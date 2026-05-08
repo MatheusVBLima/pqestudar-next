@@ -1,26 +1,419 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 98%;
+    --foreground: 0 0% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 14%;
+
+    --primary: 300 100% 25%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 300 15% 95%;
+    --secondary-foreground: 0 0% 14%;
+
+    --muted: 300 10% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 300 50% 90%;
+    --accent-foreground: 300 100% 25%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 300 20% 90%;
+    --input: 300 15% 94%;
+    --ring: 300 100% 25%;
+
+    /* Custom brand colors */
+    --brand-purple: 300 100% 25%;
+    --brand-dark: 0 0% 14%;
+    --brand-light: 300 15% 98%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(300 100% 25%), hsl(300 80% 35%));
+    --gradient-hero: linear-gradient(135deg, hsl(300 100% 25% / 0.95), hsl(300 80% 35% / 0.9));
+    
+    /* Shadows */
+    --shadow-purple: 0 10px 40px -15px hsl(300 100% 25% / 0.3);
+    --shadow-card: 0 4px 20px -8px hsl(300 20% 20% / 0.1);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* #232323 = hsl(0 0% 13.7%) */
+    --background: 0 0% 13.7%;
+    --foreground: 0 0% 93%;
+
+    /* #2b2b2b */
+    --card: 0 0% 16.9%;
+    --card-foreground: 0 0% 93%;
+
+    /* #303030 */
+    --popover: 0 0% 18.8%;
+    --popover-foreground: 0 0% 93%;
+
+    --primary: 300 80% 60%;
+    --primary-foreground: 0 0% 8%;
+
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 93%;
+
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 300 20% 22%;
+    --accent-foreground: 300 80% 60%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* #3a3a3a */
+    --border: 0 0% 22.7%;
+    --input: 0 0% 22.7%;
+    --ring: 300 80% 60%;
+    
+    /* Custom brand colors for dark mode */
+    --brand-purple: 300 80% 60%;
+    --brand-dark: 0 0% 5%;
+    --brand-light: 0 0% 20%;
+    
+    /* Gradients for dark mode */
+    --gradient-primary: linear-gradient(135deg, hsl(300 80% 60%), hsl(300 70% 70%));
+    --gradient-hero: linear-gradient(135deg, hsl(300 80% 60% / 0.95), hsl(300 70% 70% / 0.9));
+    
+    /* Shadows for dark mode */
+    --shadow-purple: 0 10px 40px -15px hsl(300 80% 60% / 0.4);
+    --shadow-card: 0 4px 20px -8px hsl(0 0% 10% / 0.5);
+
+    --sidebar-background: 0 0% 13.7%;
+    --sidebar-foreground: 0 0% 93%;
+    --sidebar-primary: 300 80% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent-foreground: 0 0% 93%;
+    --sidebar-border: 0 0% 22.7%;
+    --sidebar-ring: 300 80% 60%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+    /* Custom cursor */
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%23800080' d='M0 0v12l4-3 2 5 2-1-2-5 4-1z'/%3E%3C/svg%3E"), auto;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+  }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+  }
+
+  /* Custom scrollbar styles */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+    border-radius: 4px;
+    transition: all 0.3s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--primary) / 0.7));
+    transform: scale(1.1);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: hsl(var(--muted));
+  }
+
+  /* Firefox scrollbar styles */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+  }
+
+  /* Custom cursor states */
+  button, a, [role="button"] {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%23800080' d='M10 0a10 10 0 1 0 10 10A10 10 0 0 0 10 0zm3.5 7.5L10 11 6.5 7.5z'/%3E%3C/svg%3E"), pointer !important;
+  }
+
+  input, textarea, select {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='20' viewBox='0 0 16 20'%3E%3Cpath fill='%23800080' d='M8 0h1v20H7V0zm-7 8h6v1H1V8zm9 0h6v1h-6V8z'/%3E%3C/svg%3E"), text !important;
+  }
+
+  /* Light cursor for purple/primary backgrounds */
+  .bg-primary, .bg-primary\/90, [class*="bg-primary"], 
+  .bg-gradient-primary, [style*="background"], 
+  button.bg-primary, .badge.bg-primary {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M0 0v12l4-3 2 5 2-1-2-5 4-1z'/%3E%3C/svg%3E"), auto !important;
+  }
+
+  .bg-primary button, .bg-primary a, .bg-primary [role="button"],
+  .bg-gradient-primary button, .bg-gradient-primary a, .bg-gradient-primary [role="button"] {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%23ffffff' d='M10 0a10 10 0 1 0 10 10A10 10 0 0 0 10 0zm3.5 7.5L10 11 6.5 7.5z'/%3E%3C/svg%3E"), pointer !important;
+  }
+}
+
+@layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent;
+  }
+  
+  .shadow-glow {
+    box-shadow: var(--shadow-purple);
+  }
+
+  /* Prevent horizontal overflow */
+  .no-scrollbar-x {
+    overflow-x: hidden;
+  }
+
+  /* Responsive container utilities */
+  .container-responsive {
+    @apply w-full max-w-7xl mx-auto px-4;
+  }
+
+  /* Animation utilities */
+  @keyframes scroll-right {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .animate-scroll-right {
+    animation: scroll-right 30s linear infinite;
+  }
+
+  /* Ensure elements stay within bounds */
+  .bounded {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Markdown emphasis styles for /concursos rich content */
+  .prose strong,
+  .prose b {
+    @apply font-bold;
+  }
+
+  .prose em,
+  .prose i {
+    @apply italic;
+  }
+
+  .prose hr {
+    @apply my-6 border-border;
+  }
+
+  /* GFM Table styles for /concursos (scoped) */
+  .concursos-table-wrap {
+    @apply overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .concursos-table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .concursos-table thead {
+    @apply bg-muted/50;
+  }
+
+  .concursos-table th {
+    @apply border border-border px-3 py-2 font-semibold text-left;
+  }
+
+  .concursos-table td {
+    @apply border border-border px-3 py-2 align-top;
+  }
+
+  .concursos-table tr:hover {
+    @apply bg-muted/30;
+  }
+}
+
+/* Admin dashboard scoped radius + shadow */
+.admin-radius {
+  --admin-radius: 1.2rem;
+  --admin-shadow: 0px 4px 10px 0px hsla(240, 30%, 25%, 0.12);
+}
+.admin-radius .admin-r {
+  border-radius: var(--admin-radius);
+}
+.admin-radius .admin-r-sm {
+  border-radius: calc(var(--admin-radius) - 0.2rem);
+}
+
+/* Auto-apply radius + shadow to all Card-based components inside admin */
+.admin-radius .rounded-lg[class*="border"][class*="bg-card"],
+.admin-radius [data-slot="card"] {
+  border-radius: var(--admin-radius) !important;
+  box-shadow: var(--admin-shadow) !important;
+}
+
+/* Admin sidebar card appearance */
+.admin-radius [data-slot="admin-sidebar"] {
+  border-radius: var(--admin-radius);
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: var(--admin-shadow);
+  overflow: hidden;
+}
+
+/* Collapsed sidebar: keep card appearance and center icons */
+.admin-radius [data-slot="admin-sidebar"] [data-sidebar="sidebar"] {
+  background: transparent;
+}
+
+/* Collapsed admin sidebar: offcanvas mode hides completely, no icon-mode rules needed */
+
+/* ── Guide detail typography (/guias/:slug) ── */
+.guide-content h2 {
+  font-size: 2.25rem; /* 36px */
+  line-height: 1.2;
+}
+
+.guide-content-primary h2:first-of-type {
+  font-size: 3rem; /* 48px */
+  line-height: 1.15;
+}
+
+.guide-content p,
+.guide-content li {
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.7;
+}
+
+/* Editorial inline links */
+.guide-content a,
+.guide-content-primary a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: hsl(var(--primary) / 0.45);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease, background-color 0.15s ease;
+  border-radius: 2px;
+}
+
+.guide-content a:hover,
+.guide-content-primary a:hover {
+  color: hsl(var(--primary));
+  text-decoration-color: hsl(var(--primary));
+  text-decoration-thickness: 2px;
+  background-color: hsl(var(--primary) / 0.08);
+}
+
+.guide-content a:focus-visible,
+.guide-content-primary a:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+.guide-content img,
+.guide-content-primary img {
+  margin-top: 2rem; /* 32px */
+  margin-bottom: 2rem; /* 32px */
+}
+
+/* ── Guide mobile overrides ── */
+@media (max-width: 639px) {
+  .guide-content-primary h2:first-of-type {
+    font-size: 1.875rem; /* 30px */
+  }
+
+  .guide-content h2 {
+    font-size: 1.5rem; /* 24px */
+  }
+
+  .guide-content p,
+  .guide-content li {
+    font-size: 1rem; /* 16px */
+  }
+}
+
+/* ── Guide Flow Canvas ── */
+.guide-flow-canvas .react-flow__node {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.guide-flow-canvas .react-flow__edge-path {
+  stroke-width: 2;
+}
+
+.guide-flow-canvas .react-flow__controls {
+  border-radius: 1.2rem;
+}
+
+.guide-flow-canvas .react-flow__minimap {
+  border-radius: 1.2rem;
 }

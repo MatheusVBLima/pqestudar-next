@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bunx tsc *)",
+      "Bash(rm src/components/pages/PremiumPageClient.tsx)",
+      "Bash(mkdir -p src/components/pages/premium)",
+      "Bash(rm -rf \"src/app/[...slug]\" src/lib/prefetch-legacy-route.ts src/App.tsx src/main.tsx src/App.css src/index.css src/vite-env.d.ts)",
+      "Bash(rm src/legacy-pages/NotFound.tsx)",
+      "Bash(bun remove *)",
+      "Bash(node -e ' *)"
+    ]
+  }
+}
