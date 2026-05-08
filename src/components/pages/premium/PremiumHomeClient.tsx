@@ -1,18 +1,12 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { RouteFallbackPremium } from "@/components/layout/route-fallbacks";
+import LegacyPage from "@/legacy-pages/premium/PremiumHome";
 import { RequireActiveSubscription } from "@/components/premium/RequireActiveSubscription";
-
-const PremiumHome = dynamic(() => import("@/legacy-pages/premium/PremiumHome"), {
-  ssr: false,
-  loading: () => <RouteFallbackPremium />,
-});
 
 export default function PremiumHomeClient() {
   return (
     <RequireActiveSubscription>
-      <PremiumHome />
+      <LegacyPage />
     </RequireActiveSubscription>
   );
 }

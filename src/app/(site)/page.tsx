@@ -4,6 +4,7 @@ import IndexNext from "@/components/pages/IndexNext";
 import { QueryHydration } from "@/components/providers/query-hydration";
 import { createQueryClient } from "@/lib/query-client";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { JsonLd, absoluteUrl } from "@/lib/seo/jsonld";
 
 export async function generateMetadata(): Promise<Metadata> {
   const supabase = createServerSupabaseClient();
@@ -71,8 +72,37 @@ export default async function HomePage() {
   queryClient.setQueryData(["metrics-tools-count"], toolsCount ?? null);
   queryClient.setQueryData(["metrics-contests-count"], contestsCount ?? null);
 
+  const organizationLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "PqEstudar",
+    url: absoluteUrl("/"),
+    logo: absoluteUrl("/favicon.png"),
+    description:
+      "Curadoria educacional, concursos e ferramentas para estudar melhor.",
+    sameAs: ["https://twitter.com/pqestudar"],
+  };
+
+  const websiteLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "PqEstudar",
+    url: absoluteUrl("/"),
+    inLanguage: "pt-BR",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${absoluteUrl("/ferramentas")}?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <QueryHydration state={dehydrate(queryClient)}>
+      <JsonLd data={organizationLd} />
+      <JsonLd data={websiteLd} />
       <IndexNext />
     </QueryHydration>
   );

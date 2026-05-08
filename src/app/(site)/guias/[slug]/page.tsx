@@ -10,6 +10,7 @@ import {
   getGuideRelatedContests,
   getGuideRelatedGuides,
 } from "@/lib/data/guides";
+import { JsonLd, absoluteUrl, buildBreadcrumbList } from "@/lib/seo/jsonld";
 
 interface GuiaDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -20,24 +21,39 @@ export async function generateMetadata({ params }: GuiaDetailPageProps): Promise
   const guide = await getGuideBySlug(slug);
 
   if (!guide) {
-    return { title: "Guia não encontrado | PqEstudar" };
+    return {
+      title: "Guia não encontrado",
+      robots: { index: false, follow: true },
+    };
   }
 
+  const title = guide.seo_title || guide.title;
+  const description = guide.seo_description || guide.short_description;
+  const canonicalPath = `/guias/${slug}`;
+  const ogImages = guide.cover_image_url ? [{ url: guide.cover_image_url }] : undefined;
+
   return {
-    title: guide.seo_title || guide.title,
-    description: guide.seo_description || guide.short_description,
-    alternates: { canonical: `/guias/${slug}` },
-    openGraph: guide.cover_image_url
-      ? {
-          title: guide.title,
-          description: guide.short_description,
-          images: [{ url: guide.cover_image_url }],
-        }
-      : undefined,
+    title,
+    description,
+    alternates: { canonical: canonicalPath },
+    openGraph: {
+      type: "article",
+      url: canonicalPath,
+      title: guide.title,
+      description: guide.short_description,
+      ...(ogImages ? { images: ogImages } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: guide.title,
+      description: guide.short_description,
+      ...(guide.cover_image_url ? { images: [guide.cover_image_url] } : {}),
+    },
   };
 }
 
 function buildArticleJsonLd(guide: {
+  slug: string;
   seo_title?: string | null;
   seo_description?: string | null;
   title: string;
@@ -45,23 +61,28 @@ function buildArticleJsonLd(guide: {
   public_category?: string | null;
   category: string;
   author_name?: string | null;
+  cover_image_url?: string | null;
   updated_at: string;
   created_at: string;
 }) {
   const displayCategory = guide.public_category || guide.category;
+  const url = absoluteUrl(`/guias/${guide.slug}`);
   return {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: guide.seo_title || guide.title,
     description: guide.seo_description || guide.short_description,
     articleSection: displayCategory,
+    url,
+    mainEntityOfPage: url,
+    image: guide.cover_image_url || undefined,
     author: { "@type": "Person", name: guide.author_name || "Equipe PqEstudar" },
     dateModified: guide.updated_at,
     datePublished: guide.created_at,
     publisher: {
       "@type": "Organization",
       name: "PqEstudar",
-      url: "https://pqestudar.com.br",
+      url: absoluteUrl("/"),
     },
   };
 }
@@ -88,13 +109,16 @@ export default async function GuiaDetalhePage({ params }: GuiaDetailPageProps) {
   queryClient.setQueryData(["guide_related_contests", guide.id], contests);
   queryClient.setQueryData(["guide_related_guides", guide.id], guides);
 
+  const breadcrumbLd = buildBreadcrumbList([
+    { name: "Inicio", path: "/" },
+    { name: "Guias", path: "/guias" },
+    { name: guide.title, path: `/guias/${slug}` },
+  ]);
+
   return (
     <>
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildArticleJsonLd(guide)) }}
-      />
+      <JsonLd data={buildArticleJsonLd(guide)} />
+      <JsonLd data={breadcrumbLd} />
       <QueryHydration state={dehydrate(queryClient)}>
         <GuiaDetalheNext />
       </QueryHydration>

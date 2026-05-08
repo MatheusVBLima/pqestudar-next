@@ -34,7 +34,7 @@ import { Oportunidade, FonteOportunidade } from "@/hooks/useOportunidades";
 import { useOportunidadeViewTracker } from "@/hooks/useOportunidadeViews";
 import { useConcursoReadTracker } from "@/hooks/useAnalyticsTracker";
 import { supabase } from "@/integrations/supabase/client";
-import { renderRichContentConcursos, renderUpdateText } from "@/lib/concursos-content-renderer";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 const CATEGORIA_COLORS: Record<string, string> = {
   "Concurso": "bg-blue-500/10 text-blue-500 border-blue-500/20",
@@ -519,15 +519,11 @@ export default function ConcursoDetalheNext() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="prose prose-neutral dark:prose-invert max-w-none">
-                  <div 
-                    dangerouslySetInnerHTML={{ 
-                      __html: renderRichContentConcursos(
-                        oportunidade.conteudo_html || 
-                        oportunidade.conteudo_markdown || 
-                        oportunidade.conteudo_principal
-                      ) 
-                    }} 
-                  />
+                  <MarkdownContent>
+                    {oportunidade.conteudo_html ||
+                      oportunidade.conteudo_markdown ||
+                      oportunidade.conteudo_principal}
+                  </MarkdownContent>
                 </CardContent>
               </Card>
             </section>
@@ -558,10 +554,12 @@ export default function ConcursoDetalheNext() {
                             locale: ptBR,
                           })}
                         </time>
-                        <div 
-                          className="text-sm mt-1 prose prose-sm prose-neutral dark:prose-invert max-w-none"
-                          dangerouslySetInnerHTML={{ __html: renderUpdateText(atualizacao.texto) }}
-                        />
+                        <MarkdownContent
+                          variant="prose"
+                          className="text-sm mt-1 max-w-none"
+                        >
+                          {atualizacao.texto}
+                        </MarkdownContent>
                       </li>
                     ))}
                   </ul>

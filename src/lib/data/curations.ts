@@ -56,3 +56,21 @@ export function getCurationBySlug(slug: string) {
     { tags: [CURATIONS_TAG, curationSlugTag(slug)], revalidate: 1800 },
   )();
 }
+
+async function fetchPublishedCurations() {
+  const supabase = createServerSupabaseClient();
+  const { data } = await supabase
+    .from("curation_pages")
+    .select("slug, updated_at")
+    .eq("status", "published")
+    .order("updated_at", { ascending: false });
+  return (data ?? []) as Array<{ slug: string; updated_at: string }>;
+}
+
+export function getPublishedCurations() {
+  return unstable_cache(
+    () => fetchPublishedCurations(),
+    ["curations-published"],
+    { tags: [CURATIONS_TAG], revalidate: 3600 },
+  )();
+}

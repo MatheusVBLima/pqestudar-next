@@ -19,7 +19,8 @@ import {
   BookOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { renderMarkdownContent } from "@/lib/concursos-content-renderer";
+import { MarkdownContent } from "@/components/ui/markdown-content";
+import { splitMarkdownAtMiddle } from "@/lib/split-markdown";
 import { SaveToolButtonNext } from "@/components/ui/save-tool-button-next";
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { Tool, ToolsResult } from "@/hooks/useTools";
@@ -67,10 +68,12 @@ function CtaBlock({
   return (
     <div className="my-10 p-4 sm:p-6 rounded-[1.2rem] bg-primary/5 border text-center space-y-3 max-w-full overflow-hidden">
       {text && (
-        <div
-          className="text-sm text-muted-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>p]:mb-2"
-          dangerouslySetInnerHTML={{ __html: renderMarkdownContent(text) }}
-        />
+        <MarkdownContent
+          variant="prose"
+          className="text-sm text-muted-foreground leading-relaxed max-w-none"
+        >
+          {text}
+        </MarkdownContent>
       )}
       <Button
         asChild
@@ -95,47 +98,6 @@ function CtaBlock({
       </Button>
     </div>
   );
-}
-
-// ---------- Split content para inserir CTA do meio (igual aos guias) ----------
-function splitContentForMiddleCta(html: string): [string, string] {
-  const blockPattern = /(<\/(?:p|ul|ol|h[1-6]|blockquote|hr|table|div)>)/gi;
-  const parts: { end: number }[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = blockPattern.exec(html)) !== null) {
-    parts.push({ end: match.index + match[0].length });
-  }
-  if (parts.length < 2) return [html, ""];
-
-  const plainText = html.replace(/<[^>]+>/g, " ");
-  const totalWords = plainText.trim().split(/\s+/).length;
-
-  if (totalWords < 120) {
-    const splitIdx = Math.min(1, parts.length - 1);
-    return [html.slice(0, parts[splitIdx].end), html.slice(parts[splitIdx].end)];
-  }
-
-  const midWordIndex = Math.floor(totalWords / 2);
-  let wordCount = 0;
-  let charPos = 0;
-  const textForCounting = html.replace(/<[^>]+>/g, (tag) => " ".repeat(tag.length));
-  const wordRegex = /\S+/g;
-  let wm: RegExpExecArray | null;
-  while ((wm = wordRegex.exec(textForCounting)) !== null) {
-    wordCount++;
-    if (wordCount >= midWordIndex) {
-      charPos = wm.index;
-      break;
-    }
-  }
-  let bestSplit = parts[Math.floor(parts.length / 2)].end;
-  for (const p of parts) {
-    if (p.end >= charPos) {
-      bestSplit = p.end;
-      break;
-    }
-  }
-  return [html.slice(0, bestSplit), html.slice(bestSplit)];
 }
 
 // ---------- Hero CTA (botão principal para abrir ferramenta) ----------
@@ -237,11 +199,10 @@ export default function ToolDetalhe() {
   }
 
   const hasMiddleCta = !!(tool.cta_middle_label && tool.cta_middle_url);
-  const fullHtml = renderMarkdownContent(tool.content_markdown || "");
-  let contentFirstHalf = fullHtml;
+  let contentFirstHalf = tool.content_markdown ?? "";
   let contentSecondHalf = "";
   if (hasMiddleCta) {
-    [contentFirstHalf, contentSecondHalf] = splitContentForMiddleCta(fullHtml);
+    [contentFirstHalf, contentSecondHalf] = splitMarkdownAtMiddle(contentFirstHalf);
   }
 
   const hasContent = !!(tool.content_markdown && tool.content_markdown.trim());
@@ -382,10 +343,9 @@ export default function ToolDetalhe() {
 
             {hasContent ? (
               <>
-                <div
-                  className="guide-content guide-content-primary text-foreground/80 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: contentFirstHalf }}
-                />
+                <MarkdownContent className="guide-content guide-content-primary text-foreground/80 leading-relaxed">
+                  {contentFirstHalf}
+                </MarkdownContent>
                 {hasMiddleCta && (
                   <CtaBlock
                     label={tool.cta_middle_label}
@@ -394,10 +354,9 @@ export default function ToolDetalhe() {
                   />
                 )}
                 {contentSecondHalf && (
-                  <div
-                    className="guide-content text-foreground/80 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: contentSecondHalf }}
-                  />
+                  <MarkdownContent className="guide-content text-foreground/80 leading-relaxed">
+                    {contentSecondHalf}
+                  </MarkdownContent>
                 )}
               </>
             ) : (

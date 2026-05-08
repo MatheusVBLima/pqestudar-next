@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProductCtaButton } from "@/components/pages/ProductCtaButton";
 import { getActiveProducts } from "@/lib/data/products";
 import { findProductBySlug } from "@/lib/product-slug";
+import { JsonLd, absoluteUrl, buildBreadcrumbList } from "@/lib/seo/jsonld";
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -22,21 +23,32 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
 
   if (!product) {
     return {
-      title: "Produto não encontrado | PqEstudar",
+      title: "Produto não encontrado",
       description: "Produto não disponível.",
+      robots: { index: false, follow: true },
     };
   }
 
+  const canonicalPath = `/produtos/${slug}`;
+  const ogImages = product.image_url ? [{ url: product.image_url }] : undefined;
+
   return {
-    title: `${product.title} | PqEstudar`,
+    title: product.title,
     description: product.description,
-    openGraph: product.image_url
-      ? {
-          title: product.title,
-          description: product.description,
-          images: [{ url: product.image_url }],
-        }
-      : undefined,
+    alternates: { canonical: canonicalPath },
+    openGraph: {
+      type: "article",
+      url: canonicalPath,
+      title: product.title,
+      description: product.description,
+      ...(ogImages ? { images: ogImages } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.title,
+      description: product.description,
+      ...(product.image_url ? { images: [product.image_url] } : {}),
+    },
   };
 }
 
@@ -48,8 +60,27 @@ export default async function ProdutoDetalhePage({ params }: ProductDetailPagePr
     notFound();
   }
 
+  const productLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: product.description,
+    category: product.category,
+    url: absoluteUrl(`/produtos/${slug}`),
+    image: product.image_url || undefined,
+    brand: { "@type": "Organization", name: "PqEstudar" },
+  };
+
+  const breadcrumbLd = buildBreadcrumbList([
+    { name: "Inicio", path: "/" },
+    { name: "Produtos", path: "/produtos" },
+    { name: product.title, path: `/produtos/${slug}` },
+  ]);
+
   return (
     <main className="container mx-auto px-6 pt-8 md:pt-12 pb-16">
+      <JsonLd data={productLd} />
+      <JsonLd data={breadcrumbLd} />
       <div className="mb-6">
         <Link
           href="/produtos"

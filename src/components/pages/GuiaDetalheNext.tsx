@@ -18,7 +18,8 @@ import {
   useGuideRelatedGuides,
   useGuideLinkPreviews,
 } from "@/hooks/useGuides";
-import { renderMarkdownContent } from "@/lib/concursos-content-renderer";
+import { MarkdownContent } from "@/components/ui/markdown-content";
+import { splitMarkdownAtMiddle } from "@/lib/split-markdown";
 import { MostReadGuides } from "@/components/guides/MostReadGuides";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -29,10 +30,12 @@ function CtaBlock({ label, url, text }: { label?: string | null; url?: string | 
   return (
     <div className="my-10 p-4 sm:p-6 rounded-[1.2rem] bg-primary/5 border text-center space-y-3 max-w-full overflow-hidden">
       {text && (
-        <div
-          className="text-sm text-muted-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>p]:mb-2"
-          dangerouslySetInnerHTML={{ __html: renderMarkdownContent(text) }}
-        />
+        <MarkdownContent
+          variant="prose"
+          className="text-sm text-muted-foreground leading-relaxed max-w-none"
+        >
+          {text}
+        </MarkdownContent>
       )}
       <Button asChild size="lg" className="w-full sm:w-auto max-w-full px-4 sm:px-8 h-auto min-h-11 py-3 whitespace-normal break-words leading-tight text-sm sm:text-base">
         <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2">
@@ -42,51 +45,6 @@ function CtaBlock({ label, url, text }: { label?: string | null; url?: string | 
       </Button>
     </div>
   );
-}
-
-function splitContentForMiddleCta(html: string): [string, string] {
-  const blockPattern = /(<\/(?:p|ul|ol|h[1-6]|blockquote|hr|table|div)>)/gi;
-  const parts: { end: number }[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = blockPattern.exec(html)) !== null) {
-    parts.push({ end: match.index + match[0].length });
-  }
-
-  if (parts.length < 2) return [html, ""];
-
-  const plainText = html.replace(/<[^>]+>/g, " ");
-  const words = plainText.trim().split(/\s+/);
-  const totalWords = words.length;
-
-  if (totalWords < 120) {
-    const splitIdx = Math.min(1, parts.length - 1);
-    const splitPos = parts[splitIdx].end;
-    return [html.slice(0, splitPos), html.slice(splitPos)];
-  }
-
-  const midWordIndex = Math.floor(totalWords / 2);
-  let wordCount = 0;
-  let charPos = 0;
-  const textForCounting = html.replace(/<[^>]+>/g, (tag) => " ".repeat(tag.length));
-  const wordRegex = /\S+/g;
-  let wm: RegExpExecArray | null;
-  while ((wm = wordRegex.exec(textForCounting)) !== null) {
-    wordCount++;
-    if (wordCount >= midWordIndex) {
-      charPos = wm.index;
-      break;
-    }
-  }
-
-  let bestSplit = parts[Math.floor(parts.length / 2)].end;
-  for (const p of parts) {
-    if (p.end >= charPos) {
-      bestSplit = p.end;
-      break;
-    }
-  }
-
-  return [html.slice(0, bestSplit), html.slice(bestSplit)];
 }
 
 export default function GuiaDetalheNext() {
@@ -155,12 +113,11 @@ export default function GuiaDetalheNext() {
   const ctaFinalText = guide.cta_final_text || null;
 
   const hasMiddleCta = !!(guide.cta_middle_label && guide.cta_middle_url);
-  const fullHtml = renderMarkdownContent(guide.content_markdown);
 
-  let contentFirstHalf = fullHtml;
+  let contentFirstHalf = guide.content_markdown ?? "";
   let contentSecondHalf = "";
   if (hasMiddleCta) {
-    [contentFirstHalf, contentSecondHalf] = splitContentForMiddleCta(fullHtml);
+    [contentFirstHalf, contentSecondHalf] = splitMarkdownAtMiddle(contentFirstHalf);
   }
 
   const authorName = guide.author_name || "Equipe PqEstudar";
@@ -242,20 +199,18 @@ export default function GuiaDetalheNext() {
           <article className="flex-1 min-w-0 max-w-3xl">
             <CtaBlock label={guide.cta_top_label} url={guide.cta_top_url} text={ctaTopText} />
 
-            <div
-              className="guide-content guide-content-primary text-foreground/80 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: contentFirstHalf }}
-            />
+            <MarkdownContent className="guide-content guide-content-primary text-foreground/80 leading-relaxed">
+              {contentFirstHalf}
+            </MarkdownContent>
 
             {hasMiddleCta && (
               <CtaBlock label={guide.cta_middle_label} url={guide.cta_middle_url} text={ctaMiddleText} />
             )}
 
             {contentSecondHalf && (
-              <div
-                className="guide-content text-foreground/80 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: contentSecondHalf }}
-              />
+              <MarkdownContent className="guide-content text-foreground/80 leading-relaxed">
+                {contentSecondHalf}
+              </MarkdownContent>
             )}
 
             <CtaBlock label={guide.cta_final_label} url={guide.cta_final_url} text={ctaFinalText} />
