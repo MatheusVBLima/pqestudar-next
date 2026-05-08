@@ -13,7 +13,6 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: DEFAULT_TITLE,
-    template: "%s | PqEstudar",
   },
   description: DEFAULT_DESCRIPTION,
   applicationName: SITE_NAME,

@@ -19,7 +19,8 @@ export default async function OgImage() {
           backgroundColor: "#ffffff",
           backgroundImage:
             "radial-gradient(circle at 30% 50%, rgba(139, 92, 246, 0.15), transparent 50%), linear-gradient(135deg, rgba(139, 92, 246, 0.06) 0%, #ffffff 100%)",
-          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontFamily:
+            "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
         }}
       >
         <div
@@ -29,8 +30,8 @@ export default async function OgImage() {
             justifyContent: "center",
             textAlign: "center",
             fontSize: 110,
-            fontWeight: 800,
-            letterSpacing: "-0.035em",
+            fontWeight: 700,
+            letterSpacing: "-0.025em",
             lineHeight: 1.05,
             color: "#232323",
           }}
