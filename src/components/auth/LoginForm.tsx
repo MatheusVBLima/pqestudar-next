@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/error-message'
+import { PUBLIC_SUPABASE_URL } from '@/lib/runtime-env'
 
 interface LoginFormProps {
   onSwitchToSignUp: () => void
@@ -101,8 +102,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
     setResendLoading(true)
     
     try {
-      const supabaseUrl = 'https://omkxiomwzbykmqttfozi.supabase.co'
-      const response = await fetch(`${supabaseUrl}/functions/v1/auth-resend-confirmation`, {
+      const response = await fetch(`${PUBLIC_SUPABASE_URL}/functions/v1/auth-resend-confirmation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

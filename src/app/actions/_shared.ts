@@ -4,11 +4,7 @@ import {
   createServerSupabaseClientWithAuth,
   getServerSession,
 } from "@/lib/supabase-server";
-import { PUBLIC_SUPABASE_URL } from "@/lib/runtime-env";
-
-const SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ta3hpb213emJ5a21xdHRmb3ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MTc1OTIsImV4cCI6MjA3MzQ5MzU5Mn0.IzpMhFg4XJGNxPJlu8LTP_yDOGeHN4C8dESNKxq7bIc";
+import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "@/lib/runtime-env";
 
 export type ActionResult<T = unknown> = {
   data: T | null;
@@ -45,7 +41,7 @@ export async function invokeAdminFunction<TInput, TOutput>(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      apikey: SUPABASE_ANON_KEY,
+      apikey: PUBLIC_SUPABASE_ANON_KEY,
       Authorization: `Bearer ${session.access_token}`,
     },
     body: JSON.stringify(body),

@@ -3,14 +3,10 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Session, User } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { PUBLIC_SUPABASE_URL } from "@/lib/runtime-env";
-
-const SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ta3hpb213emJ5a21xdHRmb3ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MTc1OTIsImV4cCI6MjA3MzQ5MzU5Mn0.IzpMhFg4XJGNxPJlu8LTP_yDOGeHN4C8dESNKxq7bIc";
+import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "@/lib/runtime-env";
 
 export function createServerSupabaseClient() {
-  return createClient<Database>(PUBLIC_SUPABASE_URL, SUPABASE_ANON_KEY, {
+  return createClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
@@ -21,7 +17,7 @@ export function createServerSupabaseClient() {
 export async function createServerSupabaseClientWithAuth() {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(PUBLIC_SUPABASE_URL, SUPABASE_ANON_KEY, {
+  return createServerClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

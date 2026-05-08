@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { PUBLIC_SUPABASE_URL } from '@/lib/runtime-env';
 import { toast } from 'sonner';
 
 interface FieldData {
@@ -58,7 +59,7 @@ export function useLoadEntityFields(path: string | null) {
       });
       // workaround: use fetch directly since invoke doesn't support GET with query params well
       const { data: { session } } = await supabase.auth.getSession();
-      const baseUrl = `https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/admin-content-versions`;
+      const baseUrl = `${PUBLIC_SUPABASE_URL}/functions/v1/admin-content-versions`;
       const url = `${baseUrl}?action=load&path=${encodeURIComponent(path!)}`;
       const response = await fetch(url, {
         method: 'GET',
@@ -82,7 +83,7 @@ export function useVersionHistory(path: string | null) {
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('Não autenticado');
-      const baseUrl = `https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/admin-content-versions`;
+      const baseUrl = `${PUBLIC_SUPABASE_URL}/functions/v1/admin-content-versions`;
       const url = `${baseUrl}?action=history&path=${encodeURIComponent(path!)}`;
       const response = await fetch(url, {
         method: 'GET',

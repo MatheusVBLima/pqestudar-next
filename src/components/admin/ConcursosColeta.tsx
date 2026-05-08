@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSearchConfig } from "@/hooks/useConcursosAdmin";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ColetaRunDrillDownSheet from "./ColetaRunDrillDownSheet";
+import { PUBLIC_SUPABASE_URL } from "@/lib/runtime-env";
 
 type ColetaMethod = "crawler" | "busca" | "manual";
 type ColetaStatus = "pronto" | "coletando" | "concluido" | "falhou";
@@ -340,7 +341,7 @@ export default function ConcursosColeta() {
       console.debug("[Coleta UI] Executing:", { method, ...payload });
 
       const response = await fetch(
-        `https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/concursos-coleta`,
+        `${PUBLIC_SUPABASE_URL}/functions/v1/concursos-coleta`,
         {
           method: "POST",
           headers: {

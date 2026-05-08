@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/error-message'
+import { PUBLIC_SUPABASE_URL } from '@/lib/runtime-env'
 
 interface SignUpFormProps {
   onSwitchToLogin: () => void
@@ -30,8 +31,7 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
     setResendLoading(true)
     
     try {
-      const supabaseUrl = 'https://omkxiomwzbykmqttfozi.supabase.co'
-      const response = await fetch(`${supabaseUrl}/functions/v1/auth-resend-confirmation`, {
+      const response = await fetch(`${PUBLIC_SUPABASE_URL}/functions/v1/auth-resend-confirmation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from "@tansta
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { revalidateOportunidadesAction } from "@/app/actions/revalidate";
+import { PUBLIC_SUPABASE_URL } from "@/lib/runtime-env";
 
 function invalidateOportunidades(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: ["oportunidades-admin"] });
@@ -173,8 +174,8 @@ export function useOportunidadesAdmin(statusFilter?: "ativo" | "lixeira") {
       }
 
       const url = statusFilter 
-        ? `https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/admin-oportunidades?status=${statusFilter}`
-        : `https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/admin-oportunidades`;
+        ? `${PUBLIC_SUPABASE_URL}/functions/v1/admin-oportunidades?status=${statusFilter}`
+        : `${PUBLIC_SUPABASE_URL}/functions/v1/admin-oportunidades`;
 
       const response = await fetch(url, {
         method: "GET",
@@ -236,7 +237,7 @@ export function useOportunidadesAdmin(statusFilter?: "ativo" | "lixeira") {
   const trashMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(
-        `https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/admin-oportunidades?action=trash`,
+        `${PUBLIC_SUPABASE_URL}/functions/v1/admin-oportunidades?action=trash`,
         {
           method: "POST",
           headers: {
@@ -263,7 +264,7 @@ export function useOportunidadesAdmin(statusFilter?: "ativo" | "lixeira") {
   const restoreMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(
-        `https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/admin-oportunidades?action=restore`,
+        `${PUBLIC_SUPABASE_URL}/functions/v1/admin-oportunidades?action=restore`,
         {
           method: "POST",
           headers: {
@@ -291,7 +292,7 @@ export function useOportunidadesAdmin(statusFilter?: "ativo" | "lixeira") {
   const purgeMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(
-        `https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/admin-oportunidades?action=purge`,
+        `${PUBLIC_SUPABASE_URL}/functions/v1/admin-oportunidades?action=purge`,
         {
           method: "POST",
           headers: {
@@ -319,7 +320,7 @@ export function useOportunidadesAdmin(statusFilter?: "ativo" | "lixeira") {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(
-        `https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/admin-oportunidades?id=${id}`,
+        `${PUBLIC_SUPABASE_URL}/functions/v1/admin-oportunidades?id=${id}`,
         {
           method: "DELETE",
           headers: {
@@ -346,7 +347,7 @@ export function useOportunidadesAdmin(statusFilter?: "ativo" | "lixeira") {
   const togglePublicadoMutation = useMutation({
     mutationFn: async ({ id, publicado }: { id: string; publicado: boolean }) => {
       const response = await fetch(
-        `https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/admin-oportunidades?action=toggle`,
+        `${PUBLIC_SUPABASE_URL}/functions/v1/admin-oportunidades?action=toggle`,
         {
           method: "POST",
           headers: {

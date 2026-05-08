@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PUBLIC_SUPABASE_URL } from "@/lib/runtime-env";
 import { toast } from "sonner";
 
-const TRACK_ENDPOINT = "https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/track-oportunidade-view";
-const ADMIN_VIEWS_ENDPOINT = "https://omkxiomwzbykmqttfozi.supabase.co/functions/v1/admin-views";
+const TRACK_ENDPOINT = `${PUBLIC_SUPABASE_URL}/functions/v1/track-oportunidade-view`;
+const ADMIN_VIEWS_ENDPOINT = `${PUBLIC_SUPABASE_URL}/functions/v1/admin-views`;
 const MIN_VIEW_TIME_MS = 6000; // 6 seconds minimum on page
 
 /**
