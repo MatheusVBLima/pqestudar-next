@@ -1046,6 +1046,100 @@ export type Database = {
           },
         ]
       }
+      guide_comment_reactions: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          reaction: string
+          report_reason: string | null
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          reaction: string
+          report_reason?: string | null
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          reaction?: string
+          report_reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_comment_reactions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "guide_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guide_comments: {
+        Row: {
+          author_avatar: string | null
+          author_name: string | null
+          content: string
+          created_at: string
+          edited_at: string | null
+          guide_id: string
+          helpful_count: number
+          id: string
+          is_pinned: boolean
+          not_helpful_count: number
+          report_count: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author_avatar?: string | null
+          author_name?: string | null
+          content: string
+          created_at?: string
+          edited_at?: string | null
+          guide_id: string
+          helpful_count?: number
+          id?: string
+          is_pinned?: boolean
+          not_helpful_count?: number
+          report_count?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author_avatar?: string | null
+          author_name?: string | null
+          content?: string
+          created_at?: string
+          edited_at?: string | null
+          guide_id?: string
+          helpful_count?: number
+          id?: string
+          is_pinned?: boolean
+          not_helpful_count?: number
+          report_count?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_comments_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guide_flow_knowledge: {
         Row: {
           category: string
@@ -1094,6 +1188,36 @@ export type Database = {
           synced_at?: string | null
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      guide_moderation_log: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string
+          id: string
+          meta: Json
+          reason: string | null
+          target_user_id: string
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          meta?: Json
+          reason?: string | null
+          target_user_id: string
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          meta?: Json
+          reason?: string | null
+          target_user_id?: string
         }
         Relationships: []
       }
@@ -1236,6 +1360,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      guide_user_moderation: {
+        Row: {
+          approved_count: number
+          is_banned: boolean
+          suspended_until: string | null
+          updated_at: string
+          user_id: string
+          warning_count: number
+        }
+        Insert: {
+          approved_count?: number
+          is_banned?: boolean
+          suspended_until?: string | null
+          updated_at?: string
+          user_id: string
+          warning_count?: number
+        }
+        Update: {
+          approved_count?: number
+          is_banned?: boolean
+          suspended_until?: string | null
+          updated_at?: string
+          user_id?: string
+          warning_count?: number
+        }
+        Relationships: []
       }
       guides: {
         Row: {
@@ -1531,6 +1682,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_external: boolean
+          is_new: boolean
           label: string
           open_in_new_tab: boolean
           order_index: number
@@ -1546,6 +1698,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_external?: boolean
+          is_new?: boolean
           label: string
           open_in_new_tab?: boolean
           order_index?: number
@@ -1561,6 +1714,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_external?: boolean
+          is_new?: boolean
           label?: string
           open_in_new_tab?: boolean
           order_index?: number
@@ -3345,6 +3499,7 @@ export type Database = {
           id: string | null
           is_active: boolean | null
           is_external: boolean | null
+          is_new: boolean | null
           label: string | null
           open_in_new_tab: boolean | null
           order_index: number | null
@@ -3358,6 +3513,7 @@ export type Database = {
           id?: string | null
           is_active?: boolean | null
           is_external?: boolean | null
+          is_new?: boolean | null
           label?: string | null
           open_in_new_tab?: boolean | null
           order_index?: number | null
@@ -3371,6 +3527,7 @@ export type Database = {
           id?: string | null
           is_active?: boolean | null
           is_external?: boolean | null
+          is_new?: boolean | null
           label?: string | null
           open_in_new_tab?: boolean | null
           order_index?: number | null
@@ -3625,6 +3782,12 @@ export type Database = {
       }
     }
     Functions: {
+      _guide_comment_has_link: { Args: { p_text: string }; Returns: boolean }
+      _guide_comment_has_profanity: {
+        Args: { p_text: string }
+        Returns: boolean
+      }
+      _guide_comment_letter_count: { Args: { p_text: string }; Returns: number }
       admin_activity_actions_list: {
         Args: {
           end_at: string
@@ -3678,21 +3841,71 @@ export type Database = {
           total_pageviews: number
         }[]
       }
+      admin_get_user_moderation: { Args: { p_user_id: string }; Returns: Json }
+      admin_moderate_guide_comment: {
+        Args: { p_action: string; p_id: string }
+        Returns: Json
+      }
       admin_overview_activity: {
-        Args: { p_limit?: number }
+        Args: { end_at?: string; p_limit?: number; start_at?: string }
         Returns: {
           entity: string
           event: string
           event_date: string
         }[]
       }
-      admin_overview_stats: { Args: never; Returns: Json }
-      admin_overview_visitors_chart: {
-        Args: never
+      admin_overview_devices: {
+        Args: { end_at?: string; start_at?: string }
         Returns: {
-          day: string
+          device: string
           visitors: number
         }[]
+      }
+      admin_overview_online_visitors: {
+        Args: { p_window_minutes?: number }
+        Returns: number
+      }
+      admin_overview_sources: {
+        Args: { end_at?: string; p_limit?: number; start_at?: string }
+        Returns: {
+          source: string
+          visitors: number
+        }[]
+      }
+      admin_overview_stats: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: Json
+      }
+      admin_overview_top_pages: {
+        Args: { end_at?: string; p_limit?: number; start_at?: string }
+        Returns: {
+          path: string
+          visitors: number
+        }[]
+      }
+      admin_overview_visitors_chart:
+        | {
+            Args: { end_at?: string; start_at?: string }
+            Returns: {
+              day: string
+              visitors: number
+            }[]
+          }
+        | {
+            Args: { end_at?: string; p_bucket?: string; start_at?: string }
+            Returns: {
+              bucket_at: string
+              visitors: number
+            }[]
+          }
+      admin_user_moderation_action: {
+        Args: {
+          p_action: string
+          p_days?: number
+          p_reason?: string
+          p_target_user_id: string
+        }
+        Returns: Json
       }
       analytics_concurso_avg_read: {
         Args: { end_at: string; start_at: string }
@@ -3712,6 +3925,67 @@ export type Database = {
           opens: number
           saves: number
           shares: number
+        }[]
+      }
+      analytics_guide_avg_read: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          avg_read_seconds: number
+          entity_id: string
+          guide_label: string
+          total_sessions: number
+        }[]
+      }
+      analytics_guide_scroll_stats: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          avg_max_scroll: number
+          completion_rate: number
+          entity_id: string
+          guide_label: string
+          total_sessions: number
+        }[]
+      }
+      analytics_guide_sources: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          source: string
+          visitors: number
+        }[]
+      }
+      analytics_guide_top_ctas: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          clicks: number
+          cta_label: string
+          cta_position: string
+          cta_url: string
+          guide_label: string
+        }[]
+      }
+      analytics_guide_top_internal_links: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          clicks: number
+          guide_label: string
+          link_label: string
+          link_url: string
+        }[]
+      }
+      analytics_guides_overview: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: Json
+      }
+      analytics_guides_ranking: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          cta_clicks: number
+          entity_id: string
+          guide_label: string
+          internal_link_clicks: number
+          opens: number
+          slug: string
+          views: number
         }[]
       }
       analytics_top_tools: {
@@ -3807,6 +4081,8 @@ export type Database = {
         }[]
       }
       is_admin: { Args: never; Returns: boolean }
+      is_developer: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       list_feature_requests: {
         Args: { include_hidden?: boolean }
         Returns: {
@@ -3824,11 +4100,19 @@ export type Database = {
         }[]
       }
       public_users_count: { Args: never; Returns: number }
+      react_guide_comment: {
+        Args: { p_comment_id: string; p_reaction: string; p_reason?: string }
+        Returns: Json
+      }
       slugify_tool_name: { Args: { input_text: string }; Returns: string }
+      submit_guide_comment: {
+        Args: { p_content: string; p_guide_id: string }
+        Returns: Json
+      }
       unaccent_safe: { Args: { input_text: string }; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "developer"
       content_status: "draft" | "published"
       course_badge: "trending" | "popular" | "community"
       feature_status: "open" | "completed"
@@ -3963,7 +4247,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "developer"],
       content_status: ["draft", "published"],
       course_badge: ["trending", "popular", "community"],
       feature_status: ["open", "completed"],
