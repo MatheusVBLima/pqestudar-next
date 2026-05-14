@@ -83,6 +83,37 @@ const ROUTE_FALLBACKS: Record<string, FallbackContent> = {
     header_description:
       "Recursos selecionados, vagas exclusivas e atualizações constantes para quem quer evoluir com direção.",
   },
+  "/premium/vagas": {
+    title_tag: "Vagas Premium - PqEstudar",
+    meta_description:
+      "Curadoria exclusiva de vagas de emprego e estágio selecionadas para assinantes premium do PqEstudar.",
+    header_title: "Vagas **Selecionadas** para Você Crescer",
+    header_description:
+      "Curadoria exclusiva de oportunidades de trabalho e estágio, filtradas para quem busca evoluir com clareza.",
+  },
+  "/premium/cursos": {
+    title_tag: "Cursos Premium - PqEstudar",
+    meta_description:
+      "Curadoria de cursos gratuitos e premium escolhidos a dedo para acelerar o seu aprendizado.",
+    header_title: "Cursos **Curados** para Acelerar Sua Evolução",
+    header_description:
+      "Uma seleção criteriosa de cursos gratuitos e pagos para você estudar o que realmente importa.",
+  },
+  "/premium/atualizacoes": {
+    title_tag: "Atualizações Semanais - PqEstudar Premium",
+    meta_description:
+      "Acompanhe o que entrou de novo na Área Premium toda semana: vagas, cursos, ferramentas e oportunidades.",
+    header_title: "Atualizações **Semanais** da Área Premium",
+    header_description:
+      "Tudo que entrou de novo na curadoria premium, organizado por semana para você não perder nenhuma oportunidade.",
+  },
+  "/premium/salvos": {
+    title_tag: "Meus Salvos - PqEstudar Premium",
+    meta_description:
+      "Acesse rapidamente os cursos e vagas que você salvou na Área Premium do PqEstudar.",
+    header_title: "Seus **Salvos** em Um Só Lugar",
+    header_description: "Cursos e vagas que você marcou para acessar depois, sempre à mão.",
+  },
   "/privacidade": {
     title_tag: "Política de Privacidade e LGPD | PqEstudar",
     meta_description:
@@ -137,6 +168,10 @@ const MANAGED_ROUTES = [
   "/votacoes",
   "/ferramentas/salvos",
   "/premium",
+  "/premium/vagas",
+  "/premium/cursos",
+  "/premium/atualizacoes",
+  "/premium/salvos",
   "/privacidade",
   "/termos",
   "/produtos",

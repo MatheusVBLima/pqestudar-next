@@ -417,3 +417,14 @@ All colors MUST be HSL.
 .guide-flow-canvas .react-flow__minimap {
   border-radius: 1.2rem;
 }
+
+/* ── Drawer/Sheet anti-shift: keep scrollbar always reserved ── */
+html {
+  scrollbar-gutter: stable;
+}
+/* Neutralize Radix scroll-lock padding compensation */
+body[data-scroll-locked] {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+  overflow: hidden !important;
+}
