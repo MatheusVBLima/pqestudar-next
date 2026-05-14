@@ -21,6 +21,7 @@ const insightsItems = [
   { title: 'Ferramentas', href: '/admin/insights/ferramentas', icon: Wrench },
   { title: 'Concursos — Leitura', href: '/admin/insights/concursos-leitura', icon: BookOpen },
   { title: 'Concursos — Eventos', href: '/admin/insights/concursos-eventos', icon: MousePointerClick },
+  { title: 'Guias — Leitura', href: '/admin/insights/guias', icon: BookOpen },
   { title: 'SEO Audit', href: '/admin/insights/seo-audit', icon: Search },
   { title: 'Copy Audit', href: '/admin/insights/copy-audit', icon: FileText },
   { title: 'Atividade Admin', href: '/admin/insights/atividade-admin', icon: Shield },
