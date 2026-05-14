@@ -7,6 +7,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ManagementModeProvider } from "@/hooks/useManagementMode";
+import { PageViewTracker } from "@/components/providers/page-view-tracker";
 
 export function AppClientProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -29,6 +30,7 @@ export function AppClientProviders({ children }: { children: React.ReactNode }) 
       <AuthProvider>
         <ManagementModeProvider>
           <TooltipProvider>
+            <PageViewTracker />
             <Toaster />
             <Sonner />
             {children}
