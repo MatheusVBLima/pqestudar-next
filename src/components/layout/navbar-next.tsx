@@ -211,11 +211,16 @@ export function Navbar() {
                       onFocus={() => handleItemPrefetch(item)}
                       onTouchStart={() => handleItemPrefetch(item)}
                       className={cn(
-                        "hover:bg-accent rounded-[1.2rem]",
+                        "relative hover:bg-accent rounded-[1.2rem]",
                         isItemActive(item) && "bg-accent text-accent-foreground",
                       )}
                       aria-current={isItemActive(item) ? "page" : undefined}
                     >
+                      {item.is_new && (
+                        <span className="absolute -top-2 -right-2 inline-flex items-center rounded-full bg-primary px-1 py-px text-[8px] font-semibold uppercase leading-none tracking-wide text-primary-foreground shadow-sm">
+                          Novo
+                        </span>
+                      )}
                       {IconComp && showIconDesktop && (
                         <IconComp className="h-4 w-4 mr-2 hidden lg:inline-flex" aria-hidden="true" />
                       )}
@@ -376,6 +381,11 @@ export function Navbar() {
                           <IconComp className="h-4 w-4 mr-2" aria-hidden="true" />
                         )}
                         {item.label}
+                        {item.is_new && (
+                          <span className="ml-2 inline-flex items-center rounded-full bg-primary px-1.5 py-px text-[9px] font-semibold uppercase leading-none tracking-wide text-primary-foreground">
+                            Novo
+                          </span>
+                        )}
                         {item.is_external && <ExternalLink className="h-3 w-3 ml-1 opacity-50" />}
                       </DropdownMenuItem>
                     );

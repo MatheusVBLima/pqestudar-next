@@ -16,6 +16,7 @@ export interface NavItem {
   show_icon_desktop: boolean;
   show_icon_tablet: boolean;
   show_icon_mobile: boolean;
+  is_new: boolean;
 }
 
 export interface NavSettings {

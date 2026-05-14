@@ -1,6 +1,5 @@
 // Feature flags. Hardcoded constants until we wire a remote-config solution.
 //
-// PREMIUM_SAVE_ENABLED: true once the Supabase migration that adds
-// 'premium_item' to the saved_items.item_type check constraint is applied.
-// Until then, INSERTs into saved_items with type 'premium_item' fail.
-export const PREMIUM_SAVE_ENABLED = false;
+// PREMIUM_SAVE_ENABLED: saved_items.item_type now accepts 'premium_item'
+// (upstream migration 20260512073351 is live in the shared Supabase).
+export const PREMIUM_SAVE_ENABLED = true;
