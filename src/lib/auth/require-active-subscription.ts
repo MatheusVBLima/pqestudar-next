@@ -1,0 +1,58 @@
+import "server-only";
+import { redirect } from "next/navigation";
+import { createServerSupabaseClientWithAuth } from "@/lib/supabase-server";
+
+export interface ActiveSubscriptionGuardResult {
+  userId: string;
+  isAdmin: boolean;
+  /** Active subscription row if user has one, null for admins without subscription. */
+  subscription: {
+    id: string;
+    plan_type: string;
+    status: string;
+    ends_at: string;
+  } | null;
+}
+
+/**
+ * Server-side gate for /premium routes.
+ * - Redirects to /login if not authenticated.
+ * - Redirects to /premium/upgrade if not admin and subscription is not active.
+ * Returns user/subscription info for the page to use.
+ */
+export async function requireActiveSubscription(
+  pathname: string,
+): Promise<ActiveSubscriptionGuardResult> {
+  const supabase = await createServerSupabaseClientWithAuth();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/login?from=${encodeURIComponent(pathname)}`);
+  }
+
+  const [{ data: roleRows }, { data: sub }] = await Promise.all([
+    supabase.from("user_roles").select("role").eq("user_id", user.id),
+    supabase
+      .from("subscriptions")
+      .select("id, plan_type, status, ends_at")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
+
+  const isAdmin = (roleRows ?? []).some((r) => r.role === "admin");
+
+  const isActive =
+    !!sub && sub.status === "active" && new Date(sub.ends_at).getTime() > Date.now();
+
+  if (!isAdmin && !isActive) {
+    redirect("/premium/upgrade");
+  }
+
+  return {
+    userId: user.id,
+    isAdmin,
+    subscription: sub ?? null,
+  };
+}
