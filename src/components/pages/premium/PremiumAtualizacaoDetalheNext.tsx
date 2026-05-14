@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
-import { Calendar, ArrowLeft, BookOpen, Briefcase, ExternalLink, Bookmark, BookmarkCheck } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { usePremiumSavedItems } from '@/hooks/usePremiumSavedItems';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { Calendar, ArrowLeft, BookOpen, Briefcase, ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { usePremiumSavedItems } from "@/hooks/usePremiumSavedItems";
+import { usePremiumLastViewed } from "@/hooks/usePremiumLastViewed";
+import { PremiumBackButton } from "@/components/premium/PremiumBackButton";
 
 interface WeeklyUpdate {
   id: string;
@@ -39,66 +41,70 @@ interface UpdateItem {
   };
 }
 
-const PremiumUpdateDetail = () => {
-  const params = useParams<{ slug?: string | string[] }>();
-  const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
+export default function PremiumAtualizacaoDetalheNext() {
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
   const [update, setUpdate] = useState<WeeklyUpdate | null>(null);
   const [items, setItems] = useState<UpdateItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { isSaved, toggleSave, isToggling } = usePremiumSavedItems();
-
-  const fetchUpdate = useCallback(async () => {
-    if (!slug) return;
-
-    try {
-      // Fetch the update
-      const { data: updateData, error: updateError } = await supabase
-        .from('weekly_updates')
-        .select('*')
-        .eq('slug', slug)
-        .eq('status', 'published')
-        .single();
-
-      if (updateError) throw updateError;
-      setUpdate(updateData);
-
-      // Fetch the items
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('weekly_update_items')
-        .select(`
-          id,
-          item_id,
-          section,
-          sort_order,
-          premium_items (
-            id,
-            title,
-            slug,
-            description_short,
-            logo_url,
-            external_url,
-            tags,
-            item_type
-          )
-        `)
-        .eq('update_id', updateData.id)
-        .order('sort_order', { ascending: true });
-
-      if (itemsError) throw itemsError;
-      setItems((itemsData || []) as UpdateItem[]);
-    } catch (err) {
-      console.error('Error fetching update:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [slug]);
+  const { recordView } = usePremiumLastViewed();
 
   useEffect(() => {
-    fetchUpdate();
-  }, [fetchUpdate]);
+    if (!slug) return;
+    const fetchUpdate = async () => {
+      try {
+        const { data: updateData, error: updateError } = await supabase
+          .from("weekly_updates")
+          .select("*")
+          .eq("slug", slug)
+          .eq("status", "published")
+          .single();
+        if (updateError) throw updateError;
+        setUpdate(updateData as WeeklyUpdate);
+        if (updateData) {
+          recordView({
+            type: "update",
+            id: updateData.id,
+            title: updateData.title,
+            slug: updateData.slug,
+            href: `/premium/atualizacoes/${updateData.slug}`,
+          });
+        }
 
-  const courses = items.filter(item => item.section === 'courses');
-  const jobs = items.filter(item => item.section === 'jobs');
+        const { data: itemsData, error: itemsError } = await supabase
+          .from("weekly_update_items")
+          .select(`
+            id,
+            item_id,
+            section,
+            sort_order,
+            premium_items (
+              id,
+              title,
+              slug,
+              description_short,
+              logo_url,
+              external_url,
+              tags,
+              item_type
+            )
+          `)
+          .eq("update_id", updateData.id)
+          .order("sort_order", { ascending: true });
+        if (itemsError) throw itemsError;
+        setItems((itemsData as unknown as UpdateItem[]) || []);
+      } catch (err) {
+        console.error("Error fetching update:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUpdate();
+  }, [slug, recordView]);
+
+  const courses = items.filter((item) => item.section === "courses");
+  const jobs = items.filter((item) => item.section === "jobs");
 
   if (loading) {
     return (
@@ -129,15 +135,15 @@ const PremiumUpdateDetail = () => {
 
   const renderItemCard = (item: UpdateItem) => {
     const premiumItem = item.premium_items;
-    const Icon = premiumItem.item_type === 'course' ? BookOpen : Briefcase;
-    
+    const Icon = premiumItem.item_type === "course" ? BookOpen : Briefcase;
+
     return (
       <Card key={item.id} className="flex flex-col h-full">
         <CardHeader className="pb-3">
           <div className="flex items-start gap-3">
             {premiumItem.logo_url ? (
-              <img 
-                src={premiumItem.logo_url} 
+              <img
+                src={premiumItem.logo_url}
                 alt={premiumItem.title}
                 className="h-12 w-12 rounded-lg object-cover"
               />
@@ -151,17 +157,17 @@ const PremiumUpdateDetail = () => {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="flex-1 flex flex-col">
           {premiumItem.description_short && (
             <CardDescription className="line-clamp-3 mb-4">
               {premiumItem.description_short}
             </CardDescription>
           )}
-          
+
           {premiumItem.tags && premiumItem.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-4">
-              {premiumItem.tags.slice(0, 3).map(tag => (
+              {premiumItem.tags.slice(0, 3).map((tag) => (
                 <Badge key={tag} variant="secondary" className="text-xs">
                   {tag}
                 </Badge>
@@ -198,16 +204,10 @@ const PremiumUpdateDetail = () => {
 
   return (
     <main className="flex-1 container max-w-4xl mx-auto px-4 py-8">
-      {/* Back link */}
-      <Link 
-        href="/premium/atualizacoes" 
-        className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6"
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Voltar para atualizações
-      </Link>
+      <div className="mb-6">
+        <PremiumBackButton fallbackPath="/premium/atualizacoes" fallbackLabel="Atualizações" />
+      </div>
 
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">{update.title}</h1>
         {update.published_at && (
@@ -233,9 +233,7 @@ const PremiumUpdateDetail = () => {
             <BookOpen className="h-6 w-6 text-blue-500" />
             <h2 className="text-2xl font-semibold">Cursos Adicionados</h2>
           </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            {courses.map(renderItemCard)}
-          </div>
+          <div className="grid gap-6 md:grid-cols-2">{courses.map(renderItemCard)}</div>
         </section>
       )}
 
@@ -245,21 +243,15 @@ const PremiumUpdateDetail = () => {
             <Briefcase className="h-6 w-6 text-green-500" />
             <h2 className="text-2xl font-semibold">Vagas Adicionadas</h2>
           </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            {jobs.map(renderItemCard)}
-          </div>
+          <div className="grid gap-6 md:grid-cols-2">{jobs.map(renderItemCard)}</div>
         </section>
       )}
 
       {courses.length === 0 && jobs.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            Esta atualização ainda não possui itens.
-          </p>
+          <p className="text-muted-foreground">Esta atualização ainda não possui itens.</p>
         </div>
       )}
     </main>
   );
-};
-
-export default PremiumUpdateDetail;
+}

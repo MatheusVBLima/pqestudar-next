@@ -1,22 +1,22 @@
 "use client";
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
-import { Crown, Lock, CheckCircle, ArrowRight } from 'lucide-react';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { Crown, Lock, CheckCircle, ArrowRight } from "lucide-react";
 
-const PremiumUpgrade = () => {
+export default function PremiumUpgradeNext() {
   const { user } = useAuth();
   const { subscription, getPlanName } = useSubscription();
 
   const benefits = [
-    'Acesso a cursos gratuitos exclusivos',
-    'Vagas de emprego selecionadas',
-    'Atualizações semanais com novidades',
-    'Curadorias especiais de conteúdo',
-    'Salvar itens para ver depois',
+    "Acesso a cursos gratuitos exclusivos",
+    "Vagas de emprego selecionadas",
+    "Atualizações semanais com novidades",
+    "Curadorias especiais de conteúdo",
+    "Salvar itens para ver depois",
   ];
 
   return (
@@ -25,16 +25,15 @@ const PremiumUpgrade = () => {
         <div className="inline-flex items-center justify-center p-4 bg-primary/10 rounded-full mb-4">
           <Lock className="h-8 w-8 text-primary" />
         </div>
-        
+
         <h1 className="text-3xl font-bold mb-4">
-          {subscription ? 'Sua assinatura expirou' : 'Acesso exclusivo para assinantes'}
+          {subscription ? "Sua assinatura expirou" : "Acesso exclusivo para assinantes"}
         </h1>
-        
+
         <p className="text-muted-foreground max-w-lg mx-auto">
-          {subscription 
+          {subscription
             ? `Seu plano ${getPlanName()} não está mais ativo. Renove para continuar acessando o conteúdo premium.`
-            : 'A Área Premium oferece conteúdo exclusivo para impulsionar sua carreira.'
-          }
+            : "A Área Premium oferece conteúdo exclusivo para impulsionar sua carreira."}
         </p>
       </div>
 
@@ -81,6 +80,4 @@ const PremiumUpgrade = () => {
       </div>
     </main>
   );
-};
-
-export default PremiumUpgrade;
+}

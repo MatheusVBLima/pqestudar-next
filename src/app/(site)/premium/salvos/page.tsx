@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import PremiumSavedClient from "@/components/pages/premium/PremiumSavedClient";
+import PremiumSalvosNext from "@/components/pages/premium/PremiumSalvosNext";
+import { requireActiveSubscription } from "@/lib/auth/require-active-subscription";
 
 export const metadata: Metadata = {
   title: "Salvos Premium | PqEstudar",
-  description: "Itens salvos da sua área Premium.",
+  description: "Cursos e vagas que você marcou para acessar depois.",
   robots: { index: false, follow: false },
   alternates: { canonical: "/premium/salvos" },
 };
 
-export default function PremiumSavedPage() {
-  return <PremiumSavedClient />;
+export default async function PremiumSalvosPage() {
+  await requireActiveSubscription("/premium/salvos");
+  return <PremiumSalvosNext />;
 }

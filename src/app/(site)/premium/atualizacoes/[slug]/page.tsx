@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import PremiumUpdateDetailClient from "@/components/pages/premium/PremiumUpdateDetailClient";
+import PremiumAtualizacaoDetalheNext from "@/components/pages/premium/PremiumAtualizacaoDetalheNext";
+import { requireActiveSubscription } from "@/lib/auth/require-active-subscription";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -14,6 +15,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function PremiumUpdateDetailPage() {
-  return <PremiumUpdateDetailClient />;
+export default async function PremiumAtualizacaoDetalhePage({ params }: PageProps) {
+  const { slug } = await params;
+  await requireActiveSubscription(`/premium/atualizacoes/${slug}`);
+  return <PremiumAtualizacaoDetalheNext />;
 }
