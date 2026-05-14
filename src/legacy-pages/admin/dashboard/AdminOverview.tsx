@@ -1,22 +1,39 @@
 "use client";
 
-import { Users, Wrench, BookOpen, TrendingUp } from 'lucide-react';
-import { PageHeader } from '@/components/admin/dashboard/PageHeader';
-import { StatCard } from '@/components/admin/dashboard/StatCard';
-import { ChartCard } from '@/components/admin/dashboard/ChartCard';
-import { DataTable } from '@/components/admin/dashboard/DataTable';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useMemo, useState } from "react";
+import { Users, Wrench, BookOpen, TrendingUp } from "lucide-react";
+import { PageHeader } from "@/components/admin/dashboard/PageHeader";
+import { StatCard } from "@/components/admin/dashboard/StatCard";
+import { ChartCard } from "@/components/admin/dashboard/ChartCard";
+import { DataTable } from "@/components/admin/dashboard/DataTable";
+import { PeriodSelector, type Period } from "@/components/admin/dashboard/PeriodSelector";
+import { periodToRange } from "@/components/admin/dashboard/periodHelper";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { TopPagesCard } from "@/components/admin/dashboard/TopPagesCard";
+import { HorizontalBarsCard } from "@/components/admin/dashboard/HorizontalBarsCard";
+import { OnlineVisitorsBadge } from "@/components/admin/dashboard/OnlineVisitorsBadge";
+
+const PERIOD_LABELS: Record<Period, string> = {
+  day: "Hoje",
+  week: "Últimos 7 dias",
+  month: "Últimos 30 dias",
+  year: "Últimos 12 meses",
+  all: "Todo histórico",
+};
 
 export default function AdminOverview() {
-  // Stats cards
+  const [period, setPeriod] = useState<Period>("month");
+  const range = useMemo(() => periodToRange(period), [period]);
+  const periodLabel = PERIOD_LABELS[period];
+
   const { data: stats } = useQuery({
-    queryKey: ['admin-overview-stats'],
+    queryKey: ["admin-overview-stats", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('admin_overview_stats');
+      const { data, error } = await supabase.rpc("admin_overview_stats", range);
       if (error) throw error;
       return data as {
         visitors_30d: number;
@@ -25,28 +42,34 @@ export default function AdminOverview() {
         ctr_30d: number | null;
       };
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Visitors chart
   const { data: chartData } = useQuery({
-    queryKey: ['admin-overview-visitors-chart'],
+    queryKey: ["admin-overview-visitors-chart", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('admin_overview_visitors_chart');
+      const bucket = period === "day" ? "hour" : "day";
+      const { data, error } = await supabase.rpc("admin_overview_visitors_chart", {
+        ...range,
+        p_bucket: bucket,
+      });
       if (error) throw error;
-      return (data as { day: string; visitors: number }[]).map((d) => ({
-        day: format(new Date(d.day), 'dd/MM', { locale: ptBR }),
+      const fmt = bucket === "hour" ? "HH:mm" : "dd/MM";
+      return (data as { bucket_at: string; visitors: number }[]).map((d) => ({
+        day: format(new Date(d.bucket_at), fmt, { locale: ptBR }),
         visitors: Number(d.visitors),
       }));
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Activity feed
   const { data: activity } = useQuery({
-    queryKey: ['admin-overview-activity'],
+    queryKey: ["admin-overview-activity", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('admin_overview_activity', { p_limit: 20 });
+      const { data, error } = await supabase.rpc("admin_overview_activity", {
+        p_limit: 20,
+        ...range,
+      });
       if (error) throw error;
       return (data as { event: string; entity: string; event_date: string }[]).map((row) => ({
         event: row.event,
@@ -54,24 +77,98 @@ export default function AdminOverview() {
         date: format(new Date(row.event_date), "dd/MM/yyyy HH:mm", { locale: ptBR }),
       }));
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
-  const formatValue = (v: number | null | undefined) => (v != null ? String(v) : '—');
-  const ctrDisplay = stats?.ctr_30d != null ? `${stats.ctr_30d}%` : '—';
+  const { data: topPages, isLoading: topPagesLoading } = useQuery({
+    queryKey: ["admin-overview-top-pages", period],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_overview_top_pages", {
+        p_limit: 10,
+        ...range,
+      });
+      if (error) throw error;
+      return (data as { path: string; visitors: number }[]).map((d) => ({
+        path: d.path,
+        visitors: Number(d.visitors),
+      }));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: sources, isLoading: sourcesLoading } = useQuery({
+    queryKey: ["admin-overview-sources", period],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_overview_sources", {
+        p_limit: 10,
+        ...range,
+      });
+      if (error) throw error;
+      return (data as { source: string; visitors: number }[]).map((d) => ({
+        label: d.source,
+        value: Number(d.visitors),
+      }));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: devices, isLoading: devicesLoading } = useQuery({
+    queryKey: ["admin-overview-devices", period],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_overview_devices", range);
+      if (error) throw error;
+      return (data as { device: string; visitors: number }[]).map((d) => ({
+        label: d.device,
+        value: Number(d.visitors),
+      }));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const formatValue = (v: number | null | undefined) => (v != null ? String(v) : "—");
+  const ctrDisplay = stats?.ctr_30d != null ? `${stats.ctr_30d}%` : "—";
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Overview" description="Visão geral do painel administrativo" />
+      <PageHeader
+        title="Overview"
+        description="Visão geral do painel administrativo"
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
+            <OnlineVisitorsBadge />
+            <PeriodSelector value={period} onChange={setPeriod} />
+          </div>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Visitantes (30d)" value={formatValue(stats?.visitors_30d)} icon={Users} description="Sessões únicas" />
-        <StatCard title="Ferramentas ativas" value={formatValue(stats?.tools_active)} icon={Wrench} description="Visíveis no site" />
-        <StatCard title="Concursos publicados" value={formatValue(stats?.concursos_published)} icon={BookOpen} description="Total publicado" />
-        <StatCard title="Taxa de cliques" value={ctrDisplay} icon={TrendingUp} description="Cliques ferramentas / visitas (30d)" />
+        <StatCard
+          title="Visitantes"
+          value={formatValue(stats?.visitors_30d)}
+          icon={Users}
+          description={`Sessões únicas · ${periodLabel}`}
+        />
+        <StatCard
+          title="Ferramentas ativas"
+          value={formatValue(stats?.tools_active)}
+          icon={Wrench}
+          description="Visíveis no site"
+        />
+        <StatCard
+          title="Concursos publicados"
+          value={formatValue(stats?.concursos_published)}
+          icon={BookOpen}
+          description={`Publicados · ${periodLabel}`}
+        />
+        <StatCard
+          title="Taxa de cliques"
+          value={ctrDisplay}
+          icon={TrendingUp}
+          description={`Cliques ferramentas / visitas · ${periodLabel}`}
+        />
       </div>
 
-      <ChartCard title="Visitantes" description="Sessões únicas nos últimos 30 dias">
+      <ChartCard title="Visitantes" description={`Sessões únicas · ${periodLabel}`}>
         {chartData && chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
@@ -86,9 +183,9 @@ export default function AdminOverview() {
               <YAxis allowDecimals={false} tick={{ fontSize: 11 }} className="text-muted-foreground" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'hsl(var(--popover))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '6px',
+                  backgroundColor: "hsl(var(--popover))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "6px",
                   fontSize: 12,
                 }}
               />
@@ -104,15 +201,34 @@ export default function AdminOverview() {
         ) : undefined}
       </ChartCard>
 
-      <DataTable
-        title="Atividade recente"
-        columns={[
-          { key: 'event', label: 'Evento' },
-          { key: 'entity', label: 'Entidade' },
-          { key: 'date', label: 'Data' },
-        ]}
-        rows={activity}
-      />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <DataTable
+          title={`Atividade recente · ${periodLabel}`}
+          columns={[
+            { key: "event", label: "Evento" },
+            { key: "entity", label: "Entidade" },
+            { key: "date", label: "Data" },
+          ]}
+          rows={activity}
+        />
+        <TopPagesCard data={topPages} loading={topPagesLoading} periodLabel={periodLabel} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <HorizontalBarsCard
+          title="Origem do tráfego"
+          description={`Top 10 · ${periodLabel}`}
+          data={sources}
+          loading={sourcesLoading}
+        />
+        <HorizontalBarsCard
+          title="Dispositivos"
+          description={`Visitantes únicos · ${periodLabel}`}
+          data={devices}
+          loading={devicesLoading}
+          showPercent
+        />
+      </div>
     </div>
   );
 }
