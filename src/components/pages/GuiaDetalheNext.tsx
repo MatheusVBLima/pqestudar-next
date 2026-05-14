@@ -21,6 +21,7 @@ import {
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { splitMarkdownAtMiddle } from "@/lib/split-markdown";
 import { MostReadGuides } from "@/components/guides/MostReadGuides";
+import { GuideEngagementFooter } from "@/components/guides/GuideEngagementFooter";
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -313,6 +314,8 @@ export default function GuiaDetalheNext() {
               text={ctaFinalText}
               onClick={() => trackCta("final", guide.cta_final_label, guide.cta_final_url)}
             />
+
+            <GuideEngagementFooter guideId={guide.id} guideTitle={guide.title} />
 
             {hasRelated && (
               <div className="mt-16 space-y-10">
