@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import PremiumHomeClient from "@/components/pages/premium/PremiumHomeClient";
+import PremiumHomeNext from "@/components/pages/premium/PremiumHomeNext";
+import { requireActiveSubscription } from "@/lib/auth/require-active-subscription";
 
 export const metadata: Metadata = {
   title: "Premium | PqEstudar",
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/premium" },
 };
 
-export default function PremiumPage() {
-  return <PremiumHomeClient />;
+export default async function PremiumPage() {
+  await requireActiveSubscription("/premium");
+  return <PremiumHomeNext />;
 }
