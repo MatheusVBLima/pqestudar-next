@@ -13,7 +13,6 @@ import { PremiumRail } from "@/components/premium/PremiumRail";
 import { CourseRailCard } from "@/components/premium/cards/CourseRailCard";
 import { JobRailCard } from "@/components/premium/cards/JobRailCard";
 import { PremiumBackButton } from "@/components/premium/PremiumBackButton";
-import { PREMIUM_SAVE_ENABLED } from "@/lib/feature-flags";
 
 interface SavedItem {
   id: string;
@@ -111,14 +110,6 @@ export default function PremiumSalvosNext() {
 
         <div className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14 space-y-10 md:space-y-12">
           <PremiumBackButton fallbackPath="/premium" fallbackLabel="Premium" />
-
-          {!PREMIUM_SAVE_ENABLED && (
-            <div className="rounded-[1.2rem] border border-dashed border-primary/40 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
-              <span className="font-semibold text-primary">Em breve:</span> salvar itens
-              premium estará disponível em breve. Por enquanto, esta página mostra apenas
-              os itens já salvos.
-            </div>
-          )}
 
           {loading ? (
             <>
