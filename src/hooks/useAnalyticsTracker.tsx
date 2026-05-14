@@ -17,7 +17,7 @@ function getSessionId(): string {
 
 interface TrackEventParams {
   event_name: string;
-  entity_type?: 'tool' | 'concurso';
+  entity_type?: 'tool' | 'concurso' | 'guide';
   entity_id?: string;
   path?: string;
   meta?: Record<string, unknown>;

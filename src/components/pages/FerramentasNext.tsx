@@ -5,12 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { Suspense, lazy, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHero } from "@/components/layout/PageHero";
+import { useManagementMode } from "@/hooks/useManagementMode";
 import { X, Sparkles, Brain, Shield, GraduationCap, Wrench, Zap, Plus, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -320,7 +319,7 @@ export default function Ferramentas() {
 
   const effectiveAdmin = isAdmin || forceAdmin;
 
-  const [isManagementMode, setIsManagementMode] = useState(false);
+  const { isManagementMode } = useManagementMode();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [modalOpen, setModalOpen] = useState(false);
@@ -538,31 +537,10 @@ export default function Ferramentas() {
         <main className="flex-1">
           <PageHero title={ps.headerTitle} description={ps.headerDescription} isLoading={ps.isLoading} />
 
-          {/* Admin Toggle */}
-          {isAdmin && (
-          <section className="px-4 sm:px-6 lg:px-8 pt-12 md:pt-16">
-            <div className="container max-w-7xl mx-auto">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="management-mode"
-                    checked={isManagementMode}
-                    onCheckedChange={setIsManagementMode}
-                    data-testid="admin-toggle"
-                  />
-                  <Label htmlFor="management-mode" className="text-sm font-medium">
-                    Modo de Gerenciamento
-                  </Label>
-                </div>
-              </div>
-            </div>
-          </section>
-          )}
-
           {/* Controles Admin */}
           {isManagementMode && effectiveAdmin &&
           <section className="pb-6 px-4 sm:px-6 lg:px-8">
-              <div className="container max-w-7xl mx-auto">
+              <div className="w-full max-w-[1440px] mx-auto">
                 <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -612,7 +590,7 @@ export default function Ferramentas() {
           {/* Filtros (modo público) */}
           {!isManagementMode && showFilters &&
           <section className="pb-12 px-4 sm:px-6 lg:px-8">
-              <div className="container max-w-7xl mx-auto">
+              <div className="w-full max-w-[1440px] mx-auto">
                 <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -741,7 +719,7 @@ export default function Ferramentas() {
           {/* Paginação Superior (modo público) */}
           {showPagination &&
           <section className="pb-6 px-4 sm:px-6 lg:px-8">
-              <div className="container max-w-7xl mx-auto">
+              <div className="w-full max-w-[1440px] mx-auto">
                 <PaginationControls
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -753,7 +731,7 @@ export default function Ferramentas() {
 
           {/* Grid de Ferramentas */}
           <section className="pb-12 px-4 sm:px-6 lg:px-8">
-            <div className="container max-w-7xl mx-auto">
+            <div className="w-full max-w-[1440px] mx-auto">
               {/* Loading State */}
               {loading &&
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -882,7 +860,7 @@ export default function Ferramentas() {
           {/* Paginação Inferior (modo público) */}
           {showPagination &&
           <section className="pb-24 px-4 sm:px-6 lg:px-8">
-              <div className="container max-w-7xl mx-auto">
+              <div className="w-full max-w-[1440px] mx-auto">
                 <PaginationControls
                 currentPage={currentPage}
                 totalPages={totalPages}

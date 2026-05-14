@@ -6,6 +6,7 @@ import NextLink from "next/link";
 import { PageHero } from "@/components/layout/PageHero";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useManagementMode } from "@/hooks/useManagementMode";
 import { supabase } from "@/integrations/supabase/client";
 import { slugifyProductTitle } from "@/lib/product-slug";
 import { Card } from "@/components/ui/card";
@@ -14,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -345,7 +345,7 @@ export default function ProdutosNext() {
   const { isAdmin, loading: adminLoading } = useUserRoles();
   const queryClient = useQueryClient();
 
-  const [adminMode, setAdminMode] = useState(false);
+  const { isManagementMode: adminMode } = useManagementMode();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
@@ -530,20 +530,7 @@ export default function ProdutosNext() {
     <>
       <PageHero title={ps.headerTitle} description={ps.headerDescription} isLoading={ps.isLoading} />
 
-      <main className="container mx-auto px-6 pt-8 md:pt-12 pb-16">
-        {!adminLoading && isAdmin && (
-          <div className="flex items-center gap-3 mb-6">
-            <Switch
-              id="admin-mode-produtos"
-              checked={adminMode}
-              onCheckedChange={setAdminMode}
-            />
-            <Label htmlFor="admin-mode-produtos" className="text-sm font-medium cursor-pointer">
-              Modo de Gerenciamento
-            </Label>
-          </div>
-        )}
-
+      <main className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14 pb-16">
         {isAdmin && adminMode && (
           <div className="flex items-center gap-3 mb-6">
             <Button onClick={openCreateModal}>

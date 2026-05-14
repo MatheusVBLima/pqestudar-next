@@ -4,8 +4,6 @@ import { useState, useMemo } from "react";
 import { PageHero } from "@/components/layout/PageHero";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   AlertDialog,
@@ -19,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Search, Plus, BookOpen } from "lucide-react";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useManagementMode } from "@/hooks/useManagementMode";
 import { useGuides, Guide, useGuidesMutations } from "@/hooks/useGuides";
 import { useGuidePublicCategories } from "@/hooks/useGuidePublicCategories";
 import { usePageSettings } from "@/hooks/usePageSettings";
@@ -112,7 +111,7 @@ function GuidesList({
 export default function GuiasNext() {
   const ps = usePageSettings("/guias");
   const { isAdmin } = useUserRoles();
-  const [isManagementMode, setIsManagementMode] = useState(false);
+  const { isManagementMode } = useManagementMode();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -216,20 +215,7 @@ export default function GuiasNext() {
         }
       />
 
-      <div className="container mx-auto px-6 pt-12 md:pt-16 pb-16">
-        {isAdmin && (
-          <div className="mb-6 flex items-center gap-3">
-            <Switch
-              checked={isManagementMode}
-              onCheckedChange={setIsManagementMode}
-              id="guide-mgmt"
-            />
-            <Label htmlFor="guide-mgmt" className="text-sm">
-              Modo de Gerenciamento
-            </Label>
-          </div>
-        )}
-
+      <main className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14 pb-16">
         <div className="mb-8 flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <nav
@@ -289,7 +275,7 @@ export default function GuiasNext() {
         ) : (
           renderContent()
         )}
-      </div>
+      </main>
 
       <GuideModal
         open={modalOpen}
