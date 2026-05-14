@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useManagementMode } from "@/hooks/useManagementMode";
 import { motion } from "framer-motion";
 import { PageHero } from "@/components/layout/PageHero";
 import { format } from "date-fns";
@@ -10,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -68,7 +68,7 @@ export default function ConcursosNext() {
   const ps = usePageSettings("/concursos");
   const router = useRouter();
   const { isAdmin } = useUserRoles();
-  const [isManagementMode, setIsManagementMode] = useState(false);
+  const { isManagementMode } = useManagementMode();
   const [showFilters, setShowFilters] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Oportunidade | null>(null);
@@ -236,28 +236,14 @@ export default function ConcursosNext() {
     <div className="min-h-screen flex flex-col bg-background">
       <PageHero title={ps.headerTitle} description={ps.headerDescription} isLoading={ps.isLoading} />
 
-      <main className="flex-1 container mx-auto px-4 pt-12 md:pt-16 pb-8 max-w-7xl">
+      <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14 pb-8">
         <div className="mb-8">
-          {/* Admin toggle */}
-          {isAdmin && (
+          {isAdmin && isManagementMode && (
             <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="management-mode"
-                  checked={isManagementMode}
-                  onCheckedChange={setIsManagementMode}
-                />
-                <Label htmlFor="management-mode" className="text-sm font-medium">
-                  Modo de Gerenciamento
-                </Label>
-              </div>
-              
-              {isManagementMode && (
-                <Button onClick={handleAdd} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar
-                </Button>
-              )}
+              <Button onClick={handleAdd} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar
+              </Button>
             </div>
           )}
 

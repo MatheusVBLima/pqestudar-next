@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -21,11 +21,22 @@ import {
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { splitMarkdownAtMiddle } from "@/lib/split-markdown";
 import { MostReadGuides } from "@/components/guides/MostReadGuides";
+import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-function CtaBlock({ label, url, text }: { label?: string | null; url?: string | null; text?: string | null }) {
+function CtaBlock({
+  label,
+  url,
+  text,
+  onClick,
+}: {
+  label?: string | null;
+  url?: string | null;
+  text?: string | null;
+  onClick?: () => void;
+}) {
   if (!label || !url) return null;
   return (
     <div className="my-10 p-4 sm:p-6 rounded-[1.2rem] bg-primary/5 border text-center space-y-3 max-w-full overflow-hidden">
@@ -38,7 +49,7 @@ function CtaBlock({ label, url, text }: { label?: string | null; url?: string | 
         </MarkdownContent>
       )}
       <Button asChild size="lg" className="w-full sm:w-auto max-w-full px-4 sm:px-8 h-auto min-h-11 py-3 whitespace-normal break-words leading-tight text-sm sm:text-base">
-        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2">
+        <a href={url} target="_blank" rel="noopener noreferrer" onClick={onClick} className="inline-flex items-center justify-center gap-2">
           <span className="break-words">{label}</span>
           <ExternalLink className="h-4 w-4 shrink-0" />
         </a>
@@ -63,6 +74,8 @@ export default function GuiaDetalheNext() {
   const resolvedLinks = useGuideLinkPreviews(rawInternalLinks);
 
   const viewTracked = useRef<string | null>(null);
+  const { track } = useAnalyticsTracker();
+  const firedDepths = useRef(new Set<number>());
 
   useEffect(() => {
     if (slug && guide && viewTracked.current !== slug) {
@@ -70,8 +83,79 @@ export default function GuiaDetalheNext() {
       supabase.rpc("increment_guide_view", { p_slug: slug }).then(({ error }) => {
         if (error) console.warn("Guide view track error:", error.message);
       });
+      track({
+        event_name: "guide_detail_open",
+        entity_type: "guide",
+        entity_id: guide.id,
+        meta: { guide_slug: slug },
+      });
     }
-  }, [slug, guide]);
+  }, [slug, guide, track]);
+
+  useEffect(() => {
+    if (!guide?.id) return;
+    const guideId = guide.id;
+    const interval = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      track({
+        event_name: "guide_read_heartbeat",
+        entity_type: "guide",
+        entity_id: guideId,
+        meta: { guide_slug: slug, read_seconds_increment: 15 },
+      });
+    }, 15_000);
+    return () => clearInterval(interval);
+  }, [guide?.id, slug, track]);
+
+  useEffect(() => {
+    if (!guide?.id) return;
+    firedDepths.current.clear();
+    const guideId = guide.id;
+    const handler = () => {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight <= 0) return;
+      const pct = Math.round((window.scrollY / docHeight) * 100);
+      for (const threshold of [25, 50, 75, 100]) {
+        if (pct >= threshold && !firedDepths.current.has(threshold)) {
+          firedDepths.current.add(threshold);
+          track({
+            event_name: "guide_scroll_depth",
+            entity_type: "guide",
+            entity_id: guideId,
+            meta: { guide_slug: slug, scroll_depth: threshold },
+          });
+        }
+      }
+    };
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
+  }, [guide?.id, slug, track]);
+
+  const trackCta = useCallback(
+    (position: "top" | "middle" | "final", label: string | null, url: string | null) => {
+      if (!guide?.id || !label || !url) return;
+      track({
+        event_name: "guide_cta_click",
+        entity_type: "guide",
+        entity_id: guide.id,
+        meta: { guide_slug: slug, cta_position: position, cta_label: label, cta_url: url },
+      });
+    },
+    [guide?.id, slug, track],
+  );
+
+  const trackInternalLink = useCallback(
+    (label: string, url: string) => {
+      if (!guide?.id) return;
+      track({
+        event_name: "guide_internal_link_click",
+        entity_type: "guide",
+        entity_id: guide.id,
+        meta: { guide_slug: slug, link_label: label, link_url: url },
+      });
+    },
+    [guide?.id, slug, track],
+  );
 
   if (isLoading) {
     return (
@@ -194,17 +278,27 @@ export default function GuiaDetalheNext() {
         />
       )}
 
-      <div className="container mx-auto px-6 pt-12 md:pt-16 pb-16">
+      <main className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14 pb-16">
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-12">
           <article className="flex-1 min-w-0 max-w-3xl">
-            <CtaBlock label={guide.cta_top_label} url={guide.cta_top_url} text={ctaTopText} />
+            <CtaBlock
+              label={guide.cta_top_label}
+              url={guide.cta_top_url}
+              text={ctaTopText}
+              onClick={() => trackCta("top", guide.cta_top_label, guide.cta_top_url)}
+            />
 
             <MarkdownContent className="guide-content guide-content-primary text-foreground/80 leading-relaxed">
               {contentFirstHalf}
             </MarkdownContent>
 
             {hasMiddleCta && (
-              <CtaBlock label={guide.cta_middle_label} url={guide.cta_middle_url} text={ctaMiddleText} />
+              <CtaBlock
+                label={guide.cta_middle_label}
+                url={guide.cta_middle_url}
+                text={ctaMiddleText}
+                onClick={() => trackCta("middle", guide.cta_middle_label, guide.cta_middle_url)}
+              />
             )}
 
             {contentSecondHalf && (
@@ -213,7 +307,12 @@ export default function GuiaDetalheNext() {
               </MarkdownContent>
             )}
 
-            <CtaBlock label={guide.cta_final_label} url={guide.cta_final_url} text={ctaFinalText} />
+            <CtaBlock
+              label={guide.cta_final_label}
+              url={guide.cta_final_url}
+              text={ctaFinalText}
+              onClick={() => trackCta("final", guide.cta_final_label, guide.cta_final_url)}
+            />
 
             {hasRelated && (
               <div className="mt-16 space-y-10">
@@ -308,6 +407,7 @@ export default function GuiaDetalheNext() {
                       <Link
                         key={i}
                         href={link.url}
+                        onClick={() => trackInternalLink(link.label, link.url)}
                         className="flex items-start gap-4 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md"
                         aria-label={`Link útil: ${link.label}`}
                       >
@@ -352,7 +452,7 @@ export default function GuiaDetalheNext() {
             </div>
           </aside>
         </div>
-      </div>
+      </main>
     </>
   );
 }

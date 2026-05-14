@@ -38,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ManagementModeToggle } from "@/components/management/ManagementModeToggle";
 
 const NotificationDropdown = lazy(() =>
   import("@/components/ui/notification-dropdown").then((m) => ({
@@ -231,6 +232,7 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
+            <ManagementModeToggle />
             {user && (
               <Suspense fallback={null}>
                 <NotificationDropdown />
@@ -338,6 +340,7 @@ export function Navbar() {
             >
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
+            <ManagementModeToggle />
             {user && (
               <Suspense fallback={null}>
                 <NotificationDropdown />
