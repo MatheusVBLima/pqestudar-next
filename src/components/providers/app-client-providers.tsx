@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ManagementModeProvider } from "@/hooks/useManagementMode";
 
 export function AppClientProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -26,11 +27,13 @@ export function AppClientProviders({ children }: { children: React.ReactNode }) 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          {children}
-        </TooltipProvider>
+        <ManagementModeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            {children}
+          </TooltipProvider>
+        </ManagementModeProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

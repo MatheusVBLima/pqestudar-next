@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PremiumUpgradeClient from "@/components/pages/premium/PremiumUpgradeClient";
+import PremiumUpgradeNext from "@/components/pages/premium/PremiumUpgradeNext";
 
 export const metadata: Metadata = {
   title: "Upgrade Premium | PqEstudar",
@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function PremiumUpgradePage() {
-  return <PremiumUpgradeClient />;
+  return <PremiumUpgradeNext />;
 }

@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, BookOpen, Briefcase, ExternalLink, Bookmark, BookmarkCheck, LayoutGrid } from 'lucide-react';
-import { usePremiumSavedItems } from '@/hooks/usePremiumSavedItems';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, BookOpen, Briefcase, ExternalLink, Bookmark, BookmarkCheck, LayoutGrid } from "lucide-react";
+import { usePremiumSavedItems } from "@/hooks/usePremiumSavedItems";
 
 interface PremiumPage {
   id: string;
@@ -34,62 +34,56 @@ interface PageItem {
   };
 }
 
-const PremiumCurationPage = () => {
-  const params = useParams<{ slug?: string | string[] }>();
-  const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
+export default function PremiumCurationPageNext() {
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
   const [page, setPage] = useState<PremiumPage | null>(null);
   const [items, setItems] = useState<PageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { isSaved, toggleSave, isToggling } = usePremiumSavedItems();
 
-  const fetchPage = useCallback(async () => {
-    if (!slug) return;
-
-    try {
-      // Fetch the page
-      const { data: pageData, error: pageError } = await supabase
-        .from('premium_pages')
-        .select('*')
-        .eq('slug', slug)
-        .eq('status', 'published')
-        .single();
-
-      if (pageError) throw pageError;
-      setPage(pageData);
-
-      // Fetch the items
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('premium_page_items')
-        .select(`
-          id,
-          item_id,
-          sort_order,
-          premium_items (
-            id,
-            title,
-            slug,
-            description_short,
-            logo_url,
-            external_url,
-            tags,
-            item_type
-          )
-        `)
-        .eq('page_id', pageData.id)
-        .order('sort_order', { ascending: true });
-
-      if (itemsError) throw itemsError;
-      setItems((itemsData || []) as PageItem[]);
-    } catch (err) {
-      console.error('Error fetching page:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [slug]);
-
   useEffect(() => {
+    if (!slug) return;
+    const fetchPage = async () => {
+      try {
+        const { data: pageData, error: pageError } = await supabase
+          .from("premium_pages")
+          .select("*")
+          .eq("slug", slug)
+          .eq("status", "published")
+          .single();
+        if (pageError) throw pageError;
+        setPage(pageData as PremiumPage);
+
+        const { data: itemsData, error: itemsError } = await supabase
+          .from("premium_page_items")
+          .select(`
+            id,
+            item_id,
+            sort_order,
+            premium_items (
+              id,
+              title,
+              slug,
+              description_short,
+              logo_url,
+              external_url,
+              tags,
+              item_type
+            )
+          `)
+          .eq("page_id", pageData.id)
+          .order("sort_order", { ascending: true });
+        if (itemsError) throw itemsError;
+        setItems((itemsData as unknown as PageItem[]) || []);
+      } catch (err) {
+        console.error("Error fetching page:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchPage();
-  }, [fetchPage]);
+  }, [slug]);
 
   if (loading) {
     return (
@@ -98,7 +92,7 @@ const PremiumCurationPage = () => {
           <Skeleton className="h-10 w-64 mb-6" />
           <Skeleton className="h-24 mb-8" />
           <div className="grid gap-6 md:grid-cols-2">
-            {[1, 2, 3, 4].map(i => (
+            {[1, 2, 3, 4].map((i) => (
               <Skeleton key={i} className="h-48" />
             ))}
           </div>
@@ -128,19 +122,15 @@ const PremiumCurationPage = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      
-      
       <main className="flex-1 container max-w-4xl mx-auto px-4 py-8">
-        {/* Back link */}
-        <Link 
-          href="/premium" 
+        <Link
+          href="/premium"
           className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar para Área Premium
         </Link>
 
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">{page.title}</h1>
           {page.description && (
@@ -148,26 +138,23 @@ const PremiumCurationPage = () => {
           )}
         </div>
 
-        {/* Items Grid */}
         {items.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">
-              Esta curadoria ainda não possui itens.
-            </p>
+            <p className="text-muted-foreground">Esta curadoria ainda não possui itens.</p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
-            {items.map(item => {
+            {items.map((item) => {
               const premiumItem = item.premium_items;
-              const Icon = premiumItem.item_type === 'course' ? BookOpen : Briefcase;
-              
+              const Icon = premiumItem.item_type === "course" ? BookOpen : Briefcase;
+
               return (
                 <Card key={item.id} className="flex flex-col h-full">
                   <CardHeader className="pb-3">
                     <div className="flex items-start gap-3">
                       {premiumItem.logo_url ? (
-                        <img 
-                          src={premiumItem.logo_url} 
+                        <img
+                          src={premiumItem.logo_url}
                           alt={premiumItem.title}
                           className="h-12 w-12 rounded-lg object-cover"
                         />
@@ -179,22 +166,22 @@ const PremiumCurationPage = () => {
                       <div className="flex-1 min-w-0">
                         <CardTitle className="text-lg line-clamp-2">{premiumItem.title}</CardTitle>
                         <Badge variant="secondary" className="mt-1">
-                          {premiumItem.item_type === 'course' ? 'Curso' : 'Vaga'}
+                          {premiumItem.item_type === "course" ? "Curso" : "Vaga"}
                         </Badge>
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="flex-1 flex flex-col">
                     {premiumItem.description_short && (
                       <CardDescription className="line-clamp-3 mb-4">
                         {premiumItem.description_short}
                       </CardDescription>
                     )}
-                    
+
                     {premiumItem.tags && premiumItem.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-4">
-                        {premiumItem.tags.slice(0, 3).map(tag => (
+                        {premiumItem.tags.slice(0, 3).map((tag) => (
                           <Badge key={tag} variant="outline" className="text-xs">
                             {tag}
                           </Badge>
@@ -231,10 +218,6 @@ const PremiumCurationPage = () => {
           </div>
         )}
       </main>
-
-      
     </div>
   );
-};
-
-export default PremiumCurationPage;
+}

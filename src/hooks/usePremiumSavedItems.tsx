@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Json, TablesInsert } from '@/integrations/supabase/types';
 import { useAuth } from './useAuth';
 import { toast } from '@/hooks/use-toast';
+import { PREMIUM_SAVE_ENABLED } from '@/lib/feature-flags';
 
 export interface PremiumSavedMetadata {
   title?: string;
@@ -50,6 +51,15 @@ export const usePremiumSavedItems = () => {
     itemId: string,
     metadata?: PremiumSavedMetadata
   ): Promise<boolean> => {
+    // Feature flag: disabled until the saved_items.item_type constraint accepts 'premium_item'.
+    if (!PREMIUM_SAVE_ENABLED) {
+      toast({
+        title: 'Em breve',
+        description: 'Salvar itens premium será liberado em breve.',
+      });
+      return false;
+    }
+
     // If user is not logged in, redirect to /login with return URL
     if (!user) {
       router.push(`/login?from=${encodeURIComponent(pathname)}`);
@@ -138,7 +148,7 @@ export const usePremiumSavedItems = () => {
         return newSet;
       });
     }
-  }, [location, navigate, savedIds, user]);
+  }, [pathname, router, savedIds, user]);
 
   // Check if a specific item is being toggled
   const isToggling = useCallback((itemId: string) => {

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PremiumRedeemClient from "@/components/pages/premium/PremiumRedeemClient";
+import PremiumRedeemNext from "@/components/pages/premium/PremiumRedeemNext";
 
 export const metadata: Metadata = {
   title: "Resgatar Token Premium | PqEstudar",
@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function PremiumRedeemPage() {
-  return <PremiumRedeemClient />;
+  return <PremiumRedeemNext />;
 }

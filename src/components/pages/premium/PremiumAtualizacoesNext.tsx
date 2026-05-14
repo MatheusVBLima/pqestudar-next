@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
-import { Calendar, ArrowRight } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { Calendar, ArrowRight } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { PageHero } from "@/components/layout/PageHero";
+import { usePageSettings } from "@/hooks/usePageSettings";
+import { PremiumBackButton } from "@/components/premium/PremiumBackButton";
 
 interface WeeklyUpdate {
   id: string;
@@ -19,66 +21,55 @@ interface WeeklyUpdate {
   published_at: string | null;
 }
 
-const PremiumUpdates = () => {
+export default function PremiumAtualizacoesNext() {
   const [updates, setUpdates] = useState<WeeklyUpdate[]>([]);
   const [loading, setLoading] = useState(true);
+  const ps = usePageSettings("/premium/atualizacoes");
 
   useEffect(() => {
+    const fetchUpdates = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("weekly_updates")
+          .select("id, title, slug, intro, highlight, published_at")
+          .eq("status", "published")
+          .order("published_at", { ascending: false });
+        if (error) throw error;
+        setUpdates((data || []) as WeeklyUpdate[]);
+      } catch (err) {
+        console.error("Error fetching weekly updates:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchUpdates();
   }, []);
 
-  const fetchUpdates = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('weekly_updates')
-        .select('id, title, slug, intro, highlight, published_at')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false });
+  return (
+    <>
+      <PageHero
+        title={ps.headerTitle || "Atualizações **Semanais** da Área Premium"}
+        description={ps.headerDescription || "Tudo que entrou de novo na curadoria premium, organizado por semana."}
+      />
 
-      if (error) throw error;
-      setUpdates(data || []);
-    } catch (err) {
-      console.error('Error fetching weekly updates:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <main className="flex-1 container max-w-4xl mx-auto px-4 py-8">
-          <Skeleton className="h-10 w-64 mb-6" />
+      <main className="container max-w-4xl mx-auto px-4 py-12">
+        <div className="mb-6">
+          <PremiumBackButton fallbackPath="/premium" fallbackLabel="Premium" />
+        </div>
+        {loading ? (
           <div className="space-y-4">
-            {[1, 2, 3].map(i => (
+            {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-32" />
             ))}
           </div>
-        </main>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      
-      
-      <main className="flex-1 container max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Calendar className="h-8 w-8 text-purple-500" />
-          <h1 className="text-3xl font-bold">Atualizações Semanais</h1>
-        </div>
-
-        {updates.length === 0 ? (
+        ) : updates.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">
-              Nenhuma atualização disponível no momento.
-            </p>
+            <p className="text-muted-foreground">Nenhuma atualização disponível no momento.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {updates.map(update => (
+            {updates.map((update) => (
               <Link key={update.id} href={`/premium/atualizacoes/${update.slug}`}>
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
                   <CardHeader className="pb-2">
@@ -104,9 +95,7 @@ const PremiumUpdates = () => {
                         </div>
                       )}
                       {update.intro && (
-                        <CardDescription className="line-clamp-2">
-                          {update.intro}
-                        </CardDescription>
+                        <CardDescription className="line-clamp-2">{update.intro}</CardDescription>
                       )}
                     </CardContent>
                   )}
@@ -116,10 +105,6 @@ const PremiumUpdates = () => {
           </div>
         )}
       </main>
-
-      
-    </div>
+    </>
   );
-};
-
-export default PremiumUpdates;
+}

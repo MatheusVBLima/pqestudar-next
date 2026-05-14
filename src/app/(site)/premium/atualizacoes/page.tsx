@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import PremiumUpdatesClient from "@/components/pages/premium/PremiumUpdatesClient";
+import PremiumAtualizacoesNext from "@/components/pages/premium/PremiumAtualizacoesNext";
+import { requireActiveSubscription } from "@/lib/auth/require-active-subscription";
 
 export const metadata: Metadata = {
   title: "Atualizações Premium | PqEstudar",
-  description: "Conteúdo atualizado semanalmente para assinantes Premium.",
+  description: "Acompanhe o que entrou de novo na Área Premium toda semana.",
   robots: { index: false, follow: false },
   alternates: { canonical: "/premium/atualizacoes" },
 };
 
-export default function PremiumAtualizacoesPage() {
-  return <PremiumUpdatesClient />;
+export default async function PremiumAtualizacoesPage() {
+  await requireActiveSubscription("/premium/atualizacoes");
+  return <PremiumAtualizacoesNext />;
 }
