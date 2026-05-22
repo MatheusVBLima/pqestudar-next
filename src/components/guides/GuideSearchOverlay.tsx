@@ -148,7 +148,7 @@ export function GuideSearchOverlay({
   const hasQuery = searchTerm.trim().length > 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog modal={false} open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="p-0 gap-0 max-w-2xl top-[10%] translate-y-0 overflow-hidden [&>button]:hidden"
       >

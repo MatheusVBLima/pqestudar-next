@@ -233,10 +233,10 @@ export default function ConcursosNext() {
   const trashCount = adminQueryLixeira.oportunidades?.length || 0;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex-1 flex flex-col bg-background">
       <PageHero title={ps.headerTitle} description={ps.headerDescription} isLoading={ps.isLoading} />
 
-      <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14 pb-8">
+      <main className="flex-1 w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 pb-8">
         <div className="mb-8">
           {isAdmin && isManagementMode && (
             <div className="flex items-center gap-4 mb-4">

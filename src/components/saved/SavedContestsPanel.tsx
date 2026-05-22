@@ -33,9 +33,10 @@ interface SavedContestsPanelProps {
   savedItems: SavedItem[];
   onRefresh: () => void;
   shouldLoad: boolean;
+  variant?: "grid" | "rail";
 }
 
-export function SavedContestsPanel({ savedItems, onRefresh, shouldLoad }: SavedContestsPanelProps) {
+export function SavedContestsPanel({ savedItems, onRefresh, shouldLoad, variant = "grid" }: SavedContestsPanelProps) {
   const router = useRouter();
   const { toggleSave, isToggling } = useSavedItems();
   const savedContestIds = useMemo(
@@ -106,21 +107,25 @@ export function SavedContestsPanel({ savedItems, onRefresh, shouldLoad }: SavedC
   }
 
   if (loading) {
-    return (
+    const skeletons = [1, 2, 3].map((i) => (
+      <Card key={i} className={variant === "rail" ? "h-64 w-72 shrink-0 rounded-[1.2rem]" : "h-full"}>
+        <CardHeader className="space-y-2 pb-2">
+          <Skeleton className="h-5 w-20" />
+          <Skeleton className="h-5 w-full" />
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-9 w-full" />
+        </CardContent>
+      </Card>
+    ));
+
+    return variant === "rail" ? (
+      <>{skeletons}</>
+    ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="h-full">
-            <CardHeader className="space-y-2 pb-2">
-              <Skeleton className="h-5 w-20" />
-              <Skeleton className="h-5 w-full" />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-9 w-full" />
-            </CardContent>
-          </Card>
-        ))}
+        {skeletons}
       </div>
     );
   }
@@ -147,8 +152,8 @@ export function SavedContestsPanel({ savedItems, onRefresh, shouldLoad }: SavedC
     );
   }
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+  const content = (
+    <>
       {contests.map((contest, index) => {
         const isRemoving = isToggling('contest', contest.id);
 
@@ -158,6 +163,7 @@ export function SavedContestsPanel({ savedItems, onRefresh, shouldLoad }: SavedC
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: index * 0.03 }}
+            className={variant === "rail" ? "h-full w-72 shrink-0 snap-start" : "h-full"}
           >
             <Card className="h-full hover:shadow-md transition-shadow duration-200 flex flex-col">
               <CardHeader className="pb-2">
@@ -222,6 +228,16 @@ export function SavedContestsPanel({ savedItems, onRefresh, shouldLoad }: SavedC
           </motion.div>
         );
       })}
+    </>
+  );
+
+  if (variant === "rail") {
+    return content;
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+      {content}
     </div>
   );
 }

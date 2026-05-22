@@ -91,7 +91,7 @@ export default function PremiumCursoDetalheNext() {
 
   if (loading) {
     return (
-      <main className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14">
+      <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
         <div className="max-w-3xl mx-auto space-y-8">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-12 w-full" />
@@ -108,7 +108,7 @@ export default function PremiumCursoDetalheNext() {
 
   if (error || !course) {
     return (
-      <main className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14">
+      <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
         <div className="text-center py-16 max-w-lg mx-auto">
           <AlertCircle className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
           <h1 className="text-xl font-semibold mb-2">Curso não encontrado</h1>
@@ -133,7 +133,7 @@ export default function PremiumCursoDetalheNext() {
   const saved = isSaved(course.id);
 
   return (
-    <main className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14">
+    <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
       <div className="max-w-3xl mx-auto space-y-8">
         <PremiumBackButton fallbackPath="/premium/cursos" fallbackLabel="Cursos" />
 

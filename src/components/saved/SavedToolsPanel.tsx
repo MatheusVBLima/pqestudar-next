@@ -27,9 +27,10 @@ interface SavedToolsPanelProps {
   savedItems: SavedItem[];
   onRefresh: () => void;
   shouldLoad: boolean;
+  variant?: "grid" | "rail";
 }
 
-export function SavedToolsPanel({ savedItems, onRefresh, shouldLoad }: SavedToolsPanelProps) {
+export function SavedToolsPanel({ savedItems, onRefresh, shouldLoad, variant = "grid" }: SavedToolsPanelProps) {
   const router = useRouter();
   const { toggleSave, isToggling } = useSavedItems();
   const savedToolIds = useMemo(
@@ -69,27 +70,31 @@ export function SavedToolsPanel({ savedItems, onRefresh, shouldLoad }: SavedTool
   }
 
   if (loading) {
-    return (
+    const skeletons = [1, 2, 3].map((i) => (
+      <Card key={i} className={variant === "rail" ? "h-64 w-72 shrink-0 rounded-[1.2rem]" : "h-full"}>
+        <CardHeader>
+          <div className="flex items-center gap-4 mb-2">
+            <Skeleton className="w-14 h-14 rounded-full" />
+            <Skeleton className="h-5 w-28" />
+          </div>
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2 mb-3">
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-5 w-20" />
+          </div>
+          <Skeleton className="h-9 w-full" />
+        </CardContent>
+      </Card>
+    ));
+
+    return variant === "rail" ? (
+      <>{skeletons}</>
+    ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="h-full">
-            <CardHeader>
-              <div className="flex items-center gap-4 mb-2">
-                <Skeleton className="w-14 h-14 rounded-full" />
-                <Skeleton className="h-5 w-28" />
-              </div>
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2 mb-3">
-                <Skeleton className="h-5 w-16" />
-                <Skeleton className="h-5 w-20" />
-              </div>
-              <Skeleton className="h-9 w-full" />
-            </CardContent>
-          </Card>
-        ))}
+        {skeletons}
       </div>
     );
   }
@@ -116,8 +121,8 @@ export function SavedToolsPanel({ savedItems, onRefresh, shouldLoad }: SavedTool
     );
   }
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 items-stretch">
+  const content = (
+    <>
       {tools.map((tool, index) => {
         const Icon = tool.tags[0] ? CATEGORY_ICONS[tool.tags[0]] || Sparkles : Sparkles;
         const isRemoving = isToggling('tool', tool.id);
@@ -128,7 +133,7 @@ export function SavedToolsPanel({ savedItems, onRefresh, shouldLoad }: SavedTool
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: index * 0.03 }}
-            className="h-full"
+            className={variant === "rail" ? "h-full w-72 shrink-0 snap-start" : "h-full"}
           >
             <Card className="h-full hover:shadow-md transition-shadow duration-200 flex flex-col">
               <CardHeader className="pb-2">
@@ -207,6 +212,16 @@ export function SavedToolsPanel({ savedItems, onRefresh, shouldLoad }: SavedTool
           </motion.div>
         );
       })}
+    </>
+  );
+
+  if (variant === "rail") {
+    return content;
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 items-stretch">
+      {content}
     </div>
   );
 }

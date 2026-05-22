@@ -151,9 +151,9 @@ export default function PremiumHomeNext() {
 
   return (
     <>
-      <section className="relative bg-gradient-to-br from-primary/10 via-background to-background border-b overflow-hidden">
+      <section className="relative bg-gradient-to-br from-primary/10 via-background to-background border-b overflow-hidden px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(var(--primary)/0.12),transparent_55%)]" />
-        <div className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-16 relative">
+        <div className="w-full max-w-[1440px] mx-auto py-12 md:py-16 relative">
           <div className="grid lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -189,7 +189,7 @@ export default function PremiumHomeNext() {
         </div>
       </section>
 
-      <main className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14 space-y-10 md:space-y-12">
+      <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 space-y-10 md:space-y-12">
         <ManagementToolbar
           createLabel="Novo item premium"
           onCreate={openCreate}

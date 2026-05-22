@@ -1,7 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Instagram, Youtube, Facebook } from "lucide-react";
-import logoLight from "@/assets/logo-light.png";
-import logoDark from "@/assets/logo-dark.png";
+import { useNavConfig } from "@/hooks/useNavConfig";
 
 const ThreadsIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -36,17 +37,31 @@ const navLinksBottom = [
 ];
 
 export function Footer() {
+  const { logos } = useNavConfig();
+
   return (
-    <footer className="border-t border-border bg-background mt-16 w-full">
-      <div className="container mx-auto max-w-7xl px-4 py-8">
+    <footer className="border-t border-border bg-background shrink-0 w-full">
+      <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* ===== MOBILE LAYOUT (< md) ===== */}
         <div className="md:hidden flex flex-col gap-6">
           {/* Logo + Socials on same line */}
           <div className="flex items-center justify-between">
             <Link href="/" aria-label="Ir para a página inicial">
-              <img src={logoLight} alt="PqEstudar" className="h-8 block dark:hidden" />
-              <img src={logoDark} alt="PqEstudar" className="h-8 hidden dark:block" />
+              <img
+                src={logos.light}
+                alt="PqEstudar"
+                width={120}
+                height={36}
+                className="h-8 w-auto object-contain block dark:hidden"
+              />
+              <img
+                src={logos.dark}
+                alt="PqEstudar"
+                width={120}
+                height={36}
+                className="h-8 w-auto object-contain hidden dark:block"
+              />
             </Link>
             <div className="flex items-center gap-3">
               {socialLinks.map((s) => (
@@ -93,8 +108,20 @@ export function Footer() {
           {/* Top row: logo + socials */}
           <div className="flex items-center justify-between mb-8">
             <Link href="/" aria-label="Ir para a página inicial">
-              <img src={logoLight} alt="PqEstudar" className="h-11 block dark:hidden" />
-              <img src={logoDark} alt="PqEstudar" className="h-11 hidden dark:block" />
+              <img
+                src={logos.light}
+                alt="PqEstudar"
+                width={120}
+                height={36}
+                className="h-11 w-auto object-contain block dark:hidden"
+              />
+              <img
+                src={logos.dark}
+                alt="PqEstudar"
+                width={120}
+                height={36}
+                className="h-11 w-auto object-contain hidden dark:block"
+              />
             </Link>
 
             <div className="flex items-center gap-3">

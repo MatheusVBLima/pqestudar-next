@@ -6,7 +6,6 @@ import { PageHero } from "@/components/layout/PageHero";
 import { ThumbsUp, Plus, CheckCircle, History, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -34,6 +33,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFeatureRequests, FeatureRequest } from "@/hooks/useFeatureRequests";
 import { toast } from "@/hooks/use-toast";
 import { usePageSettings } from "@/hooks/usePageSettings";
+import { useManagementMode } from "@/hooks/useManagementMode";
 import { getErrorMessage } from "@/lib/error-message";
 
 const VotacoesManagementGrid = lazy(() => import("@/legacy-pages/votacoes/VotacoesManagementGrid"));
@@ -114,7 +114,7 @@ function PublicFeatureCard({
 export default function VotacoesNext() {
   const ps = usePageSettings("/votacoes");
   const { isAdmin, loading: loadingRoles } = useUserRoles();
-  const [isManagement, setIsManagement] = useState(false);
+  const { isManagementMode } = useManagementMode();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<FeatureRequest | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FeatureRequest | null>(null);
@@ -125,7 +125,8 @@ export default function VotacoesNext() {
   const [isSaving, setIsSaving] = useState(false);
 
   const effectiveAdmin = isAdmin;
-  const includeHidden = isManagement && effectiveAdmin;
+  const isManagement = isManagementMode && effectiveAdmin;
+  const includeHidden = isManagement;
 
   const {
     features,
@@ -188,17 +189,10 @@ export default function VotacoesNext() {
         isLoading={ps.isLoading}
       />
 
-      <div className="container mx-auto px-4 pt-12 md:pt-16 pb-8 max-w-7xl">
-        {effectiveAdmin && !loadingRoles && (
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex items-center gap-2">
-              <Switch id="management-mode" checked={isManagement} onCheckedChange={setIsManagement} />
-              <Label htmlFor="management-mode" className="text-sm font-medium">
-                Modo de Gerenciamento
-              </Label>
-            </div>
-            {isManagement && (
-              <div className="flex gap-2">
+      <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-16 pb-8">
+        {effectiveAdmin && !loadingRoles && isManagement && (
+          <div className="flex gap-2 mb-4">
+            
                 <Button size="sm" onClick={() => openModal()}>
                   <Plus className="h-4 w-4 mr-1" /> Adicionar
                 </Button>
@@ -209,8 +203,7 @@ export default function VotacoesNext() {
                 >
                   <History className="h-4 w-4 mr-1" /> Histórico
                 </Button>
-              </div>
-            )}
+            
           </div>
         )}
 

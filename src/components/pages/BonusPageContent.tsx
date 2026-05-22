@@ -7,7 +7,7 @@ interface BonusPageContentProps {
 
 export function BonusPageContent({ page }: BonusPageContentProps) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex-1 flex flex-col">
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="max-w-5xl mx-auto space-y-12">
           <div className="text-center space-y-4">

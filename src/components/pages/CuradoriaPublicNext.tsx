@@ -87,7 +87,7 @@ export default function CuradoriaPublicNext() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex-1 flex flex-col bg-background">
         <main className="flex-1 container mx-auto px-4 py-12">
           <Skeleton className="h-10 w-1/3 mb-4" />
           <Skeleton className="h-6 w-2/3 mb-8" />
@@ -103,7 +103,7 @@ export default function CuradoriaPublicNext() {
 
   if (isError || !curation) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex-1 flex flex-col bg-background">
         <main className="flex-1 container mx-auto px-4 py-12 flex flex-col items-center justify-center text-center">
           <h1 className="text-4xl font-bold mb-4">Curadoria não encontrada</h1>
           <p className="text-muted-foreground mb-8">
@@ -119,7 +119,7 @@ export default function CuradoriaPublicNext() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex-1 flex flex-col bg-background">
       <main className="flex-1 container mx-auto px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

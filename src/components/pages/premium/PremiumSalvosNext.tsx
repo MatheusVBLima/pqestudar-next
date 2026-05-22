@@ -100,7 +100,7 @@ export default function PremiumSalvosNext() {
   const hasJobs = savedJobs.length > 0;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="flex-1 bg-background flex flex-col">
       <main className="flex-1">
         <PageHero
           title={ps.headerTitle}
@@ -108,7 +108,7 @@ export default function PremiumSalvosNext() {
           isLoading={ps.isLoading}
         />
 
-        <div className="w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14 space-y-10 md:space-y-12">
+        <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 space-y-10 md:space-y-12">
           <PremiumBackButton fallbackPath="/premium" fallbackLabel="Premium" />
 
           {loading ? (

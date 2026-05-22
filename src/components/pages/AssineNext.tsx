@@ -102,7 +102,7 @@ export default function AssineNext() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/95 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8">
+    <div className="flex-1 bg-gradient-to-b from-background to-background/95 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8">
       <div className="mb-8 md:mb-12">
         <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
           <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">

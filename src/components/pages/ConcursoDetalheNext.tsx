@@ -327,7 +327,7 @@ export default function ConcursoDetalheNext() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex-1 flex flex-col bg-background">
         <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
           <Skeleton className="h-8 w-32 mb-8" />
           <Skeleton className="h-12 w-3/4 mb-4" />
@@ -343,7 +343,7 @@ export default function ConcursoDetalheNext() {
 
   if (error || !oportunidade) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex-1 flex flex-col bg-background">
         <main className="flex-1 container mx-auto px-4 py-16 max-w-4xl text-center">
           <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h1 className="text-2xl font-bold mb-2">
@@ -367,7 +367,7 @@ export default function ConcursoDetalheNext() {
   const jsonLdData = generateJsonLd(oportunidade, canonicalUrl);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex-1 flex flex-col bg-background">
       <script
         type="application/ld+json"
         suppressHydrationWarning

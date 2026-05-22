@@ -61,7 +61,7 @@ export default function CourseDetailNext() {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="flex-1 bg-background">
         <div className="container mx-auto px-4 py-12 text-center">
           <h1 className="text-2xl font-bold mb-4">Curso não encontrado</h1>
           <Button onClick={() => router.push("/explorar-cursos")}>
@@ -75,7 +75,7 @@ export default function CourseDetailNext() {
   const toggleFavorite = () => setIsFavorite(!isFavorite);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex-1 bg-background">
       <div className="bg-gradient-hero py-16">
         <div className="container mx-auto px-4">
           <Button

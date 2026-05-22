@@ -214,9 +214,9 @@ export default function PrivacidadeNext() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex-1 flex flex-col">
       <PageHero
-        title={ps.headerTitle}
+        title="Política de **Privacidade**"
         description={ps.headerDescription}
         isLoading={ps.isLoading}
         badge={
@@ -227,9 +227,9 @@ export default function PrivacidadeNext() {
         }
       />
 
-      <main className="flex-1 container mx-auto px-4 py-12">
+      <main className="flex-1 w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {isLoading ? (
-          <div className="grid lg:grid-cols-[280px_1fr] gap-8 max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-[280px_1fr] gap-8">
             <aside className="hidden lg:block">
               <Skeleton className="h-64 w-full rounded-xl" />
             </aside>
@@ -240,7 +240,7 @@ export default function PrivacidadeNext() {
             </div>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-[280px_1fr] gap-8 max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-[280px_1fr] gap-8">
             <div className="lg:hidden mb-6">
               <Button
                 onClick={() => setShowMobileTOC(!showMobileTOC)}

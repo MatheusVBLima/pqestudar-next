@@ -166,7 +166,7 @@ export default function ExploreCoursesNext() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex-1 bg-background">
       <div className="bg-gradient-hero py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mx-auto max-w-4xl">

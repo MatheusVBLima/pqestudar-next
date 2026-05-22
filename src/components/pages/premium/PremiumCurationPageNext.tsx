@@ -87,7 +87,7 @@ export default function PremiumCurationPageNext() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 bg-background flex flex-col">
         <main className="flex-1 container max-w-4xl mx-auto px-4 py-8">
           <Skeleton className="h-10 w-64 mb-6" />
           <Skeleton className="h-24 mb-8" />
@@ -103,7 +103,7 @@ export default function PremiumCurationPageNext() {
 
   if (!page) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 bg-background flex flex-col">
         <main className="flex-1 container max-w-4xl mx-auto px-4 py-8">
           <div className="text-center py-12">
             <LayoutGrid className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -121,7 +121,7 @@ export default function PremiumCurationPageNext() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="flex-1 bg-background flex flex-col">
       <main className="flex-1 container max-w-4xl mx-auto px-4 py-8">
         <Link
           href="/premium"

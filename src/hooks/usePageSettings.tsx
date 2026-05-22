@@ -71,9 +71,9 @@ const ROUTE_FALLBACKS: Record<string, FallbackContent> = {
     title_tag: "Itens Salvos | PqEstudar",
     meta_description:
       "Acesse todas as ferramentas, concursos e recursos que você salvou para acompanhar depois.",
-    header_title: "Tudo que Você Salvou",
+    header_title: "Seus **Salvos** em Um Só Lugar",
     header_description:
-      "Organize e acompanhe ferramentas, concursos e outros recursos que você marcou para acessar depois.",
+      "Ferramentas e concursos que você marcou para acessar depois, sempre à mão.",
   },
   "/premium": {
     title_tag: "Premium | Oportunidades e Curadoria Exclusiva | PqEstudar",
@@ -118,7 +118,7 @@ const ROUTE_FALLBACKS: Record<string, FallbackContent> = {
     title_tag: "Política de Privacidade e LGPD | PqEstudar",
     meta_description:
       "Entenda como o PqEstudar coleta, usa e protege seus dados conforme a LGPD. Transparência, segurança e controle para você.",
-    header_title: "Política de Privacidade",
+    header_title: "Política de **Privacidade**",
     header_description:
       "Saiba quais dados coletamos, por que coletamos e como protegemos suas informações conforme a LGPD.",
   },
@@ -126,7 +126,7 @@ const ROUTE_FALLBACKS: Record<string, FallbackContent> = {
     title_tag: "Termos de Uso | PqEstudar",
     meta_description:
       "Termos de uso do PqEstudar. Conheça as regras, responsabilidades e condições para utilizar a plataforma e seus recursos.",
-    header_title: "Termos de Uso",
+    header_title: "Termos de **Uso**",
     header_description:
       "Condições que regulam o uso dos serviços, recursos e conteúdos do PqEstudar.",
   },

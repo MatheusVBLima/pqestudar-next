@@ -97,9 +97,9 @@ export default function TermosNext() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex-1 flex flex-col">
       <PageHero
-        title={ps.headerTitle}
+        title="Termos de **Uso**"
         description={ps.headerDescription}
         isLoading={ps.isLoading}
         badge={
@@ -110,7 +110,7 @@ export default function TermosNext() {
         }
       />
 
-      <main className="flex-1 container mx-auto px-6 py-10">
+      <main className="flex-1 w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {isLoading ? (
           <div className="grid lg:grid-cols-[300px,1fr] gap-8 lg:gap-12">
             <aside className="hidden lg:block">

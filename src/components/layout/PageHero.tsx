@@ -16,9 +16,9 @@ interface PageHeroProps {
 
 export function PageHero({ title, description, badge, children, isLoading }: PageHeroProps) {
   return (
-    <section className="relative bg-gradient-to-br from-primary/10 via-background to-background border-b overflow-hidden">
+    <section className="relative bg-gradient-to-br from-primary/10 via-background to-background border-b overflow-hidden px-4 sm:px-6 lg:px-8">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(var(--primary)/0.1),transparent_50%)]" />
-      <div className="container mx-auto px-6 py-16 md:py-20 relative">
+      <div className="w-full max-w-[1440px] mx-auto py-16 md:py-20 relative">
         {isLoading ? (
           <div>
             {badge}

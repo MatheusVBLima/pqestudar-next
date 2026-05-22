@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Suspense, lazy, useState, useEffect, useMemo } from "react";
+import { Suspense, lazy, useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHero } from "@/components/layout/PageHero";
 import { useManagementMode } from "@/hooks/useManagementMode";
-import { X, Sparkles, Brain, Shield, GraduationCap, Wrench, Zap, Plus, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { X, Sparkles, Brain, Shield, GraduationCap, Wrench, Zap, Plus, ChevronLeft, ChevronRight, Star, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -43,6 +45,7 @@ import {
 "@/components/ui/pagination";
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { usePageSettings } from "@/hooks/usePageSettings";
+import { cn } from "@/lib/utils";
 
 const FerramentasManagementGrid = lazy(() => import("@/legacy-pages/ferramentas/FerramentasManagementGrid"));
 
@@ -282,6 +285,144 @@ function PublicToolCard({ tool }: {tool: Tool;}) {
   );
 }
 
+function ToolSearchItem({ tool, onSelect }: { tool: Tool; onSelect: () => void }) {
+  const Icon = tool.tags[0] ? CATEGORY_ICONS[tool.tags[0]] || Sparkles : Sparkles;
+  const detailHref = tool.slug ? `/ferramentas/${tool.slug}` : "/ferramentas";
+
+  return (
+    <Link
+      href={detailHref}
+      onClick={onSelect}
+      className="group flex gap-3 rounded-lg p-2.5 transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
+      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-accent flex items-center justify-center">
+        {tool.icon_url ? (
+          <img
+            src={tool.icon_url}
+            alt={`Logo de ${tool.name}`}
+            className="h-full w-full object-contain"
+            referrerPolicy="no-referrer"
+            loading="lazy"
+          />
+        ) : (
+          <Icon className="h-5 w-5 text-primary/50" aria-hidden="true" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex flex-wrap items-center gap-1.5">
+          {tool.tags.slice(0, 2).map((tag) => (
+            <Badge key={tag} variant="outline" className="px-1.5 py-0 text-[10px]">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+        <h4 className="line-clamp-2 text-sm font-semibold leading-snug transition-colors group-hover:text-primary">
+          {tool.name}
+        </h4>
+        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          {tool.description}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+function ToolSearchOverlay({
+  open,
+  onOpenChange,
+  tools,
+  searchTerm,
+  onSearchChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  tools: Tool[];
+  searchTerm: string;
+  onSearchChange: (term: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 50);
+    return () => window.clearTimeout(timer);
+  }, [open]);
+
+  const highlightedTools = useMemo(() => {
+    return [...tools]
+      .sort((a, b) => Number(isFeaturedActive(b)) - Number(isFeaturedActive(a)))
+      .slice(0, 6);
+  }, [tools]);
+
+  const results = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return [];
+
+    return tools
+      .filter((tool) => {
+        const searchable = [
+          tool.name,
+          tool.description,
+          ...(tool.tags ?? []),
+        ].join(" ").toLowerCase();
+
+        return searchable.includes(term);
+      })
+      .slice(0, 12);
+  }, [tools, searchTerm]);
+
+  const hasQuery = searchTerm.trim().length > 0;
+  const list = hasQuery ? results : highlightedTools;
+
+  return (
+    <Dialog modal={false} open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="p-0 gap-0 max-w-2xl top-[10%] translate-y-0 overflow-hidden [&>button]:hidden">
+        <DialogTitle className="sr-only">Buscar ferramentas</DialogTitle>
+        <DialogDescription className="sr-only">
+          Pesquise por ferramentas educacionais disponíveis.
+        </DialogDescription>
+
+        <div className="flex items-center gap-2 border-b px-4 py-3">
+          <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
+          <Input
+            ref={inputRef}
+            value={searchTerm}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Buscar ferramentas..."
+            className="h-10 border-0 px-0 text-base shadow-none focus-visible:ring-0"
+          />
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            aria-label="Fechar busca"
+            className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="max-h-[60vh] overflow-y-auto p-3">
+          <div className="px-2 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {hasQuery ? `Resultados (${results.length})` : "Em destaque"}
+          </div>
+
+          {list.length === 0 ? (
+            <p className="px-2 py-8 text-center text-sm text-muted-foreground">
+              Nenhuma ferramenta encontrada.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {list.map((tool) => (
+                <ToolSearchItem key={tool.id} tool={tool} onSelect={() => onOpenChange(false)} />
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Ferramentas() {
   const router = useRouter();
   const pathname = usePathname() ?? "/ferramentas";
@@ -327,6 +468,8 @@ export default function Ferramentas() {
   const [deleteTool, setDeleteTool] = useState<Tool | null>(null);
   const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
   const [draftTools, setDraftTools] = useState<Tool[] | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch tools from Supabase with pagination
   const toolsOptions: UseToolsOptions = {
@@ -347,6 +490,13 @@ export default function Ferramentas() {
     toggleVisible,
     reorderTools
   } = useTools(toolsOptions);
+
+  const { tools: searchTools } = useTools({
+    includeInvisible: false,
+    page: 1,
+    pageSize: 100,
+    tags: []
+  });
 
   // Keep a local draft only while in management mode.
   // This avoids duplicating server state in public mode.
@@ -444,7 +594,21 @@ export default function Ferramentas() {
   };
 
   const handleClearAll = () => {
+    const params = new URLSearchParams(window.location.search);
+    params.delete("page");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+    setCurrentPage(1);
     setSelectedTags([]);
+  };
+
+  const handleSelectSingleTag = (tag: string) => {
+    const params = new URLSearchParams(window.location.search);
+    params.delete("page");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+    setCurrentPage(1);
+    setSelectedTags([tag]);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -589,16 +753,59 @@ export default function Ferramentas() {
 
           {/* Filtros (modo público) */}
           {!isManagementMode && showFilters &&
-          <section className="pb-12 px-4 sm:px-6 lg:px-8">
+          <section className="px-4 sm:px-6 lg:px-8 py-10 md:py-14 pb-8">
               <div className="w-full max-w-[1440px] mx-auto">
                 <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}>
 
-                  <h2 className="text-2xl font-semibold text-foreground mb-6 my-[30px]">
-                    Categorias
-                  </h2>
+                  <div className="flex items-center gap-3">
+                    <nav
+                      aria-label="Filtrar por categoria"
+                      className="min-w-0 flex-1 -mx-1 overflow-x-auto scrollbar-none overscroll-x-contain"
+                    >
+                      <ul className="flex items-center gap-1.5 px-1 whitespace-nowrap">
+                        {[{ value: "all", label: "Todas" }, ...CATEGORIES.map((category) => ({ value: category, label: category }))].map((category) => {
+                          const active =
+                            category.value === "all"
+                              ? selectedTags.length === 0
+                              : selectedTags.length === 1 && selectedTags[0] === category.value;
+
+                          return (
+                            <li key={category.value} className="shrink-0">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  category.value === "all"
+                                    ? handleClearAll()
+                                    : handleSelectSingleTag(category.value)
+                                }
+                                aria-pressed={active}
+                                className={cn(
+                                  "inline-flex items-center rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
+                                  active
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-background text-foreground border-border hover:bg-accent hover:text-accent-foreground"
+                                )}
+                              >
+                                {category.label}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </nav>
+                    <button
+                      type="button"
+                      onClick={() => setSearchOpen(true)}
+                      aria-label="Abrir busca de ferramentas"
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <Search className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                  <div className="hidden">
 
                   {/* Contador de Resultados com Paginação */}
                   {showCount && total > 0 &&
@@ -711,6 +918,7 @@ export default function Ferramentas() {
                       </Button>
                     </motion.div>
                 }
+                  </div>
                 </motion.div>
               </div>
             </section>
@@ -881,6 +1089,17 @@ export default function Ferramentas() {
         onSave={handleSaveTool}
         tool={editingTool}
         availableTags={CATEGORIES} />
+
+      <ToolSearchOverlay
+        open={searchOpen}
+        onOpenChange={(open) => {
+          setSearchOpen(open);
+          if (!open) setSearchTerm("");
+        }}
+        tools={searchTools.length > 0 ? searchTools : tools}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+      />
 
 
       <AlertDialog open={!!deleteTool} onOpenChange={() => setDeleteTool(null)}>

@@ -52,7 +52,7 @@ export default function PremiumAtualizacoesNext() {
         description={ps.headerDescription || "Tudo que entrou de novo na curadoria premium, organizado por semana."}
       />
 
-      <main className="container max-w-4xl mx-auto px-4 py-12">
+      <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-6">
           <PremiumBackButton fallbackPath="/premium" fallbackLabel="Premium" />
         </div>

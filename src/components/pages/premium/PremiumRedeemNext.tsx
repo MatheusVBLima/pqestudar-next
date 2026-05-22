@@ -73,7 +73,7 @@ export default function PremiumRedeemNext() {
 
   if (!authLoading && user && isActive()) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 bg-background flex flex-col">
         <main className="flex-1 container max-w-lg mx-auto px-4 py-12">
           <Card>
             <CardHeader className="text-center">
@@ -94,7 +94,7 @@ export default function PremiumRedeemNext() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex-1 bg-background flex flex-col">
         <main className="flex-1 container max-w-lg mx-auto px-4 py-12">
           <Card>
             <CardHeader className="text-center">
@@ -112,7 +112,7 @@ export default function PremiumRedeemNext() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="flex-1 bg-background flex flex-col">
       <main className="flex-1 container max-w-lg mx-auto px-4 py-12">
         <Card>
           <CardHeader className="text-center">
