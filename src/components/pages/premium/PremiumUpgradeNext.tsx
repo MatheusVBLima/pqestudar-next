@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Crown, Lock, CheckCircle, ArrowRight } from "lucide-react";
@@ -14,7 +14,7 @@ export default function PremiumUpgradeNext() {
   const benefits = [
     "Acesso a cursos gratuitos exclusivos",
     "Vagas de emprego selecionadas",
-    "Atualizações semanais com novidades",
+    "Benefícios exclusivos para assinantes",
     "Curadorias especiais de conteúdo",
     "Salvar itens para ver depois",
   ];
@@ -37,17 +37,23 @@ export default function PremiumUpgradeNext() {
         </p>
       </div>
 
-      <Card className="mb-8">
-        <CardHeader className="text-center pb-2">
-          <Crown className="h-10 w-10 text-primary mx-auto mb-2" />
-          <CardTitle>Benefícios Premium</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-3">
+      <Card className="mb-8 overflow-hidden">
+        <CardContent className="grid gap-8 p-6 md:grid-cols-[0.9fr_1.1fr] md:p-8">
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Crown className="h-8 w-8" />
+            </div>
+            <CardTitle className="text-2xl">Benefícios Premium</CardTitle>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Tudo em um só lugar para estudar melhor, acompanhar oportunidades e aproveitar vantagens exclusivas.
+            </p>
+          </div>
+
+          <ul className="grid gap-3 sm:grid-cols-2 md:grid-cols-1">
             {benefits.map((benefit, index) => (
-              <li key={index} className="flex items-center gap-3">
-                <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                <span>{benefit}</span>
+              <li key={index} className="flex items-start gap-3 rounded-xl border border-border bg-background/60 p-3">
+                <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
+                <span className="text-sm leading-relaxed">{benefit}</span>
               </li>
             ))}
           </ul>

@@ -1,6 +1,7 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { PREMIUM_BENEFIT_TAG } from "@/lib/premium-benefits";
 
 export const PREMIUM_TAG = "premium";
 
@@ -22,6 +23,7 @@ async function fetchPremiumCourses() {
     .select(PREMIUM_ITEM_COLUMNS)
     .eq("item_type", "course")
     .eq("status", "published")
+    .not("tags", "cs", `{${PREMIUM_BENEFIT_TAG}}`)
     .order("sort_order", { ascending: true });
   return data ?? [];
 }

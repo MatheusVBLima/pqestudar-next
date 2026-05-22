@@ -12,7 +12,9 @@ import { usePageSettings } from "@/hooks/usePageSettings";
 import { PremiumRail } from "@/components/premium/PremiumRail";
 import { CourseRailCard } from "@/components/premium/cards/CourseRailCard";
 import { JobRailCard } from "@/components/premium/cards/JobRailCard";
+import { BenefitRailCard } from "@/components/premium/cards/BenefitRailCard";
 import { PremiumBackButton } from "@/components/premium/PremiumBackButton";
+import { isPremiumBenefit } from "@/lib/premium-benefits";
 
 interface SavedItem {
   id: string;
@@ -86,7 +88,12 @@ export default function PremiumSalvosNext() {
   };
 
   const savedCourses = savedItems
-    .filter((s) => itemDetails.get(s.item_id)?.item_type === "course")
+    .filter((s) => itemDetails.get(s.item_id)?.item_type === "course" && !isPremiumBenefit(itemDetails.get(s.item_id)?.tags))
+    .map((s) => itemDetails.get(s.item_id))
+    .filter(Boolean) as PremiumItemDetails[];
+
+  const savedBenefits = savedItems
+    .filter((s) => isPremiumBenefit(itemDetails.get(s.item_id)?.tags))
     .map((s) => itemDetails.get(s.item_id))
     .filter(Boolean) as PremiumItemDetails[];
 
@@ -98,6 +105,7 @@ export default function PremiumSalvosNext() {
   const hasAnySaved = !loading && savedItems.length > 0;
   const hasCourses = savedCourses.length > 0;
   const hasJobs = savedJobs.length > 0;
+  const hasBenefits = savedBenefits.length > 0;
 
   return (
     <div className="flex-1 bg-background flex flex-col">
@@ -139,6 +147,9 @@ export default function PremiumSalvosNext() {
                 <Button asChild variant="outline">
                   <Link href="/premium/vagas">Ver vagas</Link>
                 </Button>
+                <Button asChild variant="outline">
+                  <Link href="/premium/beneficios">Ver benefícios</Link>
+                </Button>
               </div>
             </div>
           ) : (
@@ -163,6 +174,31 @@ export default function PremiumSalvosNext() {
                       isSaved={isSaved(c.id)}
                       isToggling={isToggling(c.id)}
                       onToggleSave={() => handleToggleSave(c.id)}
+                    />
+                  ))}
+                </PremiumRail>
+              )}
+
+              {hasBenefits && (
+                <PremiumRail
+                  title="Benefícios Salvos"
+                  subtitle="Sua seleção de benefícios salvos"
+                  viewMoreHref="/premium/beneficios"
+                  viewMoreLabel="Explorar benefícios"
+                  isLoading={false}
+                  isEmpty={false}
+                >
+                  {savedBenefits.map((b) => (
+                    <BenefitRailCard
+                      key={b.id}
+                      id={b.id}
+                      title={b.title}
+                      slug={b.slug}
+                      description={b.description_short}
+                      tags={b.tags}
+                      isSaved={isSaved(b.id)}
+                      isToggling={isToggling(b.id)}
+                      onToggleSave={() => handleToggleSave(b.id)}
                     />
                   ))}
                 </PremiumRail>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-export type PremiumLastViewedType = 'course' | 'job' | 'update' | 'curation';
+export type PremiumLastViewedType = 'course' | 'job' | 'benefit' | 'update' | 'curation';
 
 export interface PremiumLastViewed {
   type: PremiumLastViewedType;

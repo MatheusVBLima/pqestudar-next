@@ -99,13 +99,13 @@ const ROUTE_FALLBACKS: Record<string, FallbackContent> = {
     header_description:
       "Uma seleção criteriosa de cursos gratuitos e pagos para você estudar o que realmente importa.",
   },
-  "/premium/atualizacoes": {
-    title_tag: "Atualizações Semanais - PqEstudar Premium",
+  "/premium/beneficios": {
+    title_tag: "Benefícios Premium - PqEstudar",
     meta_description:
-      "Acompanhe o que entrou de novo na Área Premium toda semana: vagas, cursos, ferramentas e oportunidades.",
-    header_title: "Atualizações **Semanais** da Área Premium",
+      "Acesse benefícios, vantagens, cupons e recursos selecionados para assinantes premium do PqEstudar.",
+    header_title: "Benefícios **Premium** para Aproveitar Mais",
     header_description:
-      "Tudo que entrou de novo na curadoria premium, organizado por semana para você não perder nenhuma oportunidade.",
+      "Cupons, acessos, vantagens e recursos selecionados para assinantes.",
   },
   "/premium/salvos": {
     title_tag: "Meus Salvos - PqEstudar Premium",
@@ -170,7 +170,7 @@ const MANAGED_ROUTES = [
   "/premium",
   "/premium/vagas",
   "/premium/cursos",
-  "/premium/atualizacoes",
+  "/premium/beneficios",
   "/premium/salvos",
   "/privacidade",
   "/termos",

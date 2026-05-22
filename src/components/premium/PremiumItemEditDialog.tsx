@@ -35,6 +35,9 @@ interface Props {
   itemId?: string | null;
   defaultType?: PremiumItemType;
   lockType?: boolean;
+  hiddenTags?: string[];
+  itemKindLabel?: string;
+  detailBasePath?: string;
   onSaved?: (item: PremiumItemSaved) => void;
 }
 
@@ -67,12 +70,17 @@ const emptyForm = (type: PremiumItemType): FormState => ({
 const slugify = (s: string) =>
   s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
+const EMPTY_HIDDEN_TAGS: string[] = [];
+
 export function PremiumItemEditDialog({
   open,
   onOpenChange,
   itemId,
   defaultType = 'course',
   lockType,
+  hiddenTags,
+  itemKindLabel,
+  detailBasePath,
   onSaved,
 }: Props) {
   const { user } = useAuth();
@@ -81,6 +89,7 @@ export function PremiumItemEditDialog({
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState('card');
   const [form, setForm] = useState<FormState>(emptyForm(defaultType));
+  const hiddenTagList = hiddenTags ?? EMPTY_HIDDEN_TAGS;
 
   useEffect(() => {
     if (!open) return;
@@ -106,12 +115,12 @@ export function PremiumItemEditDialog({
         description_full: data.description_full || '',
         logo_url: data.logo_url || '',
         external_url: data.external_url || '',
-        tags: (data.tags || []).join(', '),
+        tags: (data.tags || []).filter((tag: string) => !hiddenTagList.includes(tag)).join(', '),
         status: data.status as 'draft' | 'published',
         sort_order: data.sort_order || 0,
       });
     })();
-  }, [open, itemId, defaultType, onOpenChange]);
+  }, [open, itemId, defaultType, hiddenTagList, onOpenChange]);
 
   const update = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -132,7 +141,10 @@ export function PremiumItemEditDialog({
     }
     setSaving(true);
     try {
-      const tags = form.tags.split(',').map((t) => t.trim()).filter(Boolean);
+      const tags = Array.from(new Set([
+        ...form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+        ...hiddenTagList,
+      ]));
       const payload = {
         item_type: form.item_type,
         title: form.title.trim(),
@@ -193,13 +205,15 @@ export function PremiumItemEditDialog({
   };
 
   const isJob = form.item_type === 'job';
+  const newItemLabel = itemKindLabel || (isJob ? 'Nova vaga' : form.item_type === 'course' ? 'Novo curso' : 'Novo item premium');
+  const itemPath = detailBasePath || `/premium/${form.item_type === 'course' ? 'cursos' : 'vagas'}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Editar item premium' : isJob ? 'Nova vaga' : form.item_type === 'course' ? 'Novo curso' : 'Novo item premium'}
+            {isEditing ? 'Editar item premium' : newItemLabel}
           </DialogTitle>
           <DialogDescription>
             Edite os campos do card e da página interna sem sair desta rota.
@@ -277,7 +291,7 @@ export function PremiumItemEditDialog({
                 <Label htmlFor="slug">Slug *</Label>
                 <Input id="slug" value={form.slug} onChange={(e) => update('slug', e.target.value)} />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  URL: /premium/{form.item_type === 'course' ? 'cursos' : 'vagas'}/{form.slug || '...'}
+                  URL: {itemPath}/{form.slug || '...'}
                 </p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">

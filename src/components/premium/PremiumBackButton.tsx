@@ -18,6 +18,7 @@ function labelFromPath(path: string): string {
     premium: 'premium',
     cursos: 'cursos',
     vagas: 'vagas',
+    beneficios: 'benefícios',
     atualizacoes: 'atualizações',
     salvos: 'salvos',
   };

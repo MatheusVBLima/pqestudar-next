@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, BarChart3, Wrench, BookOpen, MousePointerClick, Search, FileText,
-  Crown, Package, CalendarDays, Users, Ticket, ChevronDown, Settings2,
+  Crown, Users, Ticket, ChevronDown, Settings2,
   Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Moon, Sun, Sparkles, Share2,
 } from 'lucide-react';
 import {
@@ -38,8 +38,6 @@ const concursosItems = [
 ];
 
 const premiumItems = [
-  { title: 'Itens Premium', href: '/admin/premium/itens', icon: Package },
-  { title: 'Atualizações Semanais', href: '/admin/premium/atualizacoes', icon: CalendarDays },
   { title: 'Usuários & Assinaturas', href: '/admin/premium/usuarios', icon: Users },
   { title: 'Tokens de Resgate', href: '/admin/premium/tokens', icon: Ticket },
 ];

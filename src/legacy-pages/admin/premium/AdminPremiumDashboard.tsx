@@ -2,31 +2,10 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Crown, BookOpen, Briefcase, Calendar, LayoutGrid, Users, Ticket, ArrowRight } from 'lucide-react';
+import { Crown, Users, Ticket, ArrowRight } from 'lucide-react';
 
 const AdminPremiumDashboard = () => {
   const menuItems = [
-    {
-      title: 'Itens Premium',
-      description: 'Gerenciar cursos e vagas',
-      icon: BookOpen,
-      href: '/admin/premium/itens',
-      count: null,
-    },
-    {
-      title: 'Atualizações Semanais',
-      description: 'Gerenciar atualizações',
-      icon: Calendar,
-      href: '/admin/premium/atualizacoes',
-      count: null,
-    },
-    {
-      title: 'Páginas de Curadoria',
-      description: 'Gerenciar curadorias',
-      icon: LayoutGrid,
-      href: '/admin/premium/paginas',
-      count: null,
-    },
     {
       title: 'Usuários & Assinaturas',
       description: 'Gerenciar assinantes',

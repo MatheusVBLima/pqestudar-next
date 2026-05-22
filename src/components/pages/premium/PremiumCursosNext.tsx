@@ -12,6 +12,7 @@ import { usePremiumSavedItems } from "@/hooks/usePremiumSavedItems";
 import { PageHero } from "@/components/layout/PageHero";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import { cn } from "@/lib/utils";
+import { isPremiumBenefit } from "@/lib/premium-benefits";
 import { useManagementMode } from "@/hooks/useManagementMode";
 import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { ManageableCard } from "@/components/management/ManageableCard";
@@ -73,7 +74,7 @@ export default function PremiumCursosNext() {
       if (!isManagementMode) query = query.eq("status", "published");
       const { data, error } = await query;
       if (error) throw error;
-      setCourses((data || []) as PremiumItem[]);
+      setCourses(((data || []) as PremiumItem[]).filter((item) => !isPremiumBenefit(item.tags)));
     } catch (err) {
       console.error("Error fetching courses:", err);
     } finally {

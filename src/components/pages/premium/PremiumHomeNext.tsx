@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Briefcase, Calendar, Bookmark, ArrowRight } from "lucide-react";
+import { BookOpen, Briefcase, Gift, Bookmark, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { usePageSettings } from "@/hooks/usePageSettings";
@@ -14,12 +14,13 @@ import { ContinueCard } from "@/components/premium/ContinueCard";
 import { PremiumRail } from "@/components/premium/PremiumRail";
 import { CourseRailCard } from "@/components/premium/cards/CourseRailCard";
 import { JobRailCard } from "@/components/premium/cards/JobRailCard";
-import { UpdateRailCard } from "@/components/premium/cards/UpdateRailCard";
+import { BenefitRailCard } from "@/components/premium/cards/BenefitRailCard";
 import { useManagementMode } from "@/hooks/useManagementMode";
 import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { ManageableCard } from "@/components/management/ManageableCard";
 import { usePremiumItemAdminActions } from "@/hooks/usePremiumItemAdminActions";
 import { PremiumItemEditDialog, type PremiumItemSaved } from "@/components/premium/PremiumItemEditDialog";
+import { PREMIUM_BENEFIT_TAG, isPremiumBenefit } from "@/lib/premium-benefits";
 
 interface PremiumItem {
   id: string;
@@ -33,19 +34,10 @@ interface PremiumItem {
   status?: string;
 }
 
-interface WeeklyUpdate {
-  id: string;
-  title: string;
-  slug: string;
-  intro: string | null;
-  highlight: string | null;
-  published_at: string | null;
-}
-
 const quickAccess = [
   { title: "Cursos", icon: BookOpen, href: "/premium/cursos", color: "text-blue-500" },
   { title: "Vagas", icon: Briefcase, href: "/premium/vagas", color: "text-green-500" },
-  { title: "Atualizações", icon: Calendar, href: "/premium/atualizacoes", color: "text-purple-500" },
+  { title: "Benefícios", icon: Gift, href: "/premium/beneficios", color: "text-purple-500" },
   { title: "Salvos", icon: Bookmark, href: "/premium/salvos", color: "text-orange-500" },
 ];
 
@@ -59,8 +51,8 @@ export default function PremiumHomeNext() {
 
   const [courses, setCourses] = useState<PremiumItem[]>([]);
   const [jobs, setJobs] = useState<PremiumItem[]>([]);
-  const [updates, setUpdates] = useState<WeeklyUpdate[]>([]);
-  const [loading, setLoading] = useState({ courses: true, jobs: true, updates: true });
+  const [benefits, setBenefits] = useState<PremiumItem[]>([]);
+  const [loading, setLoading] = useState({ courses: true, jobs: true, benefits: true });
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -84,7 +76,7 @@ export default function PremiumHomeNext() {
       item_type: item.item_type,
       status: item.status,
     };
-    const setter = item.item_type === "course" ? setCourses : setJobs;
+    const setter = isPremiumBenefit(item.tags) ? setBenefits : item.item_type === "course" ? setCourses : setJobs;
     setter((prev) => {
       const idx = prev.findIndex((p) => p.id === item.id);
       if (idx >= 0) {
@@ -107,7 +99,7 @@ export default function PremiumHomeNext() {
         .limit(10);
       if (!isManagementMode) q = q.eq("status", "published");
       const { data } = await q;
-      setCourses((data ?? []) as PremiumItem[]);
+      setCourses(((data ?? []) as PremiumItem[]).filter((item) => !isPremiumBenefit(item.tags)));
       setLoading((s) => ({ ...s, courses: false }));
     })();
 
@@ -125,14 +117,17 @@ export default function PremiumHomeNext() {
     })();
 
     (async () => {
-      const { data } = await supabase
-        .from("weekly_updates")
-        .select("id, title, slug, intro, highlight, published_at")
-        .eq("status", "published")
-        .order("published_at", { ascending: false })
-        .limit(8);
-      setUpdates((data ?? []) as WeeklyUpdate[]);
-      setLoading((s) => ({ ...s, updates: false }));
+      let q = supabase
+        .from("premium_items")
+        .select(baseSelect)
+        .eq("item_type", "course")
+        .contains("tags", [PREMIUM_BENEFIT_TAG])
+        .order("sort_order", { ascending: true })
+        .limit(10);
+      if (!isManagementMode) q = q.eq("status", "published");
+      const { data } = await q;
+      setBenefits((data ?? []) as PremiumItem[]);
+      setLoading((s) => ({ ...s, benefits: false }));
     })();
   }, [isManagementMode]);
 
@@ -147,6 +142,16 @@ export default function PremiumHomeNext() {
     if (!ok) return;
     const setter = kind === "course" ? setCourses : setJobs;
     setter((prev) => prev.filter((i) => i.id !== item.id));
+  };
+  const handleToggleBenefitPublish = async (item: PremiumItem) => {
+    const newStatus = await togglePublish({ id: item.id, title: item.title, status: item.status });
+    if (!newStatus) return;
+    setBenefits((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: newStatus } : i)));
+  };
+  const handleBenefitDelete = async (item: PremiumItem) => {
+    const ok = await remove({ id: item.id, title: item.title });
+    if (!ok) return;
+    setBenefits((prev) => prev.filter((i) => i.id !== item.id));
   };
 
   return (
@@ -299,31 +304,43 @@ export default function PremiumHomeNext() {
         </PremiumRail>
 
         <PremiumRail
-          title="Atualizações da semana"
-          subtitle="O que entrou de novo na curadoria premium"
-          viewMoreHref="/premium/atualizacoes"
-          isLoading={loading.updates}
-          isEmpty={!loading.updates && updates.length === 0}
+          title="Benefícios em destaque"
+          subtitle="Vantagens selecionadas para assinantes"
+          viewMoreHref="/premium/beneficios"
+          isLoading={loading.benefits}
+          isEmpty={!loading.benefits && benefits.length === 0}
         >
-          {updates.map((u) => (
-            <UpdateRailCard
-              key={u.id}
-              id={u.id}
-              title={u.title}
-              slug={u.slug}
-              intro={u.intro}
-              highlight={u.highlight}
-              publishedAt={u.published_at}
-              onOpen={() =>
-                recordView({
-                  type: "update",
-                  id: u.id,
-                  title: u.title,
-                  slug: u.slug,
-                  href: `/premium/atualizacoes/${u.slug}`,
-                })
-              }
-            />
+          {benefits.map((b) => (
+            <ManageableCard
+              key={b.id}
+              id={b.id}
+              onEdit={() => openEdit(b.id)}
+              viewHref={`/premium/beneficios/${b.slug}`}
+              isPublished={b.status === "published"}
+              onTogglePublish={() => handleToggleBenefitPublish(b)}
+              onDelete={() => handleBenefitDelete(b)}
+            >
+              <BenefitRailCard
+                id={b.id}
+                title={b.title}
+                slug={b.slug}
+                description={b.description_short}
+                tags={b.tags ?? []}
+                isSaved={isSaved(b.id)}
+                isToggling={isToggling(b.id)}
+                onToggleSave={() => toggleSave(b.id, { title: b.title, slug: b.slug })}
+                onOpen={() =>
+                  recordView({
+                    type: "benefit",
+                    id: b.id,
+                    title: b.title,
+                    slug: b.slug,
+                    href: `/premium/beneficios/${b.slug}`,
+                    externalUrl: b.external_url ?? undefined,
+                  })
+                }
+              />
+            </ManageableCard>
           ))}
         </PremiumRail>
       </main>

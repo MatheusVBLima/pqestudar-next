@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Briefcase, Calendar, Sparkles, PlayCircle } from 'lucide-react';
+import { ArrowRight, BookOpen, Briefcase, Gift, Sparkles, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { PremiumLastViewed } from '@/hooks/usePremiumLastViewed';
@@ -9,7 +9,8 @@ import type { PremiumLastViewed } from '@/hooks/usePremiumLastViewed';
 const typeMeta = {
   course: { label: 'Curso', icon: BookOpen },
   job: { label: 'Vaga', icon: Briefcase },
-  update: { label: 'Atualização', icon: Calendar },
+  benefit: { label: 'Benefício', icon: Gift },
+  update: { label: 'Benefício', icon: Gift },
   curation: { label: 'Curadoria', icon: Sparkles },
 } as const;
 
@@ -27,7 +28,7 @@ export function ContinueCard({ item }: { item: PremiumLastViewed | null }) {
           Sua jornada premium começa agora
         </h3>
         <p className="text-sm text-muted-foreground mb-5">
-          Explore cursos, vagas e atualizações curadas para acelerar seus estudos.
+          Explore cursos, vagas e benefícios curados para acelerar seus estudos.
         </p>
         <div className="mt-auto flex flex-col gap-2">
           <Button asChild size="sm">
@@ -37,7 +38,7 @@ export function ContinueCard({ item }: { item: PremiumLastViewed | null }) {
             </Link>
           </Button>
           <Button asChild size="sm" variant="outline">
-            <Link href="/premium/atualizacoes">Explorar novidades</Link>
+            <Link href="/premium/beneficios">Explorar benefícios</Link>
           </Button>
         </div>
       </div>
@@ -50,7 +51,7 @@ export function ContinueCard({ item }: { item: PremiumLastViewed | null }) {
   const continueHref =
     item.href ??
     (item.type === 'update' && item.slug
-      ? `/premium/atualizacoes/${item.slug}`
+      ? `/premium/beneficios/${item.slug}`
       : undefined);
 
   return (
