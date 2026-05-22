@@ -1,0 +1,64 @@
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://26.92.162.141:3000
+- Environments: .env.local
+✓ Ready in 643ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+Creating turbopack project {
+  dir: 'C:\\Matheus\\Mdiasofc\\Projetos\\pqestudar-next',
+  testMode: true
+}
+- Experiments (use with caution):
+  · staleTimes
+
+○ Compiling / ...
+ GET / 200 in 7.8s (next.js: 5.4s, proxy.ts: 210ms, application-code: 2.1s)
+ GET / 200 in 1550ms (next.js: 70ms, proxy.ts: 219ms, application-code: 1262ms)
+ GET /[object%20Object] 404 in 1870ms (next.js: 1722ms, proxy.ts: 25ms, application-code: 123ms)
+ GET /login 200 in 1524ms (next.js: 1438ms, proxy.ts: 14ms, application-code: 72ms)
+ GET /[object%20Object] 404 in 205ms (next.js: 36ms, proxy.ts: 21ms, application-code: 148ms)
+ GET /?code=4627e45b-7de0-4f5d-8738-7ddff39bfa34 200 in 1373ms (next.js: 37ms, proxy.ts: 20ms, application-code: 1316ms)
+○ Compiling /admin ...
+ GET /admin 200 in 7.0s (next.js: 5.5s, proxy.ts: 20ms, application-code: 1423ms)
+ GET /premium 200 in 3.6s (next.js: 2.9s, proxy.ts: 17ms, application-code: 650ms)
+ GET /premium/upgrade 200 in 1521ms (next.js: 1279ms, proxy.ts: 20ms, application-code: 221ms)
+ GET /premium/upgrade 200 in 104ms (next.js: 14ms, proxy.ts: 19ms, application-code: 71ms)
+ GET /admin/premium/usuarios 200 in 1404ms (next.js: 1299ms, proxy.ts: 16ms, application-code: 89ms)
+ GET /admin 200 in 252ms (next.js: 28ms, proxy.ts: 33ms, application-code: 191ms)
+ GET /admin/premium 200 in 1417ms (next.js: 1342ms, proxy.ts: 11ms, application-code: 64ms)
+ GET /[object%20Object] 404 in 132ms (next.js: 17ms, proxy.ts: 13ms, application-code: 102ms)
+ GET /premium 200 in 682ms (next.js: 9ms, proxy.ts: 11ms, application-code: 662ms)
+ GET /premium/upgrade 200 in 150ms (next.js: 15ms, proxy.ts: 26ms, application-code: 109ms)
+ GET / 200 in 3.8s (next.js: 11ms, proxy.ts: 17ms, application-code: 3.7s)
+ GET /admin 200 in 1679ms (next.js: 14ms, proxy.ts: 17ms, application-code: 1648ms)
+ GET /admin/insights/guias 200 in 2.5s (next.js: 2.5s, proxy.ts: 15ms, application-code: 62ms)
+ GET /admin 200 in 82ms (next.js: 13ms, proxy.ts: 12ms, application-code: 56ms)
+○ Compiling /admin/fluxo-guias ...
+ GET /admin/fluxo-guias 200 in 3.4s (next.js: 3.3s, proxy.ts: 32ms, application-code: 154ms)
+ GET /admin/afiliados 200 in 1346ms (next.js: 1260ms, proxy.ts: 11ms, application-code: 74ms)
+ GET /admin/[object%20Object] 404 in 502ms (next.js: 51ms, proxy.ts: 31ms, application-code: 420ms)
+ GET /[object%20Object] 404 in 493ms (next.js: 268ms, proxy.ts: 27ms, application-code: 198ms)
+ GET / 200 in 1813ms (next.js: 12ms, proxy.ts: 12ms, application-code: 1789ms)
+ GET /premium 200 in 681ms (next.js: 12ms, proxy.ts: 14ms, application-code: 656ms)
+ GET /premium/upgrade 200 in 186ms (next.js: 8ms, proxy.ts: 12ms, application-code: 167ms)
+ GET /premium/upgrade 200 in 70ms (next.js: 8ms, proxy.ts: 11ms, application-code: 51ms)
+ GET /admin 200 in 994ms (next.js: 15ms, proxy.ts: 17ms, application-code: 961ms)
+ GET /admin/premium/tokens 200 in 1330ms (next.js: 1252ms, proxy.ts: 11ms, application-code: 68ms)
+ GET /admin/premium/tokens 200 in 2.4s (next.js: 8ms, proxy.ts: 11ms, application-code: 2.4s)
+ GET /admin/premium/tokens 200 in 1204ms (next.js: 11ms, proxy.ts: 18ms, application-code: 1174ms)
+ GET /[object%20Object] 404 in 298ms (next.js: 26ms, proxy.ts: 20ms, application-code: 252ms)
+ GET / 200 in 767ms (next.js: 4ms, proxy.ts: 9ms, application-code: 754ms)
+ GET /premium 200 in 559ms (next.js: 6ms, proxy.ts: 10ms, application-code: 543ms)
+ GET /premium/upgrade 200 in 210ms (next.js: 6ms, proxy.ts: 7ms, application-code: 196ms)
+ GET /premium/upgrade 200 in 142ms (next.js: 12ms, proxy.ts: 27ms, application-code: 103ms)
+ GET /[object%20Object] 404 in 458ms (next.js: 48ms, proxy.ts: 31ms, application-code: 379ms)
+ GET / 200 in 1061ms (next.js: 6ms, proxy.ts: 9ms, application-code: 1046ms)
+ GET /premium 200 in 1034ms (next.js: 10ms, proxy.ts: 9ms, application-code: 1016ms)
+ GET /premium/upgrade 200 in 198ms (next.js: 10ms, proxy.ts: 9ms, application-code: 179ms)
+ GET /premium/upgrade 200 in 138ms (next.js: 21ms, proxy.ts: 32ms, application-code: 85ms)
+ GET /[object%20Object] 404 in 547ms (next.js: 108ms, proxy.ts: 57ms, application-code: 382ms)
+ GET / 200 in 1109ms (next.js: 7ms, proxy.ts: 10ms, application-code: 1092ms)

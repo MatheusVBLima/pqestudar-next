@@ -76,6 +76,10 @@ export function usePageViewTracker() {
           device: detectDevice(),
         },
       })
-      .then(() => {});
+      .then(({ error }) => {
+        if (error) {
+          console.error("[page_views] Failed to track page view:", error);
+        }
+      });
   }, [pathname, user?.id, isAdmin, rolesLoading]);
 }

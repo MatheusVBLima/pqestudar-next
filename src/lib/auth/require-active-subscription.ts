@@ -32,16 +32,14 @@ export async function requireActiveSubscription(
     redirect(`/login?from=${encodeURIComponent(pathname)}`);
   }
 
-  const [{ data: roleRows }, { data: sub }] = await Promise.all([
-    supabase.from("user_roles").select("role").eq("user_id", user.id),
+  const [{ data: isAdmin }, { data: sub }] = await Promise.all([
+    supabase.rpc("is_admin"),
     supabase
       .from("subscriptions")
       .select("id, plan_type, status, ends_at")
       .eq("user_id", user.id)
       .maybeSingle(),
   ]);
-
-  const isAdmin = (roleRows ?? []).some((r) => r.role === "admin");
 
   const isActive =
     !!sub && sub.status === "active" && new Date(sub.ends_at).getTime() > Date.now();
@@ -52,7 +50,7 @@ export async function requireActiveSubscription(
 
   return {
     userId: user.id,
-    isAdmin,
+    isAdmin: isAdmin === true,
     subscription: sub ?? null,
   };
 }
