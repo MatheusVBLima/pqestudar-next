@@ -3,7 +3,7 @@
 import { Suspense, lazy, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHero } from "@/components/layout/PageHero";
-import { ThumbsUp, Plus, CheckCircle, History, Sparkles } from "lucide-react";
+import { ThumbsUp, CheckCircle, History, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,7 @@ import { useFeatureRequests, FeatureRequest } from "@/hooks/useFeatureRequests";
 import { toast } from "@/hooks/use-toast";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import { useManagementMode } from "@/hooks/useManagementMode";
+import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { getErrorMessage } from "@/lib/error-message";
 
 const VotacoesManagementGrid = lazy(() => import("@/legacy-pages/votacoes/VotacoesManagementGrid"));
@@ -191,11 +192,14 @@ export default function VotacoesNext() {
 
       <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-16 pb-8">
         {effectiveAdmin && !loadingRoles && isManagement && (
+          <>
+          <ManagementToolbar
+            createLabel="Nova votação"
+            onCreate={() => openModal()}
+            hint="Edite, exclua ou acompanhe as votações de novos lançamentos."
+          />
           <div className="flex gap-2 mb-4">
             
-                <Button size="sm" onClick={() => openModal()}>
-                  <Plus className="h-4 w-4 mr-1" /> Adicionar
-                </Button>
                 <Button
                   size="sm"
                   variant={showHistory ? "default" : "outline"}
@@ -205,6 +209,7 @@ export default function VotacoesNext() {
                 </Button>
             
           </div>
+          </>
         )}
 
         {loading ? (

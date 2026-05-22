@@ -47,7 +47,7 @@ export function SavedRailCard({
   );
 
   const className =
-    'group snap-start shrink-0 w-[260px] md:w-[280px] min-h-[180px] flex flex-col p-4 rounded-[1.2rem] border border-border bg-card shadow-card hover:shadow-lg transition-all';
+    'group relative hover:z-10 snap-start shrink-0 w-[260px] md:w-[280px] min-h-[180px] flex flex-col p-4 rounded-[1.2rem] border border-border bg-card shadow-card hover:shadow-lg transition-all';
 
   if (externalUrl) {
     return (

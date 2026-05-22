@@ -91,7 +91,7 @@ export function PremiumRail({
       ) : (
         <div
           ref={scrollerRef}
-          className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-none cursor-grab active:cursor-grabbing"
+          className="flex gap-4 -mx-1 -my-2 px-1 py-2 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-none cursor-grab active:cursor-grabbing"
         >
           {children}
         </div>

@@ -28,7 +28,7 @@ export function UpdateRailCard({
     <Link
       href={`/premium/atualizacoes/${slug}`}
       onClick={onOpen}
-      className="group snap-start shrink-0 w-[300px] md:w-[320px] min-h-[240px] flex flex-col p-5 rounded-[1.2rem] border border-border bg-gradient-to-br from-card to-card/60 shadow-card hover:shadow-lg transition-all"
+      className="group relative hover:z-10 snap-start shrink-0 w-[300px] md:w-[320px] min-h-[240px] flex flex-col p-5 rounded-[1.2rem] border border-border bg-gradient-to-br from-card to-card/60 shadow-card hover:shadow-lg transition-all"
     >
       <div className="flex items-center justify-between mb-3">
         {publishedAt ? (

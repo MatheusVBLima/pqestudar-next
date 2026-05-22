@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useManagementMode } from "@/hooks/useManagementMode";
 import { motion } from "framer-motion";
@@ -13,13 +13,15 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import {
   Eye,
   Share2,
   ChevronRight,
   Filter,
+  Search,
   X,
-  Plus,
   FileText,
   Globe,
   MapPin,
@@ -31,6 +33,7 @@ import { useOportunidades, useOportunidadesAdmin, OportunidadeFilters, Oportunid
 import { useUserRoles } from "@/hooks/useUserRoles";
 import OportunidadeModal from "@/components/admin/OportunidadeModal";
 import TrashConfirmDialog from "@/components/admin/TrashConfirmDialog";
+import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { SaveContestButtonNext } from "@/components/ui/save-contest-button-next";
 import { toast } from "sonner";
 import { usePageSettings } from "@/hooks/usePageSettings";
@@ -64,12 +67,149 @@ const SITUACAO_COLORS: Record<string, string> = {
   "Encerrado": "bg-muted text-muted-foreground border-muted",
 };
 
+function OportunidadeSearchItem({ item, onSelect }: { item: Oportunidade; onSelect: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="w-full rounded-xl px-3 py-3 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="outline" className={CATEGORIA_COLORS[item.categoria] || ""}>
+              {item.categoria}
+            </Badge>
+            <Badge variant="outline" className={SITUACAO_COLORS[item.situacao] || ""}>
+              {item.situacao}
+            </Badge>
+          </div>
+          <h3 className="font-semibold leading-snug line-clamp-2">{item.titulo}</h3>
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {[item.orgao, item.banca, item.tipo, item.abrangencia].filter(Boolean).join(" • ")}
+          </p>
+        </div>
+        <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-muted-foreground" />
+      </div>
+    </button>
+  );
+}
+
+function OportunidadeSearchOverlay({
+  open,
+  onOpenChange,
+  oportunidades,
+  searchTerm,
+  onSearchChange,
+  onSelect,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  oportunidades: Oportunidade[];
+  searchTerm: string;
+  onSearchChange: (term: string) => void;
+  onSelect: (item: Oportunidade) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => inputRef.current?.focus(), 80);
+    return () => window.clearTimeout(id);
+  }, [open]);
+
+  const results = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    const source = oportunidades.filter((item) => item.status_admin !== "lixeira");
+    if (!term) return source.slice(0, 8);
+    return source
+      .filter((item) =>
+        [
+          item.titulo,
+          item.orgao,
+          item.banca,
+          item.resumo_editorial,
+          item.categoria,
+          item.situacao,
+          item.tipo,
+          item.abrangencia,
+          item.escolaridade,
+          ...(item.escolaridades ?? []),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(term)
+      )
+      .slice(0, 12);
+  }, [oportunidades, searchTerm]);
+
+  const hasQuery = searchTerm.trim().length > 0;
+
+  return (
+    <Dialog modal={false} open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="p-0 gap-0 max-w-2xl top-[10%] translate-y-0 overflow-hidden [&>button]:hidden">
+        <DialogTitle className="sr-only">Buscar concursos</DialogTitle>
+        <DialogDescription className="sr-only">
+          Pesquise por concursos, programas educacionais e processos seletivos.
+        </DialogDescription>
+
+        <div className="flex items-center gap-2 border-b px-4 py-3">
+          <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
+          <Input
+            ref={inputRef}
+            value={searchTerm}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Buscar concursos..."
+            className="h-10 border-0 px-3 text-base shadow-none focus-visible:ring-0"
+          />
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            aria-label="Fechar busca"
+            className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="max-h-[60vh] overflow-y-auto p-3">
+          <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {hasQuery ? "Resultados" : "Em destaque"}
+          </p>
+
+          {results.length > 0 ? (
+            <div className="space-y-1">
+              {results.map((item) => (
+                <OportunidadeSearchItem
+                  key={item.id}
+                  item={item}
+                  onSelect={() => {
+                    onSelect(item);
+                    onOpenChange(false);
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="px-3 py-10 text-center text-sm text-muted-foreground">
+              Nenhum concurso encontrado para sua busca.
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function ConcursosNext() {
   const ps = usePageSettings("/concursos");
   const router = useRouter();
   const { isAdmin } = useUserRoles();
   const { isManagementMode } = useManagementMode();
   const [showFilters, setShowFilters] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Oportunidade | null>(null);
   
@@ -239,12 +379,11 @@ export default function ConcursosNext() {
       <main className="flex-1 w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 pb-8">
         <div className="mb-8">
           {isAdmin && isManagementMode && (
-            <div className="flex items-center gap-4 mb-4">
-              <Button onClick={handleAdd} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar
-              </Button>
-            </div>
+            <ManagementToolbar
+              createLabel="Novo concurso"
+              onCreate={handleAdd}
+              hint="Edite, despublique, restaure ou exclua concursos. Use as abas para alternar entre ativos e lixeira."
+            />
           )}
 
 
@@ -275,6 +414,15 @@ export default function ConcursosNext() {
 
           {/* Filters toggle */}
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Abrir busca de concursos"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <Search className="h-4 w-4" aria-hidden="true" />
+            </button>
+
             <Button
               variant="outline"
               size="sm"
@@ -486,7 +634,17 @@ export default function ConcursosNext() {
         )}
       </main>
 
-      
+      <OportunidadeSearchOverlay
+        open={searchOpen}
+        onOpenChange={(open) => {
+          setSearchOpen(open);
+          if (!open) setSearchTerm("");
+        }}
+        oportunidades={displayedOportunidades as Oportunidade[]}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onSelect={(item) => router.push(`/concursos/${item.slug}`)}
+      />
 
       {/* Admin Modal */}
       {isAdmin && (

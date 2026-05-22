@@ -33,6 +33,7 @@ import {
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useTools, Tool, UseToolsOptions } from "@/hooks/useTools";
 import { ToolModal } from "@/components/admin/ToolModal";
+import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { SaveToolButtonNext } from "@/components/ui/save-tool-button-next";
 import {
   Pagination,
@@ -389,7 +390,7 @@ function ToolSearchOverlay({
             value={searchTerm}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Buscar ferramentas..."
-            className="h-10 border-0 px-0 text-base shadow-none focus-visible:ring-0"
+            className="h-10 border-0 px-3 text-base shadow-none focus-visible:ring-0"
           />
           <button
             type="button"
@@ -701,6 +702,18 @@ export default function Ferramentas() {
         <main className="flex-1">
           <PageHero title={ps.headerTitle} description={ps.headerDescription} isLoading={ps.isLoading} />
 
+          {isManagementMode && effectiveAdmin && (
+            <section className="px-4 sm:px-6 lg:px-8 pt-10">
+              <div className="w-full max-w-[1440px] mx-auto">
+                <ManagementToolbar
+                  createLabel="Nova ferramenta"
+                  onCreate={handleAddTool}
+                  hint="Edite, despublique ou exclua ferramentas. Para reordenar, arraste os cards e salve a ordem."
+                />
+              </div>
+            </section>
+          )}
+
           {/* Controles Admin */}
           {isManagementMode && effectiveAdmin &&
           <section className="pb-6 px-4 sm:px-6 lg:px-8">
@@ -710,11 +723,6 @@ export default function Ferramentas() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
                 className="flex flex-wrap items-center gap-4 p-4 bg-muted/30 rounded-lg border border-border">
-
-                  <Button onClick={handleAddTool} size="sm" data-evt="admin_add">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Adicionar Ferramenta
-                  </Button>
 
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-[200px]">

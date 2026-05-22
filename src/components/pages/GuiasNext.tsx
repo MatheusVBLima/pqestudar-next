@@ -15,13 +15,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Plus, BookOpen } from "lucide-react";
+import { Search, BookOpen } from "lucide-react";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useManagementMode } from "@/hooks/useManagementMode";
 import { useGuides, Guide, useGuidesMutations } from "@/hooks/useGuides";
 import { useGuidePublicCategories } from "@/hooks/useGuidePublicCategories";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import { GuideModal } from "@/components/admin/GuideModal";
+import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { FeaturedGuideCard } from "@/components/guides/FeaturedGuideCard";
 import { GuideListItem } from "@/components/guides/GuideListItem";
 import { GuideSearchOverlay } from "@/components/guides/GuideSearchOverlay";
@@ -216,6 +217,14 @@ export default function GuiasNext() {
       />
 
       <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 pb-16">
+        {showAdmin && (
+          <ManagementToolbar
+            createLabel="Novo guia"
+            onCreate={handleNew}
+            hint="Edite, publique ou exclua guias. Use as abas para revisar publicados e rascunhos."
+          />
+        )}
+
         <div className="mb-8 flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <nav
@@ -255,11 +264,6 @@ export default function GuiasNext() {
               <Search className="h-4 w-4" />
             </button>
 
-            {showAdmin && (
-              <Button onClick={handleNew} className="shrink-0">
-                <Plus className="mr-2 h-4 w-4" /> Novo guia
-              </Button>
-            )}
           </div>
         </div>
 

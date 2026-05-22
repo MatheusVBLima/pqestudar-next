@@ -9,6 +9,7 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 import { useManagementMode } from "@/hooks/useManagementMode";
 import { supabase } from "@/integrations/supabase/client";
 import { slugifyProductTitle } from "@/lib/product-slug";
+import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Eye, Plus, Pencil, Trash2, EyeOff, Upload, Link as LinkIcon, X } from "lucide-react";
+import { Eye, Pencil, Trash2, EyeOff, Upload, Link as LinkIcon, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/error-message";
 import { revalidateProductsAction } from "@/app/actions/revalidate";
@@ -532,11 +533,11 @@ export default function ProdutosNext() {
 
       <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 pb-16">
         {isAdmin && adminMode && (
-          <div className="flex items-center gap-3 mb-6">
-            <Button onClick={openCreateModal}>
-              <Plus className="h-4 w-4 mr-2" /> Adicionar Produto
-            </Button>
-          </div>
+          <ManagementToolbar
+            createLabel="Novo produto"
+            onCreate={openCreateModal}
+            hint="Edite, despublique ou exclua produtos exibidos na vitrine."
+          />
         )}
 
         {isLoading ? (

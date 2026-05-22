@@ -232,14 +232,14 @@ export default function PremiumVagasNext() {
       />
 
       <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-        <div className="mb-6">
-          <PremiumBackButton fallbackPath="/premium" fallbackLabel="Premium" />
-        </div>
         <ManagementToolbar
           createLabel="Nova vaga"
           onCreate={openCreate}
           hint="Arraste para reordenar, edite ou despublique cards diretamente aqui."
         />
+        <div className="mb-6">
+          <PremiumBackButton fallbackPath="/premium" fallbackLabel="Premium" />
+        </div>
 
         {loading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

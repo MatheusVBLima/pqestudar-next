@@ -165,7 +165,7 @@ export function GuideSearchOverlay({
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Buscar guias..."
-            className="border-0 shadow-none focus-visible:ring-0 px-0 text-base h-10"
+            className="border-0 shadow-none focus-visible:ring-0 px-3 text-base h-10"
           />
           <button
             onClick={() => onOpenChange(false)}

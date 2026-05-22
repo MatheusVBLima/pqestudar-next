@@ -240,6 +240,9 @@ export default function PremiumHomeNext() {
                 description={c.description_short}
                 externalUrl={c.external_url}
                 tags={c.tags ?? []}
+                isSaved={isSaved(c.id)}
+                isToggling={isToggling(c.id)}
+                onToggleSave={() => toggleSave(c.id, { title: c.title, slug: c.slug })}
                 onOpen={() =>
                   recordView({
                     type: "course",
