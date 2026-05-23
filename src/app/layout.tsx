@@ -5,23 +5,21 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://pqestudar.com.br";
 
 const SITE_NAME = "PqEstudar";
-const DEFAULT_TITLE = "PqEstudar — Curadoria educacional, concursos e ferramentas";
+const DEFAULT_TITLE = "PqEstudar - Curadoria educacional, concursos e ferramentas";
 const DEFAULT_DESCRIPTION =
-  "Conteúdo organizado para você evoluir mais rápido. Cursos, concursos, ferramentas e curadoria educacional em um só lugar.";
+  "Conteudo organizado para voce evoluir mais rapido. Cursos, concursos, ferramentas e curadoria educacional em um so lugar.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: DEFAULT_TITLE,
+    template: `%s | ${SITE_NAME}`,
   },
   description: DEFAULT_DESCRIPTION,
   applicationName: SITE_NAME,
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: SITE_NAME,
   publisher: SITE_NAME,
-  alternates: {
-    canonical: "/",
-  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -53,7 +51,7 @@ export const metadata: Metadata = {
       "pt-BR": "/",
       "x-default": "/",
     },
-  } as Metadata["alternates"],
+  },
   robots: {
     index: true,
     follow: true,

@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, BarChart3, Wrench, BookOpen, MousePointerClick, Search, FileText,
-  Crown, Users, Ticket, ChevronDown, Settings2,
+  Crown, Users, Ticket, ChevronDown, Settings2, UserCog,
   Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Moon, Sun, Sparkles, Share2,
 } from 'lucide-react';
 import {
@@ -336,6 +336,30 @@ export function AdminSidebar() {
                   <Link href="/admin/afiliados">
                     <Share2 className="h-4 w-4" />
                     <span>Afiliados</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Controle Admin */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/admin/roles'}
+                  tooltip="Controle Admin"
+                  className={cn(
+                    'rounded-[var(--admin-radius)] font-medium',
+                    pathname === '/admin/roles' && 'bg-primary/10 text-primary font-semibold border border-primary/20'
+                  )}
+                >
+                  <Link href="/admin/roles">
+                    <UserCog className="h-4 w-4" />
+                    <span>Controle Admin</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

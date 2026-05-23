@@ -66,9 +66,9 @@ type OportunidadeEscolaridade = OportunidadeInput["escolaridade"];
 type OportunidadeAbrangencia = OportunidadeInput["abrangencia"];
 type OportunidadeSituacao = OportunidadeInput["situacao"];
 
-const CATEGORIAS: OportunidadeCategoria[] = ["Concurso", "PolÃ­ticas PÃºblicas", "EducaÃ§Ã£o"];
+const CATEGORIAS: OportunidadeCategoria[] = ["Concurso", "Políticas Públicas", "Educação"];
 const TIPOS: OportunidadeTipo[] = ["Concurso", "Programa educacional", "Processo seletivo", "Processo Seletivo Simplificado"];
-const ESCOLARIDADES: OportunidadeEscolaridade[] = ["Fundamental", "MÃ©dio", "Superior"];
+const ESCOLARIDADES: OportunidadeEscolaridade[] = ["Fundamental", "Médio", "Superior"];
 const ABRANGENCIAS: OportunidadeAbrangencia[] = ["Nacional", "Estadual", "Municipal"];
 const SITUACOES: OportunidadeSituacao[] = ["Previsto", "Edital publicado", "Aberto", "Encerrado"];
 

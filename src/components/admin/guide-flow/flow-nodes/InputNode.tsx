@@ -26,7 +26,7 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
     tema: '', tipo: '', categoria: '', categoriaPublica: '', palavraChave: '', intencao: '', contextoAdicional: '', visualMode: 'generate',
   });
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Notify parent of input changes for editorial summary
   useEffect(() => {
@@ -42,7 +42,9 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
         onAutoSuggest(inputs.tema, inputs.palavraChave);
       }
     }, 500);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [inputs.tema, inputs.palavraChave, onAutoSuggest]);
 
   const canSubmit = inputs.tema.trim() && inputs.categoria && inputs.categoriaPublica && !isGenerating;

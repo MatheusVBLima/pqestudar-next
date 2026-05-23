@@ -25,7 +25,13 @@ export interface Guide {
   cta_top_text: string | null;
   cta_middle_text: string | null;
   cta_final_text: string | null;
-  internal_links: Array<{ label: string; url: string }>;
+  internal_links: Array<{
+    label: string;
+    url: string;
+    imageUrl?: string | null;
+    imageSource?: 'url' | 'upload' | null;
+    imagePath?: string | null;
+  }>;
   is_published: boolean;
   is_featured: boolean;
   sort_order: number;
