@@ -13,6 +13,7 @@ function shouldShowFooter(pathname: string) {
     "/meu-perfil",
     "/meus-materiais",
     "/ranking-comunidade",
+    "/salvos",
     "/ferramentas/salvos",
     "/premium/",
   ];

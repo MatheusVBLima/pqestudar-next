@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Crown, Users, Ticket, ArrowRight } from 'lucide-react';
+import { Crown, Users, Ticket, ArrowRight, FileText } from 'lucide-react';
 
 const AdminPremiumDashboard = () => {
   const menuItems = [
@@ -18,6 +18,13 @@ const AdminPremiumDashboard = () => {
       description: 'Criar e gerenciar tokens',
       icon: Ticket,
       href: '/admin/premium/tokens',
+      count: null,
+    },
+    {
+      title: 'Importar Benefícios',
+      description: 'Extrair benefícios de um PDF',
+      icon: FileText,
+      href: '/admin/premium/importar-beneficios',
       count: null,
     },
   ];

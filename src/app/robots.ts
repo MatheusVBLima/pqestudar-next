@@ -14,6 +14,7 @@ export default function robots(): MetadataRoute.Robots {
           "/premium/",
           "/meu-perfil",
           "/meus-materiais",
+          "/salvos",
           "/ferramentas/salvos",
           "/noticias",
           "/noticia/",

@@ -18,7 +18,7 @@ const PAGE_SETTINGS_ROUTES = [
   '/produtos',
   '/privacidade',
   '/termos',
-  '/ferramentas/salvos',
+  '/salvos',
   '/premium',
   '/sobre-pqestudar',
 ];

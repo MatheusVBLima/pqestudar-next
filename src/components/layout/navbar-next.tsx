@@ -295,9 +295,9 @@ export function Navbar() {
                       </div>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onMouseEnter={() => !isOnKitSubdomain && router.prefetch("/ferramentas/salvos")}
-                        onFocus={() => !isOnKitSubdomain && router.prefetch("/ferramentas/salvos")}
-                        onClick={() => handleNavigation("/ferramentas/salvos")}
+                        onMouseEnter={() => !isOnKitSubdomain && router.prefetch("/salvos")}
+                        onFocus={() => !isOnKitSubdomain && router.prefetch("/salvos")}
+                        onClick={() => handleNavigation("/salvos")}
                         className="cursor-pointer"
                       >
                         <Bookmark className="h-4 w-4 mr-2" />Salvos
@@ -427,9 +427,9 @@ export function Navbar() {
                         </div>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onMouseEnter={() => !isOnKitSubdomain && router.prefetch("/ferramentas/salvos")}
-                          onFocus={() => !isOnKitSubdomain && router.prefetch("/ferramentas/salvos")}
-                          onClick={() => handleNavigation("/ferramentas/salvos")}
+                          onMouseEnter={() => !isOnKitSubdomain && router.prefetch("/salvos")}
+                          onFocus={() => !isOnKitSubdomain && router.prefetch("/salvos")}
+                          onClick={() => handleNavigation("/salvos")}
                           className="cursor-pointer"
                         >
                           <Bookmark className="h-4 w-4 mr-2" />Salvos

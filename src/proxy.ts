@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/meu-perfil", "/meus-materiais", "/ferramentas/salvos", "/premium", "/admin"];
+const PROTECTED_PREFIXES = ["/meu-perfil", "/meus-materiais", "/salvos", "/ferramentas/salvos", "/premium", "/admin"];
 
 function hasSupabaseAuthCookie(request: NextRequest): boolean {
   return request.cookies.getAll().some((c) => {
@@ -27,6 +27,12 @@ export function proxy(request: NextRequest) {
 
   // Optimistic auth gate for protected routes — checks only that an auth cookie
   // exists, not its validity. Definitive check happens in the page/server action.
+  if (pathname === "/ferramentas/salvos") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/salvos";
+    return NextResponse.redirect(url, 308);
+  }
+
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   if (isProtected && !hasSupabaseAuthCookie(request)) {
     const url = request.nextUrl.clone();

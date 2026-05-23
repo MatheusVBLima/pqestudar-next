@@ -19,13 +19,13 @@ const SAVED_HERO_DESCRIPTION =
   "Ferramentas e concursos que você marcou para acessar depois, sempre à mão.";
 
 export default function FerramentasSalvos() {
-  const ps = usePageSettings("/ferramentas/salvos");
+  const ps = usePageSettings("/salvos");
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace("/login?from=ferramentas-salvos");
+      router.replace("/login?from=/salvos");
     }
   }, [authLoading, user, router]);
   const { savedItems, loading, fetchSavedItems, getSavedByType } = useSavedItems();

@@ -2,13 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Bookmark, BookmarkCheck, Gift, Search, X } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Eye, EyeOff, Gift, Search, Trash2, X } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/hooks/use-toast";
 import { PageHero } from "@/components/layout/PageHero";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import { usePremiumSavedItems } from "@/hooks/usePremiumSavedItems";
@@ -47,6 +49,7 @@ export default function PremiumBeneficiosNext() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const fetchBenefits = useCallback(async () => {
     setLoading(true);
@@ -71,6 +74,10 @@ export default function PremiumBeneficiosNext() {
   useEffect(() => {
     fetchBenefits();
   }, [fetchBenefits]);
+
+  useEffect(() => {
+    if (!isManagementMode) setSelectedIds([]);
+  }, [isManagementMode]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -132,6 +139,9 @@ export default function PremiumBeneficiosNext() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
   const sortableIds = useMemo(() => filteredBenefits.map((benefit) => benefit.id), [filteredBenefits]);
+  const visibleIds = useMemo(() => filteredBenefits.map((benefit) => benefit.id), [filteredBenefits]);
+  const selectedVisibleCount = selectedIds.filter((id) => visibleIds.includes(id)).length;
+  const allVisibleSelected = visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -150,7 +160,64 @@ export default function PremiumBeneficiosNext() {
   };
   const handleDelete = async (benefit: PremiumBenefit) => {
     const ok = await remove({ id: benefit.id, title: benefit.title });
-    if (ok) setBenefits((prev) => prev.filter((item) => item.id !== benefit.id));
+    if (ok) {
+      setBenefits((prev) => prev.filter((item) => item.id !== benefit.id));
+      setSelectedIds((prev) => prev.filter((id) => id !== benefit.id));
+    }
+  };
+
+  const handleSelectBenefit = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => (checked ? Array.from(new Set([...prev, id])) : prev.filter((item) => item !== id)));
+  };
+
+  const handleToggleSelectVisible = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      if (!checked) return prev.filter((id) => !visibleIds.includes(id));
+      return Array.from(new Set([...prev, ...visibleIds]));
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    const selectedBenefits = benefits.filter((benefit) => selectedIds.includes(benefit.id));
+    if (selectedBenefits.length === 0) return;
+    const ok = window.confirm(`Excluir ${selectedBenefits.length} benefício(s) selecionado(s)? Essa ação não pode ser desfeita.`);
+    if (!ok) return;
+
+    const ids = selectedBenefits.map((benefit) => benefit.id);
+    const { error } = await supabase.from("premium_items").delete().in("id", ids);
+    if (error) {
+      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    setBenefits((prev) => prev.filter((benefit) => !ids.includes(benefit.id)));
+    setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
+    toast({ title: "Excluídos", description: `${ids.length} benefício(s) removido(s).` });
+  };
+
+  const handleBulkStatus = async (status: "draft" | "published") => {
+    const selectedBenefits = benefits.filter((benefit) => selectedIds.includes(benefit.id));
+    if (selectedBenefits.length === 0) return;
+
+    const ids = selectedBenefits.map((benefit) => benefit.id);
+    const { error } = await supabase
+      .from("premium_items")
+      .update({
+        status,
+        published_at: status === "published" ? new Date().toISOString() : null,
+      })
+      .in("id", ids);
+
+    if (error) {
+      toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    setBenefits((prev) => prev.map((benefit) => (ids.includes(benefit.id) ? { ...benefit, status } : benefit)));
+    toast({
+      title: status === "published" ? "Publicados" : "Despublicados",
+      description: `${ids.length} benefício(s) atualizado(s).`,
+    });
   };
 
   const renderCardContent = (benefit: PremiumBenefit) => {
@@ -291,26 +358,64 @@ export default function PremiumBeneficiosNext() {
                 </p>
               </div>
             ) : isManagementMode ? (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {filteredBenefits.map((benefit) => (
-                      <ManageableCard
-                        key={benefit.id}
-                        id={benefit.id}
-                        sortable
-                        onEdit={() => openEdit(benefit.id)}
-                        viewHref={`/premium/beneficios/${benefit.slug}`}
-                        isPublished={benefit.status === "published"}
-                        onTogglePublish={() => handleTogglePublish(benefit)}
-                        onDelete={() => handleDelete(benefit)}
-                      >
-                        {renderCardContent(benefit)}
-                      </ManageableCard>
-                    ))}
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.2rem] border border-border bg-card/80 px-4 py-3">
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <Checkbox
+                      checked={allVisibleSelected}
+                      onCheckedChange={(checked) => handleToggleSelectVisible(Boolean(checked))}
+                      aria-label="Selecionar todos os benefícios visíveis"
+                    />
+                    Selecionar todos visíveis
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {selectedIds.length} selecionado(s)
+                    </span>
+                    {selectedIds.length > 0 && (
+                      <Button type="button" variant="outline" size="sm" onClick={() => setSelectedIds([])}>
+                        Limpar seleção
+                      </Button>
+                    )}
+                    <Button type="button" variant="outline" size="sm" onClick={() => handleBulkStatus("published")} disabled={selectedIds.length === 0}>
+                      <Eye className="mr-1.5 h-4 w-4" />
+                      Publicar selecionados
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => handleBulkStatus("draft")} disabled={selectedIds.length === 0}>
+                      <EyeOff className="mr-1.5 h-4 w-4" />
+                      Despublicar
+                    </Button>
+                    <Button type="button" variant="destructive" size="sm" onClick={handleBulkDelete} disabled={selectedIds.length === 0}>
+                      <Trash2 className="mr-1.5 h-4 w-4" />
+                      Excluir selecionados
+                    </Button>
                   </div>
-                </SortableContext>
-              </DndContext>
+                </div>
+
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {filteredBenefits.map((benefit) => (
+                        <ManageableCard
+                          key={benefit.id}
+                          id={benefit.id}
+                          sortable
+                          selectable
+                          selected={selectedIds.includes(benefit.id)}
+                          onSelectedChange={(checked) => handleSelectBenefit(benefit.id, checked)}
+                          onEdit={() => openEdit(benefit.id)}
+                          viewHref={`/premium/beneficios/${benefit.slug}`}
+                          isPublished={benefit.status === "published"}
+                          onTogglePublish={() => handleTogglePublish(benefit)}
+                          onDelete={() => handleDelete(benefit)}
+                        >
+                          {renderCardContent(benefit)}
+                        </ManageableCard>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredBenefits.map((benefit) => (

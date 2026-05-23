@@ -17,6 +17,7 @@ const routeTitles: Record<string, string> = {
   '/admin/curadorias': 'Curadorias',
   '/admin/premium/usuarios': 'Usuários & Assinaturas',
   '/admin/premium/tokens': 'Tokens de Resgate',
+  '/admin/premium/importar-beneficios': 'Importar Benefícios',
 };
 
 export function AdminHeader() {

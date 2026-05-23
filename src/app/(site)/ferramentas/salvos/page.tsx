@@ -1,13 +1,5 @@
-import type { Metadata } from "next";
-import FerramentasSalvosClient from "@/components/pages/FerramentasSalvosClient";
-
-export const metadata: Metadata = {
-  title: "Itens Salvos | PqEstudar",
-  description: "Acesse todas as ferramentas e concursos que você salvou.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: "/ferramentas/salvos" },
-};
+import { redirect } from "next/navigation";
 
 export default function FerramentasSalvosPage() {
-  return <FerramentasSalvosClient />;
+  redirect("/salvos");
 }

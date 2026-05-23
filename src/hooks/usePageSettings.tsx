@@ -67,7 +67,7 @@ const ROUTE_FALLBACKS: Record<string, FallbackContent> = {
     header_description:
       "Ajude a decidir o futuro da plataforma. Vote nas próximas atualizações e acompanhe o que está em desenvolvimento.",
   },
-  "/ferramentas/salvos": {
+  "/salvos": {
     title_tag: "Itens Salvos | PqEstudar",
     meta_description:
       "Acesse todas as ferramentas, concursos e recursos que você salvou para acompanhar depois.",
@@ -166,7 +166,7 @@ const MANAGED_ROUTES = [
   "/ferramentas",
   "/concursos",
   "/votacoes",
-  "/ferramentas/salvos",
+  "/salvos",
   "/premium",
   "/premium/vagas",
   "/premium/cursos",

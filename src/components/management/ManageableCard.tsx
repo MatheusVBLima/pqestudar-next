@@ -7,6 +7,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Edit, Eye, EyeOff, ExternalLink, GripVertical, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useManagementMode } from '@/hooks/useManagementMode';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ManageableCardProps {
   id: string;
@@ -15,6 +16,9 @@ interface ManageableCardProps {
   onEdit?: () => void;
   viewHref?: string;
   isPublished?: boolean;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectedChange?: (checked: boolean) => void;
   onTogglePublish?: () => void;
   onDelete?: () => void;
   className?: string;
@@ -28,6 +32,9 @@ export function ManageableCard({
   onEdit,
   viewHref,
   isPublished = true,
+  selectable = false,
+  selected = false,
+  onSelectedChange,
   onTogglePublish,
   onDelete,
   className,
@@ -65,6 +72,16 @@ export function ManageableCard({
 
       <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-2 rounded-t-[1.2rem] bg-background/95 px-2 py-1.5 backdrop-blur border-b border-primary/20">
         <div className="flex items-center gap-1">
+          {selectable && (
+            <Checkbox
+              checked={selected}
+              onCheckedChange={(checked) => onSelectedChange?.(Boolean(checked))}
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+              aria-label="Selecionar item"
+              className="mx-1"
+            />
+          )}
           {sortable && (
             <button
               type="button"
