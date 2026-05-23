@@ -7,6 +7,7 @@ import { ProductCtaButton } from "@/components/pages/ProductCtaButton";
 import { getActiveProducts } from "@/lib/data/products";
 import { findProductBySlug } from "@/lib/product-slug";
 import { JsonLd, absoluteUrl, buildBreadcrumbList } from "@/lib/seo/jsonld";
+import { DEFAULT_SOCIAL_IMAGE_ALT, DEFAULT_SOCIAL_IMAGE_URL } from "@/lib/site";
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
   }
 
   const canonicalPath = `/produtos/${slug}`;
-  const ogImages = product.image_url ? [{ url: product.image_url }] : undefined;
+  const socialImage = product.image_url || DEFAULT_SOCIAL_IMAGE_URL;
 
   return {
     title: product.title,
@@ -41,13 +42,13 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
       url: canonicalPath,
       title: product.title,
       description: product.description,
-      ...(ogImages ? { images: ogImages } : {}),
+      images: [{ url: socialImage, alt: DEFAULT_SOCIAL_IMAGE_ALT }],
     },
     twitter: {
       card: "summary_large_image",
       title: product.title,
       description: product.description,
-      ...(product.image_url ? { images: [product.image_url] } : {}),
+      images: [socialImage],
     },
   };
 }

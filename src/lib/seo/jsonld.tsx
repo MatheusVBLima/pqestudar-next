@@ -1,5 +1,6 @@
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://pqestudar.com.br";
+import { SITE_URL } from "@/lib/site";
+
+export { SITE_URL };
 
 export const SITE_NAME = "PqEstudar";
 

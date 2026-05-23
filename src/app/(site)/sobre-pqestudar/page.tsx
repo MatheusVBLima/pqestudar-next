@@ -4,6 +4,7 @@ import SobrePqEstudarNext from "@/components/pages/SobrePqEstudarNext";
 import { QueryHydration } from "@/components/providers/query-hydration";
 import { createQueryClient } from "@/lib/query-client";
 import { getPageSettings } from "@/lib/data/page-settings";
+import { absoluteUrl } from "@/lib/seo/jsonld";
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getPageSettings("/sobre-pqestudar");
@@ -21,11 +22,11 @@ const websiteJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "PqEstudar",
-  url: "https://pqestudar.com.br",
+  url: absoluteUrl("/"),
   publisher: {
     "@type": "Organization",
     name: "PqEstudar",
-    logo: { "@type": "ImageObject", url: "https://pqestudar.com.br/favicon.png" },
+    logo: { "@type": "ImageObject", url: absoluteUrl("/favicon.png") },
   },
 };
 

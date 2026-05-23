@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://pqestudar.com.br";
 
 const SITE_NAME = "PqEstudar";
 const DEFAULT_TITLE = "PqEstudar - Curadoria educacional, concursos e ferramentas";

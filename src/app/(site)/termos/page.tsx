@@ -5,6 +5,7 @@ import { QueryHydration } from "@/components/providers/query-hydration";
 import { createQueryClient } from "@/lib/query-client";
 import { getPageSettings } from "@/lib/data/page-settings";
 import { getLegalPage } from "@/lib/data/legal";
+import { absoluteUrl } from "@/lib/seo/jsonld";
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getPageSettings("/termos");
@@ -24,7 +25,7 @@ function buildJsonLd(updatedAt: string | null) {
     "@type": "WebPage",
     name: "Termos de Uso",
     description: "Termos de Uso da plataforma PqEstudar",
-    url: "https://pqestudar.com.br/termos",
+    url: absoluteUrl("/termos"),
     dateModified: updatedAt ?? "2025-10-28",
     publisher: { "@type": "Organization", name: "PqEstudar" },
   };

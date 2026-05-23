@@ -1,7 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://pqestudar.com.br";
+import { absoluteSiteUrl } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -14,7 +12,6 @@ export default function robots(): MetadataRoute.Robots {
           "/admin/",
           "/premium",
           "/premium/",
-          "/login",
           "/meu-perfil",
           "/meus-materiais",
           "/ferramentas/salvos",
@@ -26,7 +23,6 @@ export default function robots(): MetadataRoute.Robots {
           "/kit",
           "/assine",
           "/faq",
-          "/configuracoes-cookies",
           "/mapa-dos-beneficios/",
           "/acesso-kit-partida-8h3z",
           "/curadoria-conteudo-ia-k4f9",
@@ -37,6 +33,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    sitemap: absoluteSiteUrl("/sitemap.xml"),
   };
 }

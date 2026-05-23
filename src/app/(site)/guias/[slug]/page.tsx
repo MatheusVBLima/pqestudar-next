@@ -11,6 +11,7 @@ import {
   getGuideRelatedGuides,
 } from "@/lib/data/guides";
 import { JsonLd, absoluteUrl, buildBreadcrumbList } from "@/lib/seo/jsonld";
+import { DEFAULT_SOCIAL_IMAGE_ALT, DEFAULT_SOCIAL_IMAGE_URL } from "@/lib/site";
 
 interface GuiaDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: GuiaDetailPageProps): Promise
   const title = guide.seo_title || guide.title;
   const description = guide.seo_description || guide.short_description;
   const canonicalPath = `/guias/${slug}`;
-  const ogImages = guide.cover_image_url ? [{ url: guide.cover_image_url }] : undefined;
+  const socialImage = guide.cover_image_url || DEFAULT_SOCIAL_IMAGE_URL;
 
   return {
     title,
@@ -41,13 +42,13 @@ export async function generateMetadata({ params }: GuiaDetailPageProps): Promise
       url: canonicalPath,
       title: guide.title,
       description: guide.short_description,
-      ...(ogImages ? { images: ogImages } : {}),
+      images: [{ url: socialImage, alt: DEFAULT_SOCIAL_IMAGE_ALT }],
     },
     twitter: {
       card: "summary_large_image",
       title: guide.title,
       description: guide.short_description,
-      ...(guide.cover_image_url ? { images: [guide.cover_image_url] } : {}),
+      images: [socialImage],
     },
   };
 }

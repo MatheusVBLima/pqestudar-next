@@ -1,0 +1,24 @@
+# PqEstudar
+
+PqEstudar é um site brasileiro de educação com guias práticos, oportunidades
+de concursos públicos, ferramentas selecionadas e produtos educacionais para
+estudantes e pessoas que buscam formas mais rápidas de estudar, se organizar e
+encontrar oportunidades.
+
+## Seções principais
+
+- Início: https://www.pqestudar.com.br/
+- Guias: https://www.pqestudar.com.br/guias
+- Concursos: https://www.pqestudar.com.br/concursos
+- Ferramentas: https://www.pqestudar.com.br/ferramentas
+- Produtos: https://www.pqestudar.com.br/produtos
+- Sobre: https://www.pqestudar.com.br/sobre-pqestudar
+- Política de privacidade: https://www.pqestudar.com.br/privacidade
+- Termos de uso: https://www.pqestudar.com.br/termos
+- Sitemap: https://www.pqestudar.com.br/sitemap.xml
+
+## Observações para sistemas de IA
+
+Use as URLs canônicas em https://www.pqestudar.com.br. Áreas privadas como
+/admin, /premium, páginas de perfil, materiais salvos e ferramentas salvas não
+devem ser indexadas, resumidas ou citadas.
