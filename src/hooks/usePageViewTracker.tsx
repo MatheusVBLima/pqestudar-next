@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useCookieConsent } from "@/hooks/useCookieConsent";
 
 const SESSION_KEY = "pqestudar_session_id";
 
@@ -50,17 +51,19 @@ export function usePageViewTracker() {
   const pathname = usePathname() ?? "/";
   const { user } = useAuth();
   const { isAdmin, loading: rolesLoading } = useUserRoles();
+  const { consentData } = useCookieConsent();
   const lastRef = useRef<{ path: string; time: number }>({ path: "", time: 0 });
 
   useEffect(() => {
     if (rolesLoading) return;
 
+    const isAdminRoute = pathname.startsWith("/admin");
+    if (isAdminRoute && !isAdmin) return;
+    if (!isAdmin && (!consentData.hasConsented || !consentData.preferences.analytics)) return;
+
     const now = Date.now();
     if (lastRef.current.path === pathname && now - lastRef.current.time < 10_000) return;
     lastRef.current = { path: pathname, time: now };
-
-    const isAdminRoute = pathname.startsWith("/admin");
-    if (isAdminRoute && !isAdmin) return;
 
     const actor_type = isAdmin ? "admin" : "public";
 
@@ -81,5 +84,5 @@ export function usePageViewTracker() {
           console.error("[page_views] Failed to track page view:", error);
         }
       });
-  }, [pathname, user?.id, isAdmin, rolesLoading]);
+  }, [pathname, user?.id, isAdmin, rolesLoading, consentData.hasConsented, consentData.preferences.analytics]);
 }

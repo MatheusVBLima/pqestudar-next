@@ -1,5 +1,11 @@
 import { META_PIXEL_ID, PIXEL_DEBUG, PIXEL_DISABLED } from "@/lib/runtime-env";
 
+declare global {
+  interface Window {
+    fbq?: (action: string, event: string, params?: Record<string, unknown>) => void;
+  }
+}
+
 // Meta Pixel Configuration
 // Use environment variable with fallback to hardcoded ID
 export { META_PIXEL_ID };
@@ -25,13 +31,29 @@ export const GET_ORDER_VALUE = (): number | null => {
   return null;
 };
 
+function hasMarketingConsent(): boolean {
+  if (typeof window === "undefined") return false;
+
+  try {
+    const stored = window.localStorage.getItem("cookieConsent");
+    if (!stored) return false;
+    const parsed = JSON.parse(stored) as {
+      hasConsented?: boolean;
+      preferences?: { marketing?: boolean };
+    };
+    return Boolean(parsed.hasConsented && parsed.preferences?.marketing);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Utility function to track Meta Pixel events programmatically
  * @param event - Event name (e.g., 'Purchase', 'Lead', 'ViewContent')
  * @param params - Optional event parameters
  */
 export function trackMetaPixel(event: string, params?: Record<string, unknown>): void {
-  if (typeof window !== 'undefined' && window.fbq && !PIXEL_DISABLED) {
+  if (typeof window !== 'undefined' && window.fbq && !PIXEL_DISABLED && hasMarketingConsent()) {
     window.fbq('track', event, params || {});
   }
 }
@@ -42,7 +64,7 @@ export function trackMetaPixel(event: string, params?: Record<string, unknown>):
  * @param params - Optional event parameters
  */
 export function trackMetaPixelCustom(event: string, params?: Record<string, unknown>): void {
-  if (typeof window !== 'undefined' && window.fbq && !PIXEL_DISABLED) {
+  if (typeof window !== 'undefined' && window.fbq && !PIXEL_DISABLED && hasMarketingConsent()) {
     window.fbq('trackCustom', event, params || {});
   }
 }

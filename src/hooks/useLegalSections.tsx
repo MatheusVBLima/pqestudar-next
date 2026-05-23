@@ -21,6 +21,22 @@ export interface LegalSection {
   updated_at: string;
 }
 
+async function recordLegalVersion(route: string, entityId: string, summary: string) {
+  const { error } = await supabase.from("content_versions").insert({
+    url: route,
+    entity_type: "legal_document",
+    entity_id: entityId,
+    profile_key: route,
+    source: "legal_admin",
+    summary,
+    field_data: {},
+  });
+
+  if (error) {
+    console.warn("[legal] Nao foi possivel registrar historico de versao", error);
+  }
+}
+
 // Public hook: fetch document + active sections for a route
 export function useLegalPage(route: string) {
   const docQuery = useQuery({
@@ -94,6 +110,7 @@ export function useLegalAdmin(route: string) {
     qc.invalidateQueries({ queryKey: ["legal-sections-admin", route] });
     qc.invalidateQueries({ queryKey: ["legal-sections", route] });
     qc.invalidateQueries({ queryKey: ["legal-document", route] });
+    qc.invalidateQueries({ queryKey: ["legal-version-history", route] });
     void revalidateLegalAction(route);
   };
 
@@ -105,6 +122,7 @@ export function useLegalAdmin(route: string) {
         .update({ pdf_url: pdfUrl || null })
         .eq("id", docQuery.data.id);
       if (error) throw error;
+      await recordLegalVersion(route, docQuery.data.id, "PDF/link do documento legal atualizado.");
     },
     onSuccess: invalidate,
   });
@@ -123,51 +141,64 @@ export function useLegalAdmin(route: string) {
         sort_order: maxOrder + 1,
       });
       if (error) throw error;
+      await recordLegalVersion(route, docQuery.data.id, `Secao adicionada: ${section.title}.`);
     },
     onSuccess: invalidate,
   });
 
   const updateSection = useMutation({
     mutationFn: async (section: { id: string; title: string; content: string }) => {
+      if (!docQuery.data?.id) throw new Error("Documento nÃ£o encontrado");
       const { error } = await supabase
         .from("legal_sections")
         .update({ title: section.title, content: section.content })
         .eq("id", section.id);
       if (error) throw error;
+      await recordLegalVersion(route, docQuery.data.id, `Secao atualizada: ${section.title}.`);
     },
     onSuccess: invalidate,
   });
 
   const deleteSection = useMutation({
     mutationFn: async (id: string) => {
+      if (!docQuery.data?.id) throw new Error("Documento nÃ£o encontrado");
       const { error } = await supabase
         .from("legal_sections")
         .delete()
         .eq("id", id);
       if (error) throw error;
+      await recordLegalVersion(route, docQuery.data.id, "Secao removida do documento legal.");
     },
     onSuccess: invalidate,
   });
 
   const toggleActive = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      if (!docQuery.data?.id) throw new Error("Documento nÃ£o encontrado");
       const { error } = await supabase
         .from("legal_sections")
         .update({ is_active })
         .eq("id", id);
       if (error) throw error;
+      await recordLegalVersion(
+        route,
+        docQuery.data.id,
+        is_active ? "Secao reativada no documento legal." : "Secao ocultada no documento legal."
+      );
     },
     onSuccess: invalidate,
   });
 
   const reorder = useMutation({
     mutationFn: async (orderedIds: string[]) => {
+      if (!docQuery.data?.id) throw new Error("Documento nÃ£o encontrado");
       const updates = orderedIds.map((id, idx) =>
         supabase.from("legal_sections").update({ sort_order: idx + 1 }).eq("id", id)
       );
       const results = await Promise.all(updates);
       const failed = results.find((r) => r.error);
       if (failed?.error) throw failed.error;
+      await recordLegalVersion(route, docQuery.data.id, "Ordem das secoes do documento legal atualizada.");
     },
     onSuccess: invalidate,
   });

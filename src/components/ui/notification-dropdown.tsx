@@ -1,4 +1,5 @@
 import { Bell, Trash2, CheckCheck, AlertTriangle, Info, CheckCircle, X } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from './button';
 import { Badge } from './badge';
 import { ScrollArea } from './scroll-area';
@@ -10,6 +11,7 @@ import {
 } from './dropdown-menu';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
 import { useDbNotifications, DbNotification } from '@/hooks/useDbNotifications';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -92,20 +94,81 @@ const DbNotificationItem = ({ n, onMarkRead }: { n: DbNotification; onMarkRead: 
 );
 
 export const NotificationDropdown = () => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isMobile = useIsMobile();
   const { notifications, unreadCount: localUnread, markAsRead, markAllAsRead, removeNotification, clearAllNotifications } = useNotifications();
   const { notifications: dbNotifs, unreadCount: dbUnread, markRead: dbMarkRead, markAllRead: dbMarkAllRead } = useDbNotifications();
 
   const totalUnread = localUnread + dbUnread;
+  const hasNotifications = notifications.length > 0 || dbNotifs.length > 0;
 
   const handleMarkAllRead = () => {
     markAllAsRead();
     dbMarkAllRead();
   };
 
-  return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="hover:bg-accent relative">
+  const panelContent = (
+    <>
+      <div className="flex items-center justify-between p-4 pb-2">
+        <h3 className="font-semibold text-sm">Notificações</h3>
+        {totalUnread > 0 && <Badge variant="secondary" className="text-xs">{totalUnread} nova{totalUnread !== 1 ? 's' : ''}</Badge>}
+      </div>
+
+      {hasNotifications && (
+        <div className="flex items-center justify-between gap-2 px-4 pb-2">
+          <Button variant="ghost" size="sm" onClick={handleMarkAllRead} className="h-7 px-2 text-xs" disabled={totalUnread === 0}>
+            <CheckCheck className="h-3 w-3 mr-1" /> Marcar todas como lidas
+          </Button>
+          <Button variant="ghost" size="sm" onClick={clearAllNotifications} className="h-7 px-2 text-xs text-destructive hover:text-destructive">
+            <Trash2 className="h-3 w-3 mr-1" /> Limpar tudo
+          </Button>
+        </div>
+      )}
+
+      <Separator />
+
+      {!hasNotifications ? (
+        <div className="p-6 text-center">
+          <Bell className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground">Nenhuma notificação</p>
+        </div>
+      ) : (
+        <ScrollArea className="max-h-96">
+          <div className="divide-y divide-border">
+            {/* DB notifications first */}
+            {dbNotifs.map(n => (
+              <DbNotificationItem key={`db-${n.id}`} n={n} onMarkRead={dbMarkRead} />
+            ))}
+            {/* Local notifications */}
+            {notifications.map(notification => (
+              <NotificationItem key={notification.id} notification={notification} onMarkAsRead={markAsRead} onRemove={removeNotification} />
+            ))}
+          </div>
+        </ScrollArea>
+      )}
+    </>
+  );
+
+  const triggerButton = (
+    <Button variant="ghost" size="sm" className="hover:bg-accent relative">
+      <Bell className="h-4 w-4" />
+      {totalUnread > 0 && (
+        <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs animate-pulse">
+          {totalUnread > 9 ? '9+' : totalUnread}
+        </Badge>
+      )}
+    </Button>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hover:bg-accent relative"
+          onClick={() => setMobileOpen((current) => !current)}
+        >
           <Bell className="h-4 w-4" />
           {totalUnread > 0 && (
             <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs animate-pulse">
@@ -113,45 +176,27 @@ export const NotificationDropdown = () => {
             </Badge>
           )}
         </Button>
+        {mobileOpen && (
+          <div className="fixed inset-0 z-40" onClick={() => setMobileOpen(false)}>
+            <div
+              className="fixed left-1/2 top-[4.5rem] z-50 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {panelContent}
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        {triggerButton}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 p-0">
-        <div className="flex items-center justify-between p-4 pb-2">
-          <h3 className="font-semibold text-sm">Notificações</h3>
-          {totalUnread > 0 && <Badge variant="secondary" className="text-xs">{totalUnread} nova{totalUnread !== 1 ? 's' : ''}</Badge>}
-        </div>
-
-        {(notifications.length > 0 || dbNotifs.length > 0) && (
-          <div className="flex items-center gap-2 px-4 pb-2">
-            <Button variant="ghost" size="sm" onClick={handleMarkAllRead} className="h-7 px-2 text-xs" disabled={totalUnread === 0}>
-              <CheckCheck className="h-3 w-3 mr-1" /> Marcar todas como lidas
-            </Button>
-            <Button variant="ghost" size="sm" onClick={clearAllNotifications} className="h-7 px-2 text-xs text-destructive hover:text-destructive">
-              <Trash2 className="h-3 w-3 mr-1" /> Limpar local
-            </Button>
-          </div>
-        )}
-
-        <Separator />
-
-        {notifications.length === 0 && dbNotifs.length === 0 ? (
-          <div className="p-6 text-center">
-            <Bell className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">Nenhuma notificação</p>
-          </div>
-        ) : (
-          <ScrollArea className="max-h-96">
-            <div className="divide-y divide-border">
-              {/* DB notifications first */}
-              {dbNotifs.map(n => (
-                <DbNotificationItem key={`db-${n.id}`} n={n} onMarkRead={dbMarkRead} />
-              ))}
-              {/* Local notifications */}
-              {notifications.map(notification => (
-                <NotificationItem key={notification.id} notification={notification} onMarkAsRead={markAsRead} onRemove={removeNotification} />
-              ))}
-            </div>
-          </ScrollArea>
-        )}
+        {panelContent}
       </DropdownMenuContent>
     </DropdownMenu>
   );

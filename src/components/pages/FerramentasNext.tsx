@@ -513,16 +513,6 @@ export default function Ferramentas() {
     }
   }, [isManagementMode, tools, hasUnsavedOrder]);
 
-  // Reset page to 1 when filters change
-  useEffect(() => {
-    if (!isManagementMode && currentPage > 1) {
-      const params = new URLSearchParams(window.location.search);
-      params.set("page", "1");
-      router.replace(`${pathname}?${params.toString()}`);
-      setCurrentPage(1);
-    }
-  }, [selectedTags, isManagementMode, currentPage, router, pathname]);
-
   // Scroll to top when page changes (smooth)
   useEffect(() => {
     if (!isManagementMode) {
@@ -550,6 +540,8 @@ export default function Ferramentas() {
     // 3. Modo público: destaques ativos SEMPRE primeiro
     const active = base.filter(isFeaturedActive);
     const rest = base.filter((t) => !isFeaturedActive(t));
+
+    if (currentPage > 1) return rest;
 
     if (selectedTags.length === 0) {
       // Sem filtro de categoria: até 3 destaques no topo
@@ -582,7 +574,7 @@ export default function Ferramentas() {
 
       return [...featuredFirst, ...normalRest, ...rest];
     }
-  }, [tools, draftTools, isManagementMode, categoryFilter, selectedTags]);
+  }, [tools, draftTools, isManagementMode, categoryFilter, selectedTags, currentPage]);
 
   const availableTags = CATEGORIES.filter((tag) => !selectedTags.includes(tag));
 

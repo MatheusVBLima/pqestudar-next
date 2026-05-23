@@ -18,6 +18,7 @@ import {
   List,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { PageHero } from "@/components/layout/PageHero";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import { useLegalPage } from "@/hooks/useLegalSections";
+import { useLegalVersionHistory } from "@/hooks/useLegalVersionHistory";
 import { sanitizeHtml, safeHighlight } from "@/lib/utils";
 
 const cookiesData = [
@@ -83,16 +85,15 @@ const cookiesData = [
   },
 ];
 
-const versionHistory = [
-  { date: "28 de Outubro de 2025", changes: "Versão atual - Adição de seção sobre cookies e Centro de Preferências" },
-  { date: "15 de Setembro de 2025", changes: "Atualização sobre transferências internacionais de dados" },
-  { date: "01 de Junho de 2025", changes: "Adequação completa à LGPD e adição de seção sobre direitos do titular" },
-  { date: "10 de Janeiro de 2024", changes: "Versão inicial da Política de Privacidade" },
-];
-
 export default function PrivacidadeNext() {
+  const pathname = usePathname();
   const ps = usePageSettings("/privacidade");
   const { document: doc, sections, isLoading, error } = useLegalPage("/privacidade");
+  const latestUpdatedAt =
+    [doc?.updated_at, ...sections.map((section) => section.updated_at)]
+      .filter((date): date is string => Boolean(date))
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
+  const { data: legalVersionHistory = [] } = useLegalVersionHistory("/privacidade", latestUpdatedAt);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -103,9 +104,9 @@ export default function PrivacidadeNext() {
   const { toast } = useToast();
   const { consentData, acceptAll, acceptNecessaryOnly, updatePreferences } = useCookieConsent();
 
-  const updatedAt = doc?.updated_at
-    ? new Date(doc.updated_at).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })
-    : "28 de outubro de 2025";
+  const updatedAt = latestUpdatedAt
+    ? new Date(latestUpdatedAt).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })
+    : "—";
 
   const [cookiePrefs, setCookiePrefs] = useState({
     necessary: true,
@@ -212,6 +213,8 @@ export default function PrivacidadeNext() {
   if (error) {
     console.error("[Privacidade] Erro ao carregar dados:", error);
   }
+
+  if (pathname !== "/privacidade") return null;
 
   return (
     <div className="flex-1 flex flex-col">
@@ -594,16 +597,16 @@ export default function PrivacidadeNext() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {versionHistory.map((version, idx) => (
+                    {legalVersionHistory.map((version, idx) => (
                       <div key={idx} className="flex gap-4">
                         <div className="flex flex-col items-center">
                           <div className={`h-3 w-3 rounded-full ${idx === 0 ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                          {idx < versionHistory.length - 1 && <div className="w-0.5 h-full bg-muted-foreground/20 mt-1" />}
+                          {idx < legalVersionHistory.length - 1 && <div className="w-0.5 h-full bg-muted-foreground/20 mt-1" />}
                         </div>
                         <div className="flex-1 pb-8">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge variant={idx === 0 ? "default" : "secondary"} className="text-xs">{version.date}</Badge>
-                            {idx === 0 && <Badge className="bg-emerald-600 text-white">Atual</Badge>}
+                            <Badge variant={version.isCurrent ? "default" : "secondary"} className="text-xs">{version.date}</Badge>
+                            {version.isCurrent && <Badge className="bg-emerald-600 text-white">Atual</Badge>}
                           </div>
                           <p className="text-sm text-muted-foreground">{version.changes}</p>
                         </div>

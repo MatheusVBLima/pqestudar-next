@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,13 +27,20 @@ import { toast } from "@/hooks/use-toast";
 import { cn, sanitizeHtml } from "@/lib/utils";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import { useLegalPage } from "@/hooks/useLegalSections";
+import { useLegalVersionHistory } from "@/hooks/useLegalVersionHistory";
 
 export default function TermosNext() {
+  const pathname = usePathname();
   const ps = usePageSettings("/termos");
   const { document: doc, sections, isLoading, error } = useLegalPage("/termos");
+  const latestUpdatedAt =
+    [doc?.updated_at, ...sections.map((section) => section.updated_at)]
+      .filter((date): date is string => Boolean(date))
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
+  const { data: versionHistory = [] } = useLegalVersionHistory("/termos", latestUpdatedAt);
 
-  const updatedAt = doc?.updated_at
-    ? new Date(doc.updated_at).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })
+  const updatedAt = latestUpdatedAt
+    ? new Date(latestUpdatedAt).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })
     : "—";
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -95,6 +103,8 @@ export default function TermosNext() {
   if (error) {
     console.error("[Termos] Erro ao carregar dados:", error);
   }
+
+  if (pathname !== "/termos") return null;
 
   return (
     <div className="flex-1 flex flex-col">
@@ -274,6 +284,47 @@ export default function TermosNext() {
                   ))}
                 </Accordion>
               </motion.div>
+
+              {versionHistory.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Card className="border-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="w-5 h-5" />
+                        Histórico de Versões
+                      </CardTitle>
+                      <CardDescription>
+                        Acompanhe as mudanças nos Termos de Uso ao longo do tempo.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {versionHistory.map((version, idx) => (
+                          <div key={`${version.date}-${idx}`} className="flex gap-4">
+                            <div className="flex flex-col items-center">
+                              <div className={cn("h-3 w-3 rounded-full", version.isCurrent ? "bg-primary" : "bg-muted-foreground/30")} />
+                              {idx < versionHistory.length - 1 && <div className="w-0.5 h-full bg-muted-foreground/20 mt-1" />}
+                            </div>
+                            <div className="flex-1 pb-8">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge variant={version.isCurrent ? "default" : "secondary"} className="text-xs">
+                                  {version.date}
+                                </Badge>
+                                {version.isCurrent && <Badge className="bg-emerald-600 text-white">Atual</Badge>}
+                              </div>
+                              <p className="text-sm text-muted-foreground">{version.changes}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

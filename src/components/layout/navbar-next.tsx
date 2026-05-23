@@ -359,6 +359,9 @@ export function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-popover">
+                <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Menu
+                </div>
                 {navLoading ? (
                   <div className="p-2 space-y-2">
                     {Array.from({ length: 4 }).map((_, i) => (
@@ -406,6 +409,9 @@ export function Navbar() {
                       </DropdownMenuItem>
                     ) : (
                       <>
+                        <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Conta
+                        </div>
                         <div className="flex items-center gap-2 p-2">
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={user.user_metadata?.avatar_url} alt={getUserDisplayName()} />

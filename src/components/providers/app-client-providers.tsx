@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ManagementModeProvider } from "@/hooks/useManagementMode";
 import { PageViewTracker } from "@/components/providers/page-view-tracker";
+import { CookieConsentRuntime } from "@/components/providers/cookie-consent-runtime";
 
 export function AppClientProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -31,6 +32,7 @@ export function AppClientProviders({ children }: { children: React.ReactNode }) 
         <ManagementModeProvider>
           <TooltipProvider>
             <PageViewTracker />
+            <CookieConsentRuntime />
             <Toaster />
             <Sonner />
             {children}

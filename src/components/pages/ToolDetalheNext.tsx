@@ -140,7 +140,7 @@ export default function ToolDetalhe() {
 
   const placeholderTool = useMemo(() => {
     if (!slug) return null;
-    const listQueries = queryClient.getQueriesData<ToolsResult>({ queryKey: ["tools_public"] });
+    const listQueries = queryClient.getQueriesData<ToolsResult>({ queryKey: ["tools_public_v2"] });
     for (const [, cached] of listQueries) {
       const found = cached?.tools?.find((candidate) => candidate.slug === slug);
       if (found) return found as Tool;

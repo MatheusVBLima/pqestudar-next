@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { loadAdSenseAfterIdle } from '@/lib/adsense';
 
 export interface CookiePreferences {
@@ -16,6 +16,7 @@ export interface CookieConsentData {
 
 const COOKIE_CONSENT_KEY = 'cookieConsent';
 const COOKIE_EXPIRY_DAYS = 365;
+const COOKIE_CONSENT_EVENT = 'cookieConsentChanged';
 
 const defaultPreferences: CookiePreferences = {
   necessary: true, // Always true, cannot be disabled
@@ -23,6 +24,30 @@ const defaultPreferences: CookiePreferences = {
   marketing: false,
   functional: false,
 };
+
+// Apply cookie preferences to third-party services.
+function applyCookiePreferences(preferences: CookiePreferences) {
+  if (preferences.analytics) {
+    console.log('Analytics cookies enabled');
+  } else {
+    console.log('Analytics cookies disabled');
+  }
+
+  if (preferences.marketing) {
+    loadAdSenseAfterIdle({
+      personalizedAds: true,
+    });
+    console.log('Marketing cookies enabled');
+  } else {
+    console.log('Marketing cookies disabled');
+  }
+
+  if (preferences.functional) {
+    console.log('Functional cookies enabled');
+  } else {
+    console.log('Functional cookies disabled');
+  }
+}
 
 export const useCookieConsent = () => {
   const [consentData, setConsentData] = useState<CookieConsentData>({
@@ -32,8 +57,7 @@ export const useCookieConsent = () => {
   
   const [showBanner, setShowBanner] = useState(false);
 
-  // Load consent data from localStorage on mount
-  useEffect(() => {
+  const loadStoredConsent = useCallback(() => {
     const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
     if (stored) {
       try {
@@ -66,6 +90,27 @@ export const useCookieConsent = () => {
     }
   }, []);
 
+  // Load consent data from localStorage on mount and keep same-tab consumers synced.
+  useEffect(() => {
+    loadStoredConsent();
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === COOKIE_CONSENT_KEY) {
+        loadStoredConsent();
+      }
+    };
+
+    const handleConsentChange = () => loadStoredConsent();
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener(COOKIE_CONSENT_EVENT, handleConsentChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener(COOKIE_CONSENT_EVENT, handleConsentChange);
+    };
+  }, [loadStoredConsent]);
+
   const saveConsent = (preferences: CookiePreferences) => {
     const newConsentData: CookieConsentData = {
       hasConsented: true,
@@ -78,6 +123,7 @@ export const useCookieConsent = () => {
 
     setConsentData(newConsentData);
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(newConsentData));
+    window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_EVENT));
     setShowBanner(false);
 
     // Apply cookie preferences
@@ -108,45 +154,12 @@ export const useCookieConsent = () => {
 
   const resetConsent = () => {
     localStorage.removeItem(COOKIE_CONSENT_KEY);
+    window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_EVENT));
     setConsentData({
       hasConsented: false,
       preferences: defaultPreferences,
     });
     setShowBanner(true);
-  };
-
-  // Apply cookie preferences (integrate with analytics, etc.)
-  const applyCookiePreferences = (preferences: CookiePreferences) => {
-    // Analytics cookies
-    if (preferences.analytics) {
-      // Enable analytics (Google Analytics, etc.)
-      console.log('Analytics cookies enabled');
-    } else {
-      // Disable analytics
-      console.log('Analytics cookies disabled');
-    }
-
-    loadAdSenseAfterIdle({
-      personalizedAds: preferences.marketing,
-    });
-
-    // Marketing cookies
-    if (preferences.marketing) {
-      // Enable marketing cookies (Facebook Pixel, etc.)
-      console.log('Marketing cookies enabled');
-    } else {
-      // Disable marketing personalization while keeping delayed non-personalized ads.
-      console.log('Marketing cookies disabled; requesting non-personalized ads');
-    }
-
-    // Functional cookies
-    if (preferences.functional) {
-      // Enable functional cookies (user preferences, etc.)
-      console.log('Functional cookies enabled');
-    } else {
-      // Disable functional cookies
-      console.log('Functional cookies disabled');
-    }
   };
 
   return {

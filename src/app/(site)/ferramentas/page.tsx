@@ -27,7 +27,7 @@ export default async function FerramentasPage() {
     getPageSettings("/ferramentas"),
   ]);
 
-  queryClient.setQueryData(["tools_public", 1, 12, ""], toolsPage);
+  queryClient.setQueryData(["tools_public_v2", 1, 12, ""], toolsPage);
   queryClient.setQueryData(["page_settings", "/ferramentas"], pageSettings ?? null);
 
   const tools = toolsPage.tools as Array<{ slug?: string; name?: string }>;

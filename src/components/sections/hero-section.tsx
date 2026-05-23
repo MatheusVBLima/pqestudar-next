@@ -70,7 +70,7 @@ export function HeroSection({ headerTitle, headerDescription }: HeroSectionProps
       </div>
 
       <div className="container relative">
-        <div className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-start pt-16 md:pt-20 pb-12 px-4 md:px-8 lg:px-12">
+        <div className="flex min-h-[calc(100svh-72px)] flex-col items-center justify-center px-4 py-12 md:min-h-[calc(100vh-64px)] md:justify-start md:px-8 md:pb-12 md:pt-20 lg:px-12">
           <div className="flex flex-col gap-6 w-full max-w-4xl text-center">
             <div className="flex justify-center">
               <HeroBadge

@@ -81,13 +81,13 @@ export function Footer() {
 
           <div className="border-t border-border" />
 
-          {/* Nav links grid 2 cols */}
-          <nav className="grid grid-cols-2 gap-x-6 gap-y-2">
+          {/* Nav links */}
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-center">
             {allNavLinks.map((l) => (
               <Link
                 key={l.to}
                 href={l.to}
-                className="text-sm text-foreground hover:text-primary transition-colors py-2"
+                className="text-sm text-foreground hover:text-primary transition-colors"
               >
                 {l.label}
               </Link>
@@ -97,7 +97,7 @@ export function Footer() {
           <div className="border-t border-border" />
 
           {/* Copyright */}
-          <div className="text-xs text-muted-foreground leading-relaxed">
+          <div className="text-center text-xs text-muted-foreground leading-relaxed">
             <p>© 2025 PqEstudar</p>
             <p>Todos os direitos reservados</p>
           </div>

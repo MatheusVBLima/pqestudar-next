@@ -83,23 +83,54 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 // --- Fetch functions ---
 
 async function fetchPublicTools(page: number, pageSize: number, tags: string[]) {
+  let countQuery = supabase
+    .from('tools_public')
+    .select('*', { count: 'exact', head: true });
+
+  if (tags.length > 0) {
+    countQuery = countQuery.overlaps('tags', tags);
+  }
+
+  const { count: totalCount, error: countError } = await countQuery;
+  if (countError) throw countError;
+
+  let featuredCount = 0;
+  if (page > 1) {
+    let featuredCountQuery = supabase
+      .from('tools_public')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_featured', true);
+
+    if (tags.length > 0) {
+      featuredCountQuery = featuredCountQuery.overlaps('tags', tags);
+    }
+
+    const { count, error } = await featuredCountQuery;
+    if (error) throw error;
+    featuredCount = count || 0;
+  }
+
   let query = supabase
     .from('tools_public')
-    .select('*', { count: 'exact' });
+    .select('*');
 
   if (tags.length > 0) {
     query = query.overlaps('tags', tags);
   }
 
-  const from = (page - 1) * pageSize;
+  if (page > 1) {
+    query = query.eq('is_featured', false);
+  }
+
+  const from = Math.max(0, (page - 1) * pageSize - featuredCount);
   const to = from + pageSize - 1;
 
-  const { data, error, count } = await query
+  const { data, error } = await query
     .order('sort_order', { ascending: true })
     .range(from, to);
 
   if (error) throw error;
-  return { tools: (data || []) as Tool[], total: count || 0 };
+  return { tools: (data || []) as Tool[], total: totalCount || 0 };
 }
 
 async function fetchAdminTools() {
@@ -125,7 +156,7 @@ export const useTools = (options: UseToolsOptions = {}) => {
 
   // Public query
   const publicQuery = useQuery({
-    queryKey: ['tools_public', page, pageSize, sortedTagsString],
+    queryKey: ['tools_public_v2', page, pageSize, sortedTagsString],
     queryFn: () => fetchPublicTools(page, pageSize, tags),
     enabled: !includeInvisible,
     placeholderData: (prev) => prev,
@@ -151,6 +182,7 @@ export const useTools = (options: UseToolsOptions = {}) => {
   // --- Invalidation helper ---
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['tools_public'] });
+    queryClient.invalidateQueries({ queryKey: ['tools_public_v2'] });
     queryClient.invalidateQueries({ queryKey: ['tools_admin'] });
   };
 

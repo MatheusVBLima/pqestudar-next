@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Json, TablesInsert } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRoles } from '@/hooks/useUserRoles';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 const SESSION_KEY = 'pqestudar_session_id';
 
@@ -26,10 +27,15 @@ interface TrackEventParams {
 export function useAnalyticsTracker() {
   const { user } = useAuth();
   const { isAdmin, loading: rolesLoading } = useUserRoles();
+  const { consentData } = useCookieConsent();
 
   const track = useCallback(
     async (params: TrackEventParams) => {
       try {
+        if (!isAdmin && (!consentData.hasConsented || !consentData.preferences.analytics)) {
+          return;
+        }
+
         // Determine actor type based on auth + role
         const actor_type = rolesLoading
           ? 'unknown'
@@ -52,7 +58,7 @@ export function useAnalyticsTracker() {
         // fire-and-forget
       }
     },
-    [user?.id, isAdmin, rolesLoading],
+    [user?.id, isAdmin, rolesLoading, consentData.hasConsented, consentData.preferences.analytics],
   );
 
   return { track };
