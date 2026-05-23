@@ -10,6 +10,7 @@ import {
   getOportunidadeRedirectSlug,
 } from "@/lib/data/oportunidades";
 import { JsonLd, absoluteUrl, buildBreadcrumbList } from "@/lib/seo/jsonld";
+import { DEFAULT_SOCIAL_IMAGE_ALT, DEFAULT_SOCIAL_IMAGE_URL } from "@/lib/site";
 
 interface ConcursoDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -32,11 +33,13 @@ export async function generateMetadata({ params }: ConcursoDetailPageProps): Pro
       url: canonicalPath,
       title,
       description,
+      images: [{ url: DEFAULT_SOCIAL_IMAGE_URL, alt: DEFAULT_SOCIAL_IMAGE_ALT }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [DEFAULT_SOCIAL_IMAGE_URL],
     },
   };
 }

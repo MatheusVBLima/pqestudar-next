@@ -5,6 +5,7 @@ import { QueryHydration } from "@/components/providers/query-hydration";
 import { createQueryClient } from "@/lib/query-client";
 import { getRelatedTools, getToolBySlug } from "@/lib/data/tools";
 import { JsonLd, absoluteUrl, buildBreadcrumbList } from "@/lib/seo/jsonld";
+import { DEFAULT_SOCIAL_IMAGE_ALT, DEFAULT_SOCIAL_IMAGE_URL } from "@/lib/site";
 
 interface ToolDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: ToolDetailPageProps): Promise
   const description =
     tool.seo_description || tool.description || `Conheça a ferramenta ${tool.name} no PqEstudar.`;
   const canonicalPath = `/ferramentas/${slug}`;
-  const ogImage = tool.cover_image_url || tool.icon_url;
+  const ogImage = tool.cover_image_url || tool.icon_url || DEFAULT_SOCIAL_IMAGE_URL;
 
   return {
     title,
@@ -39,13 +40,13 @@ export async function generateMetadata({ params }: ToolDetailPageProps): Promise
       url: canonicalPath,
       title,
       description,
-      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
+      images: [{ url: ogImage, alt: DEFAULT_SOCIAL_IMAGE_ALT }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      ...(ogImage ? { images: [ogImage] } : {}),
+      images: [ogImage],
     },
   };
 }

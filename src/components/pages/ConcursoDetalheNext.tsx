@@ -35,6 +35,7 @@ import { useOportunidadeViewTracker } from "@/hooks/useOportunidadeViews";
 import { useConcursoReadTracker } from "@/hooks/useAnalyticsTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { absoluteSiteUrl } from "@/lib/site";
 
 const CATEGORIA_COLORS: Record<string, string> = {
   "Concurso": "bg-blue-500/10 text-blue-500 border-blue-500/20",
@@ -99,7 +100,7 @@ function generateJsonLd(oportunidade: ExtendedOportunidade, canonicalUrl: string
     "publisher": {
       "@type": "Organization",
       "name": "PqEstudar",
-      "url": "https://pqestudar.com.br"
+      "url": absoluteSiteUrl("/")
     },
     "author": {
       "@type": "Organization",
@@ -120,13 +121,13 @@ function generateJsonLd(oportunidade: ExtendedOportunidade, canonicalUrl: string
         "@type": "ListItem",
         "position": 1,
         "name": "Início",
-        "item": "https://pqestudar.com.br"
+        "item": absoluteSiteUrl("/")
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Concursos",
-        "item": "https://pqestudar.com.br/concursos"
+        "item": absoluteSiteUrl("/concursos")
       },
       {
         "@type": "ListItem",
@@ -323,7 +324,7 @@ export default function ConcursoDetalheNext() {
     }
   };
 
-  const canonicalUrl = `https://pqestudar.com.br/concursos/${slug}`;
+  const canonicalUrl = absoluteSiteUrl(`/concursos/${slug}`);
 
   if (isLoading) {
     return (

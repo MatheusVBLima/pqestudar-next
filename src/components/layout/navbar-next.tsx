@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ManagementModeToggle } from "@/components/management/ManagementModeToggle";
+import { SITE_URL } from "@/lib/site";
 
 const NotificationDropdown = lazy(() =>
   import("@/components/ui/notification-dropdown").then((m) => ({
@@ -99,7 +100,7 @@ export function Navbar() {
   const showPremiumArea = isAdmin || isActive();
   const isOnKitSubdomain =
     typeof window !== "undefined" && window.location.hostname.startsWith("kit.");
-  const mainDomain = isOnKitSubdomain ? "https://pqestudar.com.br" : "";
+  const mainDomain = isOnKitSubdomain ? SITE_URL : "";
 
   const handleNavigation = (path: string) => {
     if (isOnKitSubdomain) {

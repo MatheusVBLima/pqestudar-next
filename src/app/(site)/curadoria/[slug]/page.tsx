@@ -6,6 +6,7 @@ import { QueryHydration } from "@/components/providers/query-hydration";
 import { createQueryClient } from "@/lib/query-client";
 import { getCurationBySlug } from "@/lib/data/curations";
 import { JsonLd, buildBreadcrumbList } from "@/lib/seo/jsonld";
+import { DEFAULT_SOCIAL_IMAGE_ALT, DEFAULT_SOCIAL_IMAGE_URL } from "@/lib/site";
 
 interface CuradoriaPageProps {
   params: Promise<{ slug: string }>;
@@ -35,11 +36,13 @@ export async function generateMetadata({ params }: CuradoriaPageProps): Promise<
       url: canonicalPath,
       title,
       description,
+      images: [{ url: DEFAULT_SOCIAL_IMAGE_URL, alt: DEFAULT_SOCIAL_IMAGE_ALT }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [DEFAULT_SOCIAL_IMAGE_URL],
     },
   };
 }

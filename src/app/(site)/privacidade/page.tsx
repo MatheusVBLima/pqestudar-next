@@ -5,6 +5,7 @@ import { QueryHydration } from "@/components/providers/query-hydration";
 import { createQueryClient } from "@/lib/query-client";
 import { getPageSettings } from "@/lib/data/page-settings";
 import { getLegalPage } from "@/lib/data/legal";
+import { absoluteUrl } from "@/lib/seo/jsonld";
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getPageSettings("/privacidade");
@@ -22,7 +23,7 @@ function buildJsonLd(updatedAt: string | null) {
   return {
     "@context": "https://schema.org",
     "@type": ["WebPage", "PrivacyPolicy"],
-    "@id": "https://pqestudar.com.br/privacidade",
+    "@id": absoluteUrl("/privacidade"),
     name: "Política de Privacidade – PqEstudar",
     description: "Transparência e proteção dos seus dados pessoais.",
     publisher: { "@type": "Organization", name: "PqEstudar" },
