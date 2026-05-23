@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePremiumSavedItems } from "@/hooks/usePremiumSavedItems";
 import { PremiumBackButton } from "@/components/premium/PremiumBackButton";
 import { PREMIUM_BENEFIT_TAG, visiblePremiumTags } from "@/lib/premium-benefits";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 interface BenefitDetail {
   id: string;
@@ -136,9 +137,9 @@ export default function PremiumBeneficioDetalheNext() {
 
         {benefit.description_full && (
           <div className="rounded-[1.2rem] border border-border bg-card p-6 md:p-8 shadow-card">
-            <div className="prose prose-sm max-w-none text-foreground whitespace-pre-line">
+            <MarkdownContent className="guide-content text-foreground/80 leading-relaxed">
               {benefit.description_full}
-            </div>
+            </MarkdownContent>
           </div>
         )}
 

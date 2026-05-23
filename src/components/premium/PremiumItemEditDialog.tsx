@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import MarkdownEditor, { htmlToMarkdown } from '@/components/admin/MarkdownEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -71,6 +72,7 @@ const slugify = (s: string) =>
   s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
 const EMPTY_HIDDEN_TAGS: string[] = [];
+const containsHtml = (text: string) => /<[a-z][\s\S]*>/i.test(text);
 
 export function PremiumItemEditDialog({
   open,
@@ -112,7 +114,9 @@ export function PremiumItemEditDialog({
         title: data.title,
         slug: data.slug,
         description_short: data.description_short || '',
-        description_full: data.description_full || '',
+        description_full: data.description_full && containsHtml(data.description_full)
+          ? htmlToMarkdown(data.description_full)
+          : data.description_full || '',
         logo_url: data.logo_url || '',
         external_url: data.external_url || '',
         tags: (data.tags || []).filter((tag: string) => !hiddenTagList.includes(tag)).join(', '),
@@ -269,12 +273,17 @@ export function PremiumItemEditDialog({
 
             <TabsContent value="pagina" className="space-y-4 pt-4">
               <div>
-                <Label htmlFor="desc-full">Descrição completa</Label>
-                <Textarea id="desc-full" rows={6} value={form.description_full} onChange={(e) => update('description_full', e.target.value)} placeholder={isJob ? 'Detalhes da vaga: empresa, modalidade, localização, benefícios...' : 'Detalhes do curso: plataforma, modalidade, nível, duração, certificado...'} />
+                <Label>Descrição completa (Markdown)</Label>
+                <MarkdownEditor
+                  value={form.description_full}
+                  onChange={(value) => update('description_full', value)}
+                  placeholder={isJob ? '## Sobre a vaga\n\nEmpresa, modalidade, localização, benefícios...' : '## Sobre o curso\n\nPlataforma, modalidade, nível, duração, certificado...'}
+                  rows={10}
+                />
                 <p className="mt-1 text-xs text-muted-foreground">
                   {isJob
-                    ? 'Inclua aqui empresa, localização, modalidade/tipo, salário e demais detalhes da vaga.'
-                    : 'Inclua aqui plataforma/instituição, modalidade, nível, duração e demais detalhes do curso.'}
+                    ? 'Aceita Markdown e HTML colado. Inclua empresa, localização, modalidade/tipo, salário e demais detalhes da vaga.'
+                    : 'Aceita Markdown e HTML colado. Inclua plataforma/instituição, modalidade, nível, duração e demais detalhes do curso.'}
                 </p>
               </div>
               <div>

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { usePremiumSavedItems } from "@/hooks/usePremiumSavedItems";
 import { PremiumBackButton } from "@/components/premium/PremiumBackButton";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 
 interface CourseDetail {
   id: string;
@@ -208,6 +209,14 @@ export default function PremiumCursoDetalheNext() {
             </div>
           )}
         </div>
+
+        {course.description_full && (
+          <div className="rounded-[1.2rem] border border-border bg-card p-6 md:p-8 shadow-card">
+            <MarkdownContent className="guide-content text-foreground/80 leading-relaxed">
+              {course.description_full}
+            </MarkdownContent>
+          </div>
+        )}
 
         {hasExternalUrl ? (
           <div className="rounded-[1.2rem] border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-8 md:p-10 text-center space-y-5 shadow-card">
