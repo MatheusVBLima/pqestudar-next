@@ -19,6 +19,14 @@ const securityHeaders = [
     : []),
 ];
 
+const privateRobotsHeaders = [
+  { key: "X-Robots-Tag", value: "noindex, nofollow" },
+];
+
+const utilityRobotsHeaders = [
+  { key: "X-Robots-Tag", value: "noindex, follow" },
+];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
@@ -40,6 +48,42 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/admin",
+        headers: privateRobotsHeaders,
+      },
+      {
+        source: "/admin/:path*",
+        headers: privateRobotsHeaders,
+      },
+      {
+        source: "/premium",
+        headers: privateRobotsHeaders,
+      },
+      {
+        source: "/premium/:path*",
+        headers: privateRobotsHeaders,
+      },
+      {
+        source: "/meu-perfil",
+        headers: privateRobotsHeaders,
+      },
+      {
+        source: "/meus-materiais",
+        headers: privateRobotsHeaders,
+      },
+      {
+        source: "/ferramentas/salvos",
+        headers: privateRobotsHeaders,
+      },
+      {
+        source: "/login",
+        headers: utilityRobotsHeaders,
+      },
+      {
+        source: "/configuracoes-cookies",
+        headers: utilityRobotsHeaders,
       },
     ];
   },

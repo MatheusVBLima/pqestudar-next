@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Configurações de Cookies | PqEstudar",
   description:
     "Gerencie suas preferências de cookies e proteção de dados conforme a LGPD. Você decide o que permitir.",
+  robots: { index: false, follow: true },
   alternates: { canonical: "/configuracoes-cookies" },
 };
 

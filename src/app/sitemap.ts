@@ -5,12 +5,10 @@ import { getPublishedGuides } from "@/lib/data/guides";
 import { getPublishedCurations } from "@/lib/data/curations";
 import { getPublicTools } from "@/lib/data/tools";
 import { slugifyProductTitle } from "@/lib/product-slug";
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://pqestudar.com.br";
+import { absoluteSiteUrl } from "@/lib/site";
 
 function url(path: string): string {
-  return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  return absoluteSiteUrl(path);
 }
 
 const STATIC_INDEXABLE: Array<{ path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }> = [
@@ -26,7 +24,6 @@ const STATIC_INDEXABLE: Array<{ path: string; changeFrequency: MetadataRoute.Sit
   { path: "/ranking-comunidade", changeFrequency: "weekly", priority: 0.4 },
   { path: "/termos", changeFrequency: "yearly", priority: 0.3 },
   { path: "/privacidade", changeFrequency: "yearly", priority: 0.3 },
-  { path: "/configuracoes-cookies", changeFrequency: "yearly", priority: 0.2 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
