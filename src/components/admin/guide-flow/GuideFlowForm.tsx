@@ -7,6 +7,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sparkles, Loader2, Cog, Eye } from 'lucide-react';
 import { TIPOS_GUIA, CATEGORIAS, INTENCOES, CATEGORIAS_PUBLICAS, mapInternaToPublica } from '@/lib/guide-editorial-options';
 
+export type GuideFlowAiProvider = 'lovable' | 'openai';
+
+export const AI_PROVIDER_OPTIONS: Array<{ value: GuideFlowAiProvider; label: string; description: string }> = [
+  { value: 'lovable', label: 'Lovable / Gemini', description: 'Gateway atual do Lovable' },
+  { value: 'openai', label: 'OpenAI / ChatGPT', description: 'Usa sua OPENAI_API_KEY' },
+];
+
+export const AI_MODEL_OPTIONS: Record<GuideFlowAiProvider, string[]> = {
+  lovable: ['google/gemini-3-flash-preview', 'google/gemini-2.5-flash'],
+  openai: ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o'],
+};
+
+export const DEFAULT_GUIDE_FLOW_INPUTS: GuideFlowInputs = {
+  tema: '',
+  tipo: '',
+  categoria: '',
+  categoriaPublica: '',
+  palavraChave: '',
+  intencao: '',
+  contextoAdicional: '',
+  visualMode: 'generate',
+  aiProvider: 'lovable',
+  textModel: 'google/gemini-3-flash-preview',
+  imageModel: 'google/gemini-2.5-flash-image',
+};
+
 export interface GuideFlowInputs {
   tema: string;
   tipo: string;
@@ -16,6 +42,9 @@ export interface GuideFlowInputs {
   intencao: string;
   contextoAdicional: string;
   visualMode: 'generate' | 'prompt_only';
+  aiProvider: GuideFlowAiProvider;
+  textModel: string;
+  imageModel: string;
 }
 
 interface Props {
@@ -24,16 +53,7 @@ interface Props {
 }
 
 export function GuideFlowForm({ onGenerate, isGenerating }: Props) {
-  const [inputs, setInputs] = useState<GuideFlowInputs>({
-    tema: '',
-    tipo: '',
-    categoria: '',
-    categoriaPublica: '',
-    palavraChave: '',
-    intencao: '',
-    contextoAdicional: '',
-    visualMode: 'generate',
-  });
+  const [inputs, setInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
 
   // Sugere automaticamente a Categoria Pública quando a Interna muda (admin pode trocar)
   const handleCategoriaInternaChange = (v: string) => {
@@ -62,6 +82,52 @@ export function GuideFlowForm({ onGenerate, isGenerating }: Props) {
           onChange={(e) => setInputs((p) => ({ ...p, tema: e.target.value }))}
           className="rounded-[var(--admin-radius)]"
         />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-[var(--admin-radius)] border border-primary/20 bg-primary/5 p-3">
+        <div className="space-y-1.5">
+          <Label>IA para gerar o texto</Label>
+          <Select
+            value={inputs.aiProvider}
+            onValueChange={(v) => {
+              const aiProvider = v as GuideFlowAiProvider;
+              setInputs((p) => ({
+                ...p,
+                aiProvider,
+                textModel: AI_MODEL_OPTIONS[aiProvider][0],
+              }));
+            }}
+          >
+            <SelectTrigger className="rounded-[var(--admin-radius)] bg-background">
+              <SelectValue placeholder="Selecione..." />
+            </SelectTrigger>
+            <SelectContent>
+              {AI_PROVIDER_OPTIONS.map((provider) => (
+                <SelectItem key={provider.value} value={provider.value}>{provider.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            A chave da API fica nas secrets da Edge Function.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Modelo</Label>
+          <Select value={inputs.textModel} onValueChange={(v) => setInputs((p) => ({ ...p, textModel: v }))}>
+            <SelectTrigger className="rounded-[var(--admin-radius)] bg-background">
+              <SelectValue placeholder="Modelo..." />
+            </SelectTrigger>
+            <SelectContent>
+              {AI_MODEL_OPTIONS[inputs.aiProvider].map((model) => (
+                <SelectItem key={model} value={model}>{model}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Enviado junto com o pedido de geracao do guia.
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

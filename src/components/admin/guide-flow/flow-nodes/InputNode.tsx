@@ -8,7 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sparkles, Loader2, CheckCircle2, AlertTriangle, ImageIcon, FileText, Cog, Eye } from 'lucide-react';
 import { TIPOS_GUIA, CATEGORIAS, INTENCOES, CATEGORIAS_PUBLICAS, mapInternaToPublica } from '@/lib/guide-editorial-options';
-import type { GuideFlowInputs } from '../GuideFlowForm';
+import {
+  AI_MODEL_OPTIONS,
+  AI_PROVIDER_OPTIONS,
+  DEFAULT_GUIDE_FLOW_INPUTS,
+  type GuideFlowAiProvider,
+  type GuideFlowInputs,
+} from '../GuideFlowForm';
 
 interface InputNodeData {
   onGenerate?: (inputs: GuideFlowInputs) => void;
@@ -22,9 +28,7 @@ interface InputNodeData {
 
 function InputNodeComponent({ data }: { data: InputNodeData }) {
   const { onGenerate, isGenerating, hasValidSources, hasLibrary, selectedLibrary, onAutoSuggest, onInputsChange } = data;
-  const [inputs, setInputs] = useState<GuideFlowInputs>({
-    tema: '', tipo: '', categoria: '', categoriaPublica: '', palavraChave: '', intencao: '', contextoAdicional: '', visualMode: 'generate',
-  });
+  const [inputs, setInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -95,6 +99,44 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
             onChange={(e) => setInputs((p) => ({ ...p, tema: e.target.value }))}
             className="rounded-lg text-xs h-8"
           />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 rounded-lg border border-primary/20 bg-primary/5 p-2">
+          <div className="space-y-1">
+            <Label className="text-xs">IA do texto</Label>
+            <Select
+              value={inputs.aiProvider}
+              onValueChange={(v) => {
+                const aiProvider = v as GuideFlowAiProvider;
+                setInputs((p) => ({
+                  ...p,
+                  aiProvider,
+                  textModel: AI_MODEL_OPTIONS[aiProvider][0],
+                }));
+              }}
+            >
+              <SelectTrigger className="rounded-lg text-xs h-8 bg-background"><SelectValue placeholder="IA..." /></SelectTrigger>
+              <SelectContent>
+                {AI_PROVIDER_OPTIONS.map((provider) => (
+                  <SelectItem key={provider.value} value={provider.value} className="text-xs">{provider.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Modelo</Label>
+            <Select value={inputs.textModel} onValueChange={(v) => setInputs((p) => ({ ...p, textModel: v }))}>
+              <SelectTrigger className="rounded-lg text-xs h-8 bg-background"><SelectValue placeholder="Modelo..." /></SelectTrigger>
+              <SelectContent>
+                {AI_MODEL_OPTIONS[inputs.aiProvider].map((model) => (
+                  <SelectItem key={model} value={model} className="text-xs">{model}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="col-span-2 text-[9px] text-muted-foreground leading-tight">
+            Usa a secret correspondente configurada na Edge Function.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">

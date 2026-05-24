@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/admin/dashboard/PageHeader';
 import { FlowCanvas } from '@/components/admin/guide-flow/FlowCanvas';
 import { EditorialSummaryPanel } from '@/components/admin/guide-flow/EditorialSummaryPanel';
 import type { GeneratedGuideData, ImagePrompt } from '@/components/admin/guide-flow/GuideFlowPreview';
-import type { GuideFlowInputs } from '@/components/admin/guide-flow/GuideFlowForm';
+import { DEFAULT_GUIDE_FLOW_INPUTS, type GuideFlowInputs } from '@/components/admin/guide-flow/GuideFlowForm';
 import { hasValidationErrors } from '@/components/admin/guide-flow/GuideFlowValidation';
 import { findOption, TIPOS_GUIA, CATEGORIAS, INTENCOES, mapInternaToPublica } from '@/lib/guide-editorial-options';
 import { useGuidesMutations } from '@/hooks/useGuides';
@@ -39,9 +39,7 @@ export default function GuideFlow() {
   const [isSaving, setIsSaving] = useState(false);
   const [guideData, setGuideData] = useState<GeneratedGuideData | null>(null);
   const [linkedGuideId, setLinkedGuideId] = useState<string | null>(null);
-  const [currentInputs, setCurrentInputs] = useState<GuideFlowInputs>({
-    tema: '', tipo: '', categoria: '', categoriaPublica: '', palavraChave: '', intencao: '', contextoAdicional: '', visualMode: 'generate',
-  });
+  const [currentInputs, setCurrentInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
 
   // Load guide from URL param ?guide=ID
   useEffect(() => {
@@ -85,7 +83,7 @@ export default function GuideFlow() {
           image_prompts: fd.image_prompts ?? [],
           generated_images: fd.generated_images ?? [],
         });
-        if (fd.inputs) setCurrentInputs(fd.inputs);
+        if (fd.inputs) setCurrentInputs({ ...DEFAULT_GUIDE_FLOW_INPUTS, ...fd.inputs });
         toast({ title: 'Fluxo restaurado', description: `"${guide.title}" carregado do estado salvo.` });
       } else {
         // Build flow state from guide fields (no flow_data persisted)
