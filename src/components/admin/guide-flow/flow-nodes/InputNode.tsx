@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import * as pdfjs from 'pdfjs-dist';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Sparkles, Loader2, CheckCircle2, AlertTriangle, ImageIcon, FileText, Cog, Eye } from 'lucide-react';
+import { Sparkles, Loader2, CheckCircle2, AlertTriangle, ImageIcon, FileText, Cog, Eye, Upload } from 'lucide-react';
 import { TIPOS_GUIA, CATEGORIAS, INTENCOES, CATEGORIAS_PUBLICAS, mapInternaToPublica } from '@/lib/guide-editorial-options';
 import {
   AI_MODEL_OPTIONS,
@@ -16,6 +17,10 @@ import {
   type GuideFlowInputs,
 } from '../GuideFlowForm';
 
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+
+type PdfTextItem = { str?: string };
+
 interface InputNodeData {
   onGenerate?: (inputs: GuideFlowInputs) => void;
   isGenerating?: boolean;
@@ -24,11 +29,14 @@ interface InputNodeData {
   selectedLibrary?: string | null;
   onAutoSuggest?: (tema: string, palavraChave: string) => void;
   onInputsChange?: (inputs: GuideFlowInputs) => void;
+  onTargetTypeChange?: (targetType: GuideFlowInputs['targetType']) => void;
 }
 
 function InputNodeComponent({ data }: { data: InputNodeData }) {
-  const { onGenerate, isGenerating, hasValidSources, hasLibrary, selectedLibrary, onAutoSuggest, onInputsChange } = data;
+  const { onGenerate, isGenerating, hasValidSources, hasLibrary, selectedLibrary, onAutoSuggest, onInputsChange, onTargetTypeChange } = data;
   const [inputs, setInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
+  const [isParsingPdf, setIsParsingPdf] = useState(false);
+  const [pdfName, setPdfName] = useState<string | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -36,6 +44,10 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
   useEffect(() => {
     onInputsChange?.(inputs);
   }, [inputs, onInputsChange]);
+
+  useEffect(() => {
+    onTargetTypeChange?.(inputs.targetType);
+  }, [inputs.targetType, onTargetTypeChange]);
 
   // Auto-suggest library when tema or palavraChave changes
   useEffect(() => {
@@ -51,7 +63,8 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
     };
   }, [inputs.tema, inputs.palavraChave, onAutoSuggest]);
 
-  const canSubmit = inputs.tema.trim() && inputs.categoria && inputs.categoriaPublica && !isGenerating;
+  const isTool = inputs.targetType === 'tool';
+  const canSubmit = inputs.tema.trim() && (isTool || inputs.categoria) && (isTool || inputs.categoriaPublica) && !isGenerating;
 
   const handleCategoriaInternaChange = (v: string) => {
     setInputs((p) => ({
@@ -59,6 +72,42 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
       categoria: v,
       categoriaPublica: p.categoriaPublica || mapInternaToPublica(v),
     }));
+  };
+
+  const handlePdfContext = async (file: File | null) => {
+    if (!file) return;
+    setIsParsingPdf(true);
+    setPdfName(file.name);
+
+    try {
+      const raw = new Uint8Array(await file.arrayBuffer());
+      const pdf = await pdfjs.getDocument({ data: raw }).promise;
+      const chunks: string[] = [];
+
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        const textContent = await page.getTextContent();
+        const text = (textContent.items as PdfTextItem[])
+          .map((item) => item.str ?? '')
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        if (text) chunks.push(`[PDF pagina ${pageNumber}]\n${text}`);
+      }
+
+      const extracted = chunks.join('\n\n---\n\n').slice(0, 24000);
+      setInputs((p) => ({
+        ...p,
+        contextoAdicional: [
+          p.contextoAdicional,
+          `[Arquivo de referencia: ${file.name}]`,
+          extracted,
+        ].filter(Boolean).join('\n\n'),
+      }));
+    } finally {
+      setIsParsingPdf(false);
+    }
   };
 
   return (
@@ -70,7 +119,30 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
         <span className="text-sm font-semibold text-foreground">Dados Iniciais</span>
       </div>
 
-      <div className="p-4 space-y-3">
+        <div className="p-4 space-y-3">
+        <div className="space-y-1">
+          <Label className="text-xs">Destino</Label>
+          <Select
+            value={inputs.targetType}
+            onValueChange={(v) => {
+              const targetType = v as GuideFlowInputs['targetType'];
+              setInputs((p) => ({
+                ...p,
+                targetType,
+                visualMode: targetType === 'tool' ? 'prompt_only' : p.visualMode,
+                tipo: targetType === 'tool' ? '' : p.tipo,
+                categoriaPublica: targetType === 'tool' ? (p.categoriaPublica || 'Ferramentas') : p.categoriaPublica,
+              }));
+            }}
+          >
+            <SelectTrigger className="rounded-lg text-xs h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="guide" className="text-xs">Guia</SelectItem>
+              <SelectItem value="tool" className="text-xs">Ferramenta</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Source status indicators */}
         <div className="flex gap-2">
           <div className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-muted">
@@ -92,9 +164,9 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Tema do guia *</Label>
+          <Label className="text-xs">{isTool ? 'Nome da ferramenta *' : 'Tema do guia *'}</Label>
           <Input
-            placeholder="Ex: Como organizar uma rotina de estudos"
+            placeholder={isTool ? 'Ex: Todas do ENEM' : 'Ex: Como organizar uma rotina de estudos'}
             value={inputs.tema}
             onChange={(e) => setInputs((p) => ({ ...p, tema: e.target.value }))}
             className="rounded-lg text-xs h-8"
@@ -139,6 +211,7 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
           </p>
         </div>
 
+        {!isTool && (
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <Label className="text-xs">Tipo de guia</Label>
@@ -167,7 +240,9 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
             <p className="text-[9px] text-muted-foreground leading-tight">Guia a IA · não exibida ao público</p>
           </div>
         </div>
+        )}
 
+        {!isTool && (
         <div className="space-y-1 pt-1 border-t border-border/40">
           <Label className="text-xs flex items-center gap-1">
             <Eye className="h-2.5 w-2.5 text-emerald-600" />
@@ -183,6 +258,7 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
           </Select>
           <p className="text-[9px] text-muted-foreground leading-tight">Apenas badge visual · não influencia geração</p>
         </div>
+        )}
 
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
@@ -218,6 +294,25 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
           />
         </div>
 
+        {isTool && (
+          <div className="space-y-1.5 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-2">
+            <Label className="text-xs flex items-center gap-1">
+              <Upload className="h-3 w-3 text-primary" />
+              PDF de referência da ferramenta
+            </Label>
+            <Input
+              type="file"
+              accept="application/pdf"
+              disabled={isParsingPdf}
+              onChange={(event) => void handlePdfContext(event.target.files?.[0] ?? null)}
+              className="rounded-lg text-xs h-8"
+            />
+            <p className="text-[9px] text-muted-foreground leading-tight">
+              {isParsingPdf ? 'Extraindo texto do PDF...' : pdfName ? `Contexto adicionado: ${pdfName}` : 'Use um PDF impresso do site ou material oficial para alimentar a geração.'}
+            </p>
+          </div>
+        )}
+
         <div className="space-y-1.5">
           <Label className="text-xs font-medium">Modo visual</Label>
           <RadioGroup
@@ -251,7 +346,7 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
           {isGenerating ? (
             <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Gerando...</>
           ) : (
-            <><Sparkles className="h-3.5 w-3.5" /> Gerar guia assistido</>
+            <><Sparkles className="h-3.5 w-3.5" /> {isTool ? 'Gerar ferramenta' : 'Gerar guia assistido'}</>
           )}
         </Button>
 

@@ -64,7 +64,7 @@ function SourcesNodeComponent({ data }: { data: SourcesNodeData }) {
         <div className="bg-primary/8 px-4 py-2.5 border-b border-primary/15 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold">Fontes do Guia</span>
+            <span className="text-sm font-semibold">Fontes do Fluxo</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Badge variant={isReady ? 'default' : 'secondary'} className="text-[10px] h-5">

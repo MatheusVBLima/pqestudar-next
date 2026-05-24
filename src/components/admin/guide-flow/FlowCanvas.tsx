@@ -258,11 +258,12 @@ interface FlowCanvasProps {
   onGuideDataChange: (data: GeneratedGuideData) => void;
   sources: GuideFlowSources;
   onInputsChange?: (inputs: GuideFlowInputs) => void;
+  onTargetTypeChange?: (targetType: GuideFlowInputs['targetType']) => void;
   onRegenerateImage?: (prompt: string, position: string) => void;
   onUpdateImagePrompt?: (position: string, newPrompt: string) => void;
 }
 
-export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataChange, sources, onInputsChange, onRegenerateImage, onUpdateImagePrompt }: FlowCanvasProps) {
+export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataChange, sources, onInputsChange, onTargetTypeChange, onRegenerateImage, onUpdateImagePrompt }: FlowCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorData, setEditorData] = useState<EditorNodeData | null>(null);
@@ -335,6 +336,7 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
             selectedLibrary: libraryName,
             onAutoSuggest: sources.autoSuggest,
             onInputsChange,
+            onTargetTypeChange,
           },
         };
       }
@@ -361,7 +363,7 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
       }
       return node;
     });
-  }, [nodes, onGenerate, isGenerating, sources, libraryName, onInputsChange]);
+  }, [nodes, onGenerate, isGenerating, sources, libraryName, onInputsChange, onTargetTypeChange]);
 
   useEffect(() => {
     if (!isFullscreen) return;

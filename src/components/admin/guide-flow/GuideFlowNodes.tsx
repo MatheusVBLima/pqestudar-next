@@ -525,7 +525,7 @@ export function GuideFlowNodes({ data, onChange }: Props) {
       {/* Flow end marker */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground pl-6">
         <div className="w-2 h-2 rounded-full bg-primary/40" />
-        <span>Fim do guia — {nodes.length} blocos</span>
+        <span>Fim do fluxo — {nodes.length} blocos</span>
       </div>
     </div>
   );

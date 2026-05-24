@@ -142,19 +142,21 @@ serve(async (req) => {
       aiProvider,
       textModel,
       imageModel,
+      targetType,
     } = body;
 
     const selectedProvider = getAiProvider(aiProvider);
-    const shouldGenerateImages = visualMode !== "prompt_only";
+    const isToolTarget = targetType === "tool";
+    const shouldGenerateImages = !isToolTarget && visualMode !== "prompt_only";
 
-    if (!tema || !categoria) {
+    if (!tema || (!isToolTarget && !categoria)) {
       return jsonResponse({ error: "Tema e categoria sao obrigatorios" }, 400);
     }
 
     const hasStructure = !!structureContext?.trim();
     const hasLibrary = !!libraryContext?.trim();
     const hasImageDirective =
-      hasStructure && normalize(structureContext).includes(normalize("diretriz editorial de imagens"));
+      isToolTarget || (hasStructure && normalize(structureContext).includes(normalize("diretriz editorial de imagens")));
 
     const [guidesRes, toolsRes, contestsRes] = await Promise.all([
       supabase.from("guides").select("id, title, slug, category, short_description").eq("is_published", true).limit(30),
@@ -197,7 +199,45 @@ REGRA DE CONFLITO: Se houver conflito entre estes parametros e as diretrizes edi
 ${editorialParts.join("\n\n")}`
       : "";
 
-    const imageInstruction = hasImageDirective
+    const toolEditorialInstruction = isToolTarget
+      ? `\n\n## FORMATO EDITORIAL PARA PAGINA DE FERRAMENTA
+Voce esta gerando uma pagina editorial para uma ferramenta do PqEstudar, nao um guia generico.
+
+Use este formato no content_markdown:
+- Introducao curta, independente e honesta
+- ## O que e [ferramenta]
+- ## Resposta rapida
+- ## O que da para fazer com ela
+- ## Para quem faz mais sentido
+- ## Plano gratuito, pago ou limitacoes de acesso
+- ## Pontos de atencao antes de usar
+- ## Como usar do jeito certo
+- ## Quando ela pode nao ser a melhor opcao
+- ## Como comecar
+- ## FAQ — Perguntas Frequentes
+
+Regras:
+- Escreva como curadoria independente, nao como propaganda.
+- Aponte limites, cuidados e situacoes em que a ferramenta nao e ideal.
+- Nao gere links internos no texto. As relacoes de ferramentas sao feitas automaticamente pela pagina.
+- CTAs podem ser null se nao houver contexto forte.
+- O campo "category" deve representar a principal tag/publico da ferramenta, como "ENEM", "Cursos Gratuitos", "Redacao", "Simulados" ou "IA".
+`
+      : "";
+
+    const imageInstruction = isToolTarget
+      ? `\n\n## IMAGENS PARA PAGINA DE FERRAMENTA
+Gere prompts de imagem para prints/areas da ferramenta. Use 3 imagens internas como padrao minimo. Pode sugerir mais se houver funcionalidades claramente diferentes.
+
+Para cada imagem, inclua no campo "image_prompts":
+- "type": "internal"
+- "position": "after_section_N"
+- "prompt": descreva qual print real/manual deveria entrar naquele ponto
+- "alt_text": texto alternativo em portugues
+- "editorial_function": por que esta imagem ajuda a leitura
+
+Nao gere imagem de capa para ferramenta por padrao. As imagens serao preenchidas inicialmente com placeholder e trocadas manualmente por prints reais.`
+      : hasImageDirective
       ? `\n\n## GERACAO DE PROMPTS VISUAIS
 A diretriz editorial de imagens esta ativa. Voce DEVE gerar prompts visuais para as imagens do guia.
 
@@ -232,6 +272,7 @@ ${hasStructure ? structureContext : "Nenhuma diretriz editorial fornecida."}
 ## BASE FACTUAL
 ${hasLibrary ? libraryContext : "Nenhuma biblioteca factual selecionada. Nao afirme fatos sem fonte."}
 ${editorialModulation}
+${toolEditorialInstruction}
 ${imageInstruction}
 
 ## CTAs contextuais
@@ -257,7 +298,14 @@ Use sempre o titulo: ## FAQ — Perguntas Frequentes
 ## Regras de output
 Retorne exclusivamente um JSON valido, sem markdown code fences e sem texto fora do JSON.`;
 
-    const imageSchema = hasImageDirective
+    const imageSchema = isToolTarget
+      ? `,
+  "image_prompts": [
+    { "type": "internal", "position": "after_section_1", "prompt": "descricao do primeiro print real/manual da ferramenta", "alt_text": "texto alternativo em portugues", "editorial_function": "funcao editorial da imagem" },
+    { "type": "internal", "position": "after_section_3", "prompt": "descricao do segundo print real/manual da ferramenta", "alt_text": "texto alternativo em portugues", "editorial_function": "funcao editorial da imagem" },
+    { "type": "internal", "position": "after_section_6", "prompt": "descricao do terceiro print real/manual da ferramenta", "alt_text": "texto alternativo em portugues", "editorial_function": "funcao editorial da imagem" }
+  ]`
+      : hasImageDirective
       ? `,
   "image_prompts": [
     { "type": "cover", "position": "cover", "prompt": "Wide 16:9 landscape format. detailed visual description in English for AI image generation", "alt_text": "texto alternativo em portugues", "editorial_function": "funcao editorial da imagem" }
@@ -265,9 +313,9 @@ Retorne exclusivamente um JSON valido, sem markdown code fences e sem texto fora
       : `,
   "cover_image_suggestion": "descricao da imagem de capa ideal"`;
 
-    const userPrompt = `Gere um guia completo com base nos seguintes inputs:
+    const userPrompt = `Gere ${isToolTarget ? "uma pagina editorial de ferramenta" : "um guia completo"} com base nos seguintes inputs:
 
-- Tema: ${tema}
+- ${isToolTarget ? "Ferramenta" : "Tema"}: ${tema}
 - Tipo de guia: ${editorialMeta?.tipo?.label || tipo || "pratico"}
 - Categoria: ${editorialMeta?.categoria?.label || categoria}
 - Palavra-chave principal: ${palavraChave || tema}
@@ -277,18 +325,18 @@ ${selectedLibrary ? `- Biblioteca factual: ${selectedLibrary}` : "- ATENCAO: Nen
 
 Retorne um JSON com esta estrutura exata:
 {
-  "title": "titulo do guia",
-  "slug": "slug-do-guia",
-  "short_description": "descricao curta, max 160 chars",
+  "title": "${isToolTarget ? "nome da ferramenta" : "titulo do guia"}",
+  "slug": "${isToolTarget ? "slug-da-ferramenta" : "slug-do-guia"}",
+  "short_description": "${isToolTarget ? "descricao curta da ferramenta, max 180 chars" : "descricao curta, max 160 chars"}",
   "seo_title": "titulo SEO, max 60 chars",
   "seo_description": "meta description, max 160 chars",
-  "category": "${editorialMeta?.categoria?.label || categoria}",
+  "category": "${editorialMeta?.categoria?.label || categoria || "Ferramentas"}",
   "author_name": "Matheus Dias",
   "content_markdown": "conteudo completo em Markdown",
   "cta_top": { "label": "texto do botao", "url": "/caminho-interno", "text": "texto descritivo" },
   "cta_middle": { "label": "texto do botao", "url": "/caminho-interno", "text": "texto descritivo" },
   "cta_final": { "label": "texto do botao", "url": "/caminho-interno", "text": "texto descritivo" },
-  "internal_links": [{ "label": "texto do link", "url": "/guias/slug" }]${imageSchema}
+  "internal_links": ${isToolTarget ? "[]" : '[{ "label": "texto do link", "url": "/guias/slug" }]'}${imageSchema}
 }`;
 
     const aiResult = await callTextAi({

@@ -165,7 +165,7 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Fluxo de Guias */}
+        {/* Fluxos */}
         <SidebarGroup className={groupClass}>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -173,12 +173,12 @@ export function AdminSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === '/admin/fluxo-guias'}
-                  tooltip="Fluxo de Guias"
+                  tooltip="Fluxos"
                   className={itemClass(pathname === '/admin/fluxo-guias')}
                 >
                   <Link href="/admin/fluxo-guias">
                     <Sparkles className="h-4 w-4" />
-                    <span>Fluxo de Guias</span>
+                    <span>Fluxos</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -21,6 +21,7 @@ export interface GuideFlowSources {
   toggleStructure: (id: string) => void;
   selectAllStructure: () => void;
   deselectAllStructure: () => void;
+  applyTargetDefaults: (targetType: 'guide' | 'tool') => void;
 
   // Library selections
   selectedLibraryIds: string[];
@@ -167,6 +168,36 @@ export function useGuideFlowSources(): GuideFlowSources {
     setSelectedStructureIds([]);
   }, []);
 
+  const applyTargetDefaults = useCallback((targetType: 'guide' | 'tool') => {
+    if (structureEntries.length === 0) return;
+    if (targetType === 'guide') {
+      setSelectedStructureIds(structureEntries.map(e => e.id));
+      return;
+    }
+
+    const shouldUseForTool = (entry: KnowledgeEntry) => {
+      const text = normalize(`${entry.title} ${entry.source_path ?? ''}`);
+      if (text.includes('sistema de links internos')) return false;
+      if (text.includes('funcao de cada tipo de guia')) return false;
+      if (text.includes('função de cada tipo de guia')) return false;
+      if (text.includes('imagens para guias')) return false;
+      if (text.includes('imagem') && text.includes('guia') && !text.includes('ferramenta')) return false;
+
+      return (
+        text.includes('estilo de titulos') ||
+        text.includes('estilo de títulos') ||
+        text.includes('ritmo de leitura') ||
+        text.includes('linguagem padrao') ||
+        text.includes('linguagem padrão') ||
+        text.includes('estrutura textual') ||
+        text.includes('ferramenta')
+      );
+    };
+
+    const toolStructureIds = structureEntries.filter(shouldUseForTool).map(e => e.id);
+    setSelectedStructureIds(toolStructureIds.length > 0 ? toolStructureIds : structureEntries.map(e => e.id));
+  }, [structureEntries]);
+
   // ── Library auto-suggestion ──
   const autoSuggest = useCallback((tema: string, palavraChave: string) => {
     if (libraryEntries.length === 0) {
@@ -239,6 +270,7 @@ export function useGuideFlowSources(): GuideFlowSources {
     toggleStructure,
     selectAllStructure,
     deselectAllStructure,
+    applyTargetDefaults,
     selectedLibraryIds: effectiveLibraryIds,
     suggestedLibraryIds,
     selectionMode,

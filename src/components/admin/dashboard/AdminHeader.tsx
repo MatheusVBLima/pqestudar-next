@@ -15,6 +15,8 @@ const routeTitles: Record<string, string> = {
   '/admin/insights/seo-audit': 'Insights — SEO Audit',
   '/admin/insights/copy-audit': 'Insights — Copy Audit',
   '/admin/curadorias': 'Curadorias',
+  '/admin/fluxo-guias': 'Fluxos',
+  '/admin/fluxo-guias/biblioteca': 'Biblioteca',
   '/admin/premium/usuarios': 'Usuários & Assinaturas',
   '/admin/premium/tokens': 'Tokens de Resgate',
   '/admin/premium/importar-beneficios': 'Importar Benefícios',

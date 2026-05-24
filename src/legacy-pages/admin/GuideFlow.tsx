@@ -12,8 +12,9 @@ import { hasValidationErrors } from '@/components/admin/guide-flow/GuideFlowVali
 import { findOption, TIPOS_GUIA, CATEGORIAS, INTENCOES, mapInternaToPublica } from '@/lib/guide-editorial-options';
 import { useGuidesMutations } from '@/hooks/useGuides';
 import { useGuideFlowSources } from '@/hooks/useGuideFlowSources';
+import { createToolAction, updateToolAction } from '@/app/actions/tools';
 import { supabase } from '@/integrations/supabase/client';
-import type { Json, Tables, TablesInsert } from '@/integrations/supabase/types';
+import type { Json, Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { toast } from '@/hooks/use-toast';
 import { Save, Send, RotateCcw } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-message';
@@ -26,19 +27,24 @@ const EMPTY_GUIDE: GeneratedGuideData = {
   image_prompts: [], generated_images: [],
 };
 
+const TOOL_PLACEHOLDER_IMAGE = '/images/pqestudar-em-construcao.png';
+
 type GuideFlowStoredData = Partial<GeneratedGuideData> & { inputs?: GuideFlowInputs };
 type GuideRow = Tables<'guides'> & { flow_data?: GuideFlowStoredData | null };
+type ToolRow = Tables<'tools'>;
 
 export default function GuideFlow() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { createGuide, updateGuide } = useGuidesMutations();
   const sources = useGuideFlowSources();
+  const { applyTargetDefaults } = sources;
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [guideData, setGuideData] = useState<GeneratedGuideData | null>(null);
   const [linkedGuideId, setLinkedGuideId] = useState<string | null>(null);
+  const [linkedToolId, setLinkedToolId] = useState<string | null>(null);
   const [currentInputs, setCurrentInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
 
   // Load guide from URL param ?guide=ID
@@ -100,7 +106,9 @@ export default function GuideFlow() {
           cta_top: guide.cta_top_label ? { label: guide.cta_top_label, url: guide.cta_top_url, text: guide.cta_top_text } : null,
           cta_middle: guide.cta_middle_label ? { label: guide.cta_middle_label, url: guide.cta_middle_url, text: guide.cta_middle_text } : null,
           cta_final: guide.cta_final_label ? { label: guide.cta_final_label, url: guide.cta_final_url, text: guide.cta_final_text } : null,
-          internal_links: Array.isArray(guide.internal_links) ? guide.internal_links : [],
+          internal_links: Array.isArray(guide.internal_links)
+            ? (guide.internal_links as Array<{ label: string; url: string }>)
+            : [],
           cover_image_suggestion: '',
           cover_image_url: guide.cover_image_url ?? '',
           image_prompts: [],
@@ -111,9 +119,65 @@ export default function GuideFlow() {
     })();
   }, [searchParams]);
 
+  // Load tool from URL param ?tool=ID
+  useEffect(() => {
+    const toolId = searchParams?.get('tool') ?? null;
+    if (!toolId) return;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from('tools')
+        .select('*')
+        .eq('id', toolId)
+        .single();
+
+      if (error || !data) {
+        toast({ title: 'Ferramenta não encontrada', variant: 'destructive' });
+        return;
+      }
+
+      const tool = data as ToolRow;
+      setLinkedToolId(tool.id);
+      setLinkedGuideId(null);
+      const restoredInputs: GuideFlowInputs = {
+        ...DEFAULT_GUIDE_FLOW_INPUTS,
+        targetType: 'tool',
+        tema: tool.name,
+        categoria: tool.tags?.[0] ?? '',
+        categoriaPublica: tool.tags?.[0] ?? 'Ferramentas',
+        palavraChave: tool.name,
+      };
+      setCurrentInputs(restoredInputs);
+      applyTargetDefaults('tool');
+      setGuideData({
+        ...EMPTY_GUIDE,
+        title: tool.name,
+        slug: tool.slug ?? '',
+        short_description: tool.description,
+        seo_title: tool.seo_title ?? '',
+        seo_description: tool.seo_description ?? '',
+        category: tool.tags?.[0] ?? '',
+        public_category: tool.tags?.[0] ?? 'Ferramentas',
+        author_name: 'PqEstudar',
+        content_markdown: tool.content_markdown ?? '',
+        cta_top: tool.cta_top_label ? { label: tool.cta_top_label, url: tool.cta_top_url ?? '', text: tool.cta_top_text ?? '' } : null,
+        cta_middle: tool.cta_middle_label ? { label: tool.cta_middle_label, url: tool.cta_middle_url ?? '', text: tool.cta_middle_text ?? '' } : null,
+        cta_final: tool.cta_final_label ? { label: tool.cta_final_label, url: tool.cta_final_url ?? '', text: tool.cta_final_text ?? '' } : null,
+        internal_links: Array.isArray(tool.internal_links) ? tool.internal_links as Array<{ label: string; url: string }> : [],
+        cover_image_url: tool.cover_image_url ?? '',
+      });
+      toast({ title: 'Ferramenta carregada', description: `"${tool.name}" aberta no fluxo.` });
+    })();
+  }, [searchParams, applyTargetDefaults]);
+
   const handleInputsChange = useCallback((inputs: GuideFlowInputs) => {
     setCurrentInputs(inputs);
   }, []);
+
+  const handleTargetTypeChange = useCallback((targetType: GuideFlowInputs['targetType']) => {
+    setCurrentInputs((prev) => prev.targetType === targetType ? prev : { ...prev, targetType });
+    applyTargetDefaults(targetType);
+  }, [applyTargetDefaults]);
 
   const handleGenerate = useCallback(async (inputs: GuideFlowInputs) => {
     setIsGenerating(true);
@@ -266,10 +330,14 @@ export default function GuideFlow() {
 
   /** Inject internal images into the markdown content at their correct positions */
   const buildFinalMarkdown = (data: GeneratedGuideData): string => {
+    const isToolFlow = currentInputs.targetType === 'tool';
     const internalImages = (data.generated_images ?? data.image_prompts ?? [])
-      .filter(img => img.type === 'internal' && img.status === 'success' && img.url);
+      .filter(img => img.type === 'internal' && ((img.status === 'success' && img.url) || isToolFlow));
 
     if (internalImages.length === 0) return data.content_markdown;
+
+    const imageUrlFor = (img: ImagePrompt) =>
+      img.status === 'success' && img.url ? img.url : TOOL_PLACEHOLDER_IMAGE;
 
     // Parse positions like "after_section_1", "after_section_2" etc.
     const imagesBySection = new Map<number, typeof internalImages>();
@@ -286,7 +354,7 @@ export default function GuideFlow() {
     if (imagesBySection.size === 0) {
       // No positional info — append all at the end
       const suffix = internalImages
-        .map(img => `\n\n<img src="${img.url}" alt="${img.alt_text || ''}" width="100%" loading="lazy" decoding="async" />\n`)
+        .map(img => `\n\n<img src="${imageUrlFor(img)}" alt="${img.alt_text || 'Imagem em construção do PqEstudar'}" width="100%" loading="lazy" decoding="async" />\n`)
         .join('');
       return data.content_markdown + suffix;
     }
@@ -318,7 +386,7 @@ export default function GuideFlow() {
       if (!section) continue;
 
       const imgTags = images
-        .map(img => `<img src="${img.url}" alt="${img.alt_text || ''}" width="100%" loading="lazy" decoding="async" />`)
+        .map(img => `<img src="${imageUrlFor(img)}" alt="${img.alt_text || 'Imagem em construção do PqEstudar'}" width="100%" loading="lazy" decoding="async" />`)
         .join('\n\n');
 
       result.splice(section.endLine + 1, 0, '', imgTags, '');
@@ -329,8 +397,14 @@ export default function GuideFlow() {
 
   const handleSave = async (publish: boolean) => {
     if (!guideData) return;
-    if (hasValidationErrors(guideData)) {
+    const isToolFlow = currentInputs.targetType === 'tool';
+    if (!isToolFlow && hasValidationErrors(guideData)) {
       toast({ title: 'Erros de validação', description: 'Corrija os campos obrigatórios antes de salvar.', variant: 'destructive' });
+      return;
+    }
+
+    if (isToolFlow && (!guideData.title.trim() || !guideData.short_description.trim())) {
+      toast({ title: 'Campos obrigatórios', description: 'Informe nome e descrição da ferramenta antes de salvar.', variant: 'destructive' });
       return;
     }
 
@@ -344,7 +418,53 @@ export default function GuideFlow() {
         inputs: currentInputs,
       };
 
-      const guidePayload: TablesInsert<'guides'> = {
+      if (isToolFlow) {
+        const tags = Array.from(new Set([
+          guideData.public_category,
+          guideData.category,
+          currentInputs.palavraChave,
+        ].map((value) => value?.trim()).filter(Boolean))) as string[];
+
+        const toolPayload: Record<string, unknown> = {
+          name: guideData.title,
+          slug: guideData.slug,
+          description: guideData.short_description,
+          seo_title: guideData.seo_title || null,
+          seo_description: guideData.seo_description || null,
+          content_markdown: finalMarkdown,
+          cover_image_url: guideData.cover_image_url || null,
+          is_visible: publish,
+          is_featured: false,
+          featured_indefinite: false,
+          sort_order: 0,
+          tags,
+          internal_links: [],
+          cta_top_label: guideData.cta_top?.label || null,
+          cta_top_url: guideData.cta_top?.url || null,
+          cta_top_text: guideData.cta_top?.text || null,
+          cta_middle_label: guideData.cta_middle?.label || null,
+          cta_middle_url: guideData.cta_middle?.url || null,
+          cta_middle_text: guideData.cta_middle?.text || null,
+          cta_final_label: guideData.cta_final?.label || null,
+          cta_final_url: guideData.cta_final?.url || null,
+          cta_final_text: guideData.cta_final?.text || null,
+        };
+
+        const result = linkedToolId
+          ? await updateToolAction({ id: linkedToolId, ...toolPayload })
+          : await createToolAction(toolPayload);
+
+        if (result.error) throw new Error(result.error);
+
+        toast({
+          title: publish ? 'Ferramenta publicada!' : 'Ferramenta salva!',
+          description: `"${guideData.title}" foi ${publish ? 'publicada' : 'salva como rascunho'}.`,
+        });
+        router.push(`/ferramentas/${guideData.slug}`);
+        return;
+      }
+
+      const guidePayload: TablesUpdate<'guides'> = {
         title: guideData.title,
         slug: guideData.slug,
         short_description: guideData.short_description,
@@ -374,10 +494,12 @@ export default function GuideFlow() {
         await updateGuide.mutateAsync({ id: linkedGuideId, ...guidePayload });
       } else {
         // Create new guide
-        guidePayload.internal_code = `FLOW-${Date.now()}`;
-        guidePayload.is_featured = false;
-        guidePayload.sort_order = 0;
-        await createGuide.mutateAsync(guidePayload);
+        await createGuide.mutateAsync({
+          ...guidePayload,
+          internal_code: `FLOW-${Date.now()}`,
+          is_featured: false,
+          sort_order: 0,
+        } as TablesInsert<'guides'>);
       }
 
       toast({
@@ -394,14 +516,16 @@ export default function GuideFlow() {
 
   const handleReset = () => {
     setGuideData(null);
+    setLinkedGuideId(null);
+    setLinkedToolId(null);
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <PageHeader
-          title="Fluxo de Guias"
-          description="Criação assistida com base na Biblioteca de Conhecimento."
+          title="Fluxos"
+          description="Criação assistida de guias e páginas de ferramentas com base na Biblioteca de Conhecimento."
         />
         <div className="flex items-center gap-2">
           {guideData && (
@@ -427,6 +551,7 @@ export default function GuideFlow() {
         onGuideDataChange={setGuideData}
         sources={sources}
         onInputsChange={handleInputsChange}
+        onTargetTypeChange={handleTargetTypeChange}
         onRegenerateImage={handleRegenerateImage}
         onUpdateImagePrompt={handleUpdateImagePrompt}
       />

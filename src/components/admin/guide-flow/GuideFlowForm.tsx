@@ -8,6 +8,7 @@ import { Sparkles, Loader2, Cog, Eye } from 'lucide-react';
 import { TIPOS_GUIA, CATEGORIAS, INTENCOES, CATEGORIAS_PUBLICAS, mapInternaToPublica } from '@/lib/guide-editorial-options';
 
 export type GuideFlowAiProvider = 'lovable' | 'openai';
+export type FlowTargetType = 'guide' | 'tool';
 
 export const AI_PROVIDER_OPTIONS: Array<{ value: GuideFlowAiProvider; label: string; description: string }> = [
   { value: 'lovable', label: 'Lovable / Gemini', description: 'Gateway atual do Lovable' },
@@ -20,6 +21,7 @@ export const AI_MODEL_OPTIONS: Record<GuideFlowAiProvider, string[]> = {
 };
 
 export const DEFAULT_GUIDE_FLOW_INPUTS: GuideFlowInputs = {
+  targetType: 'guide',
   tema: '',
   tipo: '',
   categoria: '',
@@ -34,6 +36,7 @@ export const DEFAULT_GUIDE_FLOW_INPUTS: GuideFlowInputs = {
 };
 
 export interface GuideFlowInputs {
+  targetType: FlowTargetType;
   tema: string;
   tipo: string;
   categoria: string;          // Categoria Interna
@@ -64,7 +67,8 @@ export function GuideFlowForm({ onGenerate, isGenerating }: Props) {
     }));
   };
 
-  const canSubmit = inputs.tema.trim() && inputs.categoria && inputs.categoriaPublica && !isGenerating;
+  const isTool = inputs.targetType === 'tool';
+  const canSubmit = inputs.tema.trim() && (isTool || inputs.categoria) && (isTool || inputs.categoriaPublica) && !isGenerating;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,11 +77,27 @@ export function GuideFlowForm({ onGenerate, isGenerating }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="space-y-1.5 rounded-[var(--admin-radius)] border border-primary/20 bg-primary/5 p-3">
+        <Label>Destino do fluxo</Label>
+        <Select value={inputs.targetType} onValueChange={(v) => {
+          const targetType = v as FlowTargetType;
+          setInputs((p) => ({ ...p, targetType, visualMode: targetType === 'tool' ? 'prompt_only' : p.visualMode }));
+        }}>
+          <SelectTrigger className="rounded-[var(--admin-radius)] bg-background">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="guide">Guia</SelectItem>
+            <SelectItem value="tool">Ferramenta</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="space-y-1.5">
-        <Label htmlFor="tema">Tema do guia *</Label>
+        <Label htmlFor="tema">{isTool ? 'Nome da ferramenta *' : 'Tema do guia *'}</Label>
         <Input
           id="tema"
-          placeholder="Ex: Como organizar uma rotina de estudos para concursos"
+          placeholder={isTool ? 'Ex: Todas do ENEM' : 'Ex: Como organizar uma rotina de estudos para concursos'}
           value={inputs.tema}
           onChange={(e) => setInputs((p) => ({ ...p, tema: e.target.value }))}
           className="rounded-[var(--admin-radius)]"
@@ -231,12 +251,12 @@ export function GuideFlowForm({ onGenerate, isGenerating }: Props) {
         {isGenerating ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Gerando guia...
+            {isTool ? 'Gerando ferramenta...' : 'Gerando guia...'}
           </>
         ) : (
           <>
             <Sparkles className="h-4 w-4" />
-            Gerar guia assistido
+            {isTool ? 'Gerar página de ferramenta' : 'Gerar guia assistido'}
           </>
         )}
       </Button>
