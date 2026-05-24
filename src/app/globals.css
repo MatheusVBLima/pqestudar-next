@@ -431,6 +431,36 @@ All colors MUST be HSL.
   margin-bottom: 2rem; /* 32px */
 }
 
+.concurso-content h2 {
+  font-size: 2rem;
+  line-height: 1.25;
+}
+
+.concurso-content h3 {
+  font-size: 1.35rem;
+  line-height: 1.3;
+}
+
+.concurso-content p,
+.concurso-content li {
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+
+.concurso-content a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: hsl(var(--primary) / 0.45);
+  font-weight: 500;
+}
+
+.concurso-content a:hover {
+  text-decoration-color: hsl(var(--primary));
+  text-decoration-thickness: 2px;
+}
+
 /* ── Guide mobile overrides ── */
 @media (max-width: 639px) {
   .guide-content-primary h2:first-of-type {
@@ -444,6 +474,19 @@ All colors MUST be HSL.
   .guide-content p,
   .guide-content li {
     font-size: 1rem; /* 16px */
+  }
+
+  .concurso-content h2 {
+    font-size: 1.5rem;
+  }
+
+  .concurso-content h3 {
+    font-size: 1.2rem;
+  }
+
+  .concurso-content p,
+  .concurso-content li {
+    font-size: 1rem;
   }
 }
 

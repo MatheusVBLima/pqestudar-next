@@ -329,7 +329,7 @@ export default function ConcursoDetalheNext() {
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col bg-background">
-        <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
+        <main className="flex-1 w-full max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 py-10">
           <Skeleton className="h-8 w-32 mb-8" />
           <Skeleton className="h-12 w-3/4 mb-4" />
           <Skeleton className="h-6 w-1/2 mb-8" />
@@ -345,7 +345,7 @@ export default function ConcursoDetalheNext() {
   if (error || !oportunidade) {
     return (
       <div className="flex-1 flex flex-col bg-background">
-        <main className="flex-1 container mx-auto px-4 py-16 max-w-4xl text-center">
+        <main className="flex-1 w-full max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 py-16 text-center">
           <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h1 className="text-2xl font-bold mb-2">
             {error || "Oportunidade não encontrada"}
@@ -374,7 +374,8 @@ export default function ConcursoDetalheNext() {
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
       />
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
+      <main className="flex-1 w-full max-w-[1280px] mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14">
+        <div className="mx-auto max-w-[1040px]">
         {/* Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="mb-6">
           <ol className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -429,11 +430,11 @@ export default function ConcursoDetalheNext() {
               </Badge>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <h1 className="max-w-[1100px] text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-5">
               {oportunidade.titulo}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-4 text-sm md:text-base text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
                 <time dateTime={oportunidade.data_publicacao}>
@@ -473,17 +474,17 @@ export default function ConcursoDetalheNext() {
           <Separator className="my-8" />
 
           {/* Resumo Editorial */}
-          <section className="mb-8">
-            <Card>
+          <section className="mb-10">
+            <Card className="rounded-[1.2rem]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-2xl">
                   <FileText className="h-5 w-5" />
                   Sobre esta oportunidade
                 </CardTitle>
               </CardHeader>
-              <CardContent className="prose prose-neutral dark:prose-invert max-w-none">
+              <CardContent className="concurso-content prose prose-neutral dark:prose-invert max-w-none text-foreground/80">
                 {oportunidade.resumo_editorial ? (
-                  <p className="text-base leading-relaxed">{oportunidade.resumo_editorial}</p>
+                  <p>{oportunidade.resumo_editorial}</p>
                 ) : (
                   <p className="text-muted-foreground italic">
                     Informações detalhadas serão adicionadas em breve. Consulte as fontes oficiais abaixo para mais informações.
@@ -491,7 +492,7 @@ export default function ConcursoDetalheNext() {
                 )}
 
                 {oportunidade.orgao && (
-                  <div className="flex items-center gap-2 mt-4 text-sm">
+                  <div className="flex items-center gap-2 mt-5 text-base">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Órgão:</span>
                     <span>{oportunidade.orgao}</span>
@@ -499,7 +500,7 @@ export default function ConcursoDetalheNext() {
                 )}
 
                 {oportunidade.banca && (
-                  <div className="flex items-center gap-2 mt-2 text-sm">
+                  <div className="flex items-center gap-2 mt-2 text-base">
                     <Briefcase className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Banca:</span>
                     <span>{oportunidade.banca}</span>
@@ -511,16 +512,16 @@ export default function ConcursoDetalheNext() {
 
           {/* Conteúdo Principal */}
           {(oportunidade.conteudo_html || oportunidade.conteudo_markdown || oportunidade.conteudo_principal) && (
-            <section className="mb-8">
-              <Card>
+            <section className="mb-10">
+              <Card className="rounded-[1.2rem]">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-2xl">
                     <FileText className="h-5 w-5" />
                     Informações Detalhadas
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="prose prose-neutral dark:prose-invert max-w-none">
-                  <MarkdownContent>
+                  <MarkdownContent className="concurso-content text-foreground/80">
                     {oportunidade.conteudo_html ||
                       oportunidade.conteudo_markdown ||
                       oportunidade.conteudo_principal}
@@ -532,10 +533,10 @@ export default function ConcursoDetalheNext() {
 
           {/* Atualizações */}
           {atualizacoes.length > 0 && (
-            <section className="mb-8">
-              <Card>
+            <section className="mb-10">
+              <Card className="rounded-[1.2rem]">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-2xl">
                     <Clock className="h-5 w-5" />
                     Atualizações
                   </CardTitle>
@@ -557,7 +558,7 @@ export default function ConcursoDetalheNext() {
                         </time>
                         <MarkdownContent
                           variant="prose"
-                          className="text-sm mt-1 max-w-none"
+                          className="text-base mt-1 max-w-none leading-relaxed"
                         >
                           {atualizacao.texto}
                         </MarkdownContent>
@@ -570,10 +571,10 @@ export default function ConcursoDetalheNext() {
           )}
 
           {/* Tags/Classificação */}
-          <section className="mb-8">
-            <Card>
+          <section className="mb-10">
+            <Card className="rounded-[1.2rem]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-2xl">
                   <GraduationCap className="h-5 w-5" />
                   Classificação
                 </CardTitle>
@@ -645,10 +646,10 @@ export default function ConcursoDetalheNext() {
           </section>
 
           {/* Fontes */}
-          <section className="mb-8">
-            <Card>
+          <section className="mb-10">
+            <Card className="rounded-[1.2rem]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-2xl">
                   <LinkIcon className="h-5 w-5" />
                   Fontes
                 </CardTitle>
@@ -719,6 +720,7 @@ export default function ConcursoDetalheNext() {
             </div>
           </div>
         </motion.article>
+        </div>
       </main>
 
       
