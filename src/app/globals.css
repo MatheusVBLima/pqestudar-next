@@ -332,6 +332,52 @@ All colors MUST be HSL.
   background: transparent;
 }
 
+.admin-radius [data-slot="admin-sidebar"] [data-sidebar="group"] {
+  padding: 0.2rem 0;
+}
+
+.admin-radius [data-slot="admin-sidebar"] [data-sidebar="menu"] {
+  gap: 0.15rem;
+}
+
+.admin-radius [data-slot="admin-sidebar"] .admin-sidebar-collapsible-content {
+  overflow: hidden;
+}
+
+.admin-radius [data-slot="admin-sidebar"] .admin-sidebar-collapsible-content[data-state="open"] {
+  animation: admin-sidebar-expand 190ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.admin-radius [data-slot="admin-sidebar"] .admin-sidebar-collapsible-content[data-state="closed"] {
+  animation: admin-sidebar-collapse 150ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+@keyframes admin-sidebar-expand {
+  from {
+    height: 0;
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes admin-sidebar-collapse {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    height: 0;
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
 /* Collapsed admin sidebar: offcanvas mode hides completely, no icon-mode rules needed */
 
 /* ── Guide detail typography (/guias/:slug) ── */

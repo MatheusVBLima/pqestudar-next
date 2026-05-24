@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useEffect, useState } from 'react';
+import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
   Controls,
+  ControlButton,
   MiniMap,
   useNodesState,
   useEdgesState,
@@ -14,6 +15,7 @@ import {
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { Maximize2, Minimize2 } from 'lucide-react';
 
 import { InputNode } from './flow-nodes/InputNode';
 import { MetaNode } from './flow-nodes/MetaNode';
@@ -261,9 +263,11 @@ interface FlowCanvasProps {
 }
 
 export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataChange, sources, onInputsChange, onRegenerateImage, onUpdateImagePrompt }: FlowCanvasProps) {
+  const canvasRef = useRef<HTMLDivElement>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorData, setEditorData] = useState<EditorNodeData | null>(null);
   const [imageEditorPosition, setImageEditorPosition] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const structureNames = useMemo(
     () => sources.activeStructureEntries.map(e => e.source_path ?? e.title),
@@ -359,8 +363,61 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
     });
   }, [nodes, onGenerate, isGenerating, sources, libraryName, onInputsChange]);
 
+  useEffect(() => {
+    if (!isFullscreen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsFullscreen(false);
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === canvasRef.current);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (isFullscreen) {
+      if (document.fullscreenElement) {
+        void document.exitFullscreen();
+      } else {
+        setIsFullscreen(false);
+      }
+      return;
+    }
+
+    setIsFullscreen(true);
+    void canvasRef.current?.requestFullscreen?.().catch(() => {
+      setIsFullscreen(true);
+    });
+  }, [isFullscreen]);
+
   return (
-    <div className="w-full h-[calc(100vh-140px)] rounded-[var(--admin-radius)] overflow-hidden border border-border/50 bg-background/50">
+    <div
+      ref={canvasRef}
+      className={
+        isFullscreen
+          ? "fixed inset-0 z-[100] h-screen w-screen overflow-hidden bg-background"
+          : "w-full h-[calc(100vh-216px)] min-h-[520px] rounded-[var(--admin-radius)] overflow-hidden border border-border/50 bg-background/50"
+      }
+    >
       <ReactFlow
         nodes={nodesWithCallbacks}
         edges={edges}
@@ -380,8 +437,17 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} className="!bg-muted/30" />
         <Controls
           className="!bg-card !border-border !rounded-[var(--admin-radius)] !shadow-card [&>button]:!bg-card [&>button]:!border-border [&>button]:!text-foreground [&>button:hover]:!bg-muted"
+          showFitView={false}
           showInteractive={false}
-        />
+        >
+          <ControlButton
+            onClick={toggleFullscreen}
+            title={isFullscreen ? 'Sair da tela cheia' : 'Expandir canvas'}
+            aria-label={isFullscreen ? 'Sair da tela cheia' : 'Expandir canvas'}
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </ControlButton>
+        </Controls>
         <MiniMap
           className="!bg-card !border-border !rounded-[var(--admin-radius)] !shadow-card"
           nodeColor="hsl(var(--primary) / 0.3)"
