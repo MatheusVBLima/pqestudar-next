@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/footer-next";
 
 function shouldShowFooter(pathname: string) {
   if (pathname === "/pqestudar-premium") return false;
+  if (pathname === "/mapa-dos-beneficios" || pathname.startsWith("/mapa-dos-beneficios/")) return false;
   if (pathname === "/premium") return true;
 
   const hiddenFooterRoutes = [
@@ -23,7 +24,10 @@ function shouldShowFooter(pathname: string) {
 }
 
 function shouldShowNavbar(pathname: string) {
-  return pathname !== "/pqestudar-premium";
+  if (pathname === "/pqestudar-premium") return false;
+  if (pathname === "/mapa-dos-beneficios" || pathname.startsWith("/mapa-dos-beneficios/")) return false;
+
+  return true;
 }
 
 export function PublicShellNext({ children }: { children: React.ReactNode }) {

@@ -178,10 +178,44 @@ All colors MUST be HSL.
     background: hsl(var(--muted));
   }
 
+  html.pq-premium-scrollbar-page::-webkit-scrollbar,
+  body.pq-premium-scrollbar-page::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  html.pq-premium-scrollbar-page::-webkit-scrollbar-track,
+  body.pq-premium-scrollbar-page::-webkit-scrollbar-track {
+    background: hsl(300 10% 96%);
+    border-radius: 4px;
+  }
+
+  html.pq-premium-scrollbar-page::-webkit-scrollbar-thumb,
+  body.pq-premium-scrollbar-page::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, hsl(300 100% 25%), hsl(300 100% 25% / 0.8));
+    border-radius: 4px;
+  }
+
+  html.pq-premium-scrollbar-page::-webkit-scrollbar-thumb:hover,
+  body.pq-premium-scrollbar-page::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, hsl(300 100% 25% / 0.9), hsl(300 100% 25% / 0.7));
+  }
+
+  html.pq-premium-scrollbar-page::-webkit-scrollbar-corner,
+  body.pq-premium-scrollbar-page::-webkit-scrollbar-corner {
+    background: hsl(300 10% 96%);
+  }
+
   /* Firefox scrollbar styles */
   * {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+  }
+
+  html.pq-premium-scrollbar-page,
+  body.pq-premium-scrollbar-page {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(300 100% 25%) hsl(300 10% 96%);
   }
 
   /* Custom cursor states */

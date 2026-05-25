@@ -236,6 +236,16 @@ function UrgencyBar() {
 }
 
 export default function PqEstudarPremiumLanding() {
+  useEffect(() => {
+    document.documentElement.classList.add("pq-premium-scrollbar-page");
+    document.body.classList.add("pq-premium-scrollbar-page");
+
+    return () => {
+      document.documentElement.classList.remove("pq-premium-scrollbar-page");
+      document.body.classList.remove("pq-premium-scrollbar-page");
+    };
+  }, []);
+
   return (
     <main className="dark min-h-screen bg-[#070707] text-foreground">
       <UrgencyBar />
