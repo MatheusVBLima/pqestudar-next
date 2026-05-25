@@ -1,50 +1,38 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Save,
+  BookOpen,
   Globe,
-  Search,
-  Plus,
-  X,
   GripVertical,
   Loader2,
+  Plus,
+  Save,
+  Search,
+  Trophy,
+  Wrench,
+  X,
 } from "lucide-react";
+import { DndContext, DragEndEvent, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { useUserRoles } from "@/hooks/useUserRoles";
-import { useTools, Tool } from "@/hooks/useTools";
 import {
+  CurationContentItem,
+  useCheckSlugUnique,
+  useCurationAutomationSources,
   useCurationById,
   useCurationMutations,
-  useCheckSlugUnique,
 } from "@/hooks/useCurations";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 
-// Slugify helper
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -57,33 +45,37 @@ function slugify(text: string): string {
     .slice(0, 80);
 }
 
-// Sortable item component
-function SortableToolItem({
-  tool,
+function ItemTypeIcon({ type, className }: { type: CurationContentItem["type"]; className?: string }) {
+  if (type === "contest") return <Trophy className={className} />;
+  if (type === "guide") return <BookOpen className={className} />;
+  return <Wrench className={className} />;
+}
+
+function itemTypeLabel(type: CurationContentItem["type"]) {
+  if (type === "contest") return "Concurso";
+  if (type === "guide") return "Guia";
+  return "Ferramenta";
+}
+
+function SortableCurationItem({
+  item,
   onRemove,
 }: {
-  tool: Tool;
+  item: CurationContentItem;
   onRemove: () => void;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: tool.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: `${item.type}:${item.id}`,
+  });
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+      }}
       className="flex items-center gap-3 p-3 bg-card border rounded-lg group"
     >
       <div
@@ -95,27 +87,27 @@ function SortableToolItem({
         <GripVertical className="w-4 h-4 text-muted-foreground" />
       </div>
       <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0">
-        {tool.icon_url ? (
-          <img
-            src={tool.icon_url}
-            alt={tool.name}
-            className="w-full h-full object-contain"
-            referrerPolicy="no-referrer"
-          />
+        {item.imageUrl ? (
+          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
         ) : (
-          <div className="w-5 h-5 bg-primary/10 rounded-full" />
+          <ItemTypeIcon type={item.type} className="w-5 h-5 text-muted-foreground" />
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{tool.name}</p>
-        <p className="text-xs text-muted-foreground truncate">{tool.description}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-medium truncate">{item.title}</p>
+          <span className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground">
+            {itemTypeLabel(item.type)}
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground truncate">{item.description}</p>
       </div>
       <Button
         variant="ghost"
         size="sm"
         onClick={onRemove}
         className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
-        aria-label="Remover ferramenta"
+        aria-label="Remover item"
       >
         <X className="h-4 w-4" />
       </Button>
@@ -130,110 +122,83 @@ export default function AdminCuradoriasForm() {
   const isEditing = id && id !== "new";
 
   const { isAdmin, loading: loadingRoles } = useUserRoles();
-  const { data: existingCuration, isLoading: loadingCuration } = useCurationById(
-    isEditing ? id : ""
-  );
-  const { tools: allTools, loading: loadingTools } = useTools({ includeInvisible: true });
+  const { data: existingCuration, isLoading: loadingCuration } = useCurationById(isEditing ? id : "");
+  const { data: allItems = [], isLoading: loadingItems } = useCurationAutomationSources();
   const { create, update } = useCurationMutations();
   const checkSlugUnique = useCheckSlugUnique();
 
-  // Form state
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [description, setDescription] = useState("");
-  const [selectedTools, setSelectedTools] = useState<Tool[]>([]);
-  const [toolSearch, setToolSearch] = useState("");
+  const [selectedItems, setSelectedItems] = useState<CurationContentItem[]>([]);
+  const [itemSearch, setItemSearch] = useState("");
   const [slugError, setSlugError] = useState("");
 
-  // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  // Initialize form with existing data
   useEffect(() => {
-    if (existingCuration) {
-      setTitle(existingCuration.title);
-      setSlug(existingCuration.slug);
-      setSlugManuallyEdited(true);
-      setDescription(existingCuration.description || "");
-      setSelectedTools(
-        existingCuration.items.map((item) => item.tool as Tool).filter(Boolean)
-      );
-    }
+    if (!existingCuration) return;
+    setTitle(existingCuration.title);
+    setSlug(existingCuration.slug);
+    setSlugManuallyEdited(true);
+    setDescription(existingCuration.description || "");
+    setSelectedItems(existingCuration.items.map((item) => item.content).filter(Boolean));
   }, [existingCuration]);
 
-  // Validate slug uniqueness
   const validateSlug = async (value: string) => {
     if (!value) {
-      setSlugError("Slug é obrigatório");
+      setSlugError("Slug e obrigatorio");
       return false;
     }
     if (!/^[a-z0-9-]+$/.test(value)) {
-      setSlugError("Slug deve conter apenas letras minúsculas, números e hífens");
+      setSlugError("Slug deve conter apenas letras minusculas, numeros e hifens");
       return false;
     }
     const isUnique = await checkSlugUnique(value, isEditing ? id : undefined);
     if (!isUnique) {
-      setSlugError("Já existe uma curadoria com este slug");
+      setSlugError("Ja existe uma curadoria com este slug");
       return false;
     }
     setSlugError("");
     return true;
   };
 
-  // Filter available tools
-  const availableTools = useMemo(() => {
-    const selectedIds = new Set(selectedTools.map((t) => t.id));
-    return allTools
-      .filter((t) => !selectedIds.has(t.id))
-      .filter(
-        (t) =>
-          !toolSearch ||
-          t.name.toLowerCase().includes(toolSearch.toLowerCase()) ||
-          t.description.toLowerCase().includes(toolSearch.toLowerCase())
-      );
-  }, [allTools, selectedTools, toolSearch]);
+  const availableItems = useMemo(() => {
+    const selectedIds = new Set(selectedItems.map((item) => `${item.type}:${item.id}`));
+    const term = itemSearch.trim().toLowerCase();
+    return allItems
+      .filter((item) => !selectedIds.has(`${item.type}:${item.id}`))
+      .filter((item) => {
+        if (!term) return true;
+        return [item.title, item.description, item.category, ...(item.tags ?? [])]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(term);
+      });
+  }, [allItems, itemSearch, selectedItems]);
 
-  // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setSelectedTools((items) => {
-        const oldIndex = items.findIndex((t) => t.id === active.id);
-        const newIndex = items.findIndex((t) => t.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
-
-  // Add tool
-  const addTool = (tool: Tool) => {
-    setSelectedTools((prev) => [...prev, tool]);
-    setToolSearch("");
+    if (!over || active.id === over.id) return;
+    setSelectedItems((items) => {
+      const oldIndex = items.findIndex((item) => `${item.type}:${item.id}` === active.id);
+      const newIndex = items.findIndex((item) => `${item.type}:${item.id}` === over.id);
+      return arrayMove(items, oldIndex, newIndex);
+    });
   };
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
-    if (!slugManuallyEdited) {
-      setSlug(slugify(value));
-    }
+    if (!slugManuallyEdited) setSlug(slugify(value));
   };
 
-  // Remove tool
-  const removeTool = (toolId: string) => {
-    setSelectedTools((prev) => prev.filter((t) => t.id !== toolId));
-  };
-
-  // Save handlers
   const handleSave = async (status: "draft" | "published") => {
-    if (!title.trim()) {
-      return;
-    }
+    if (!title.trim()) return;
 
     const isValid = await validateSlug(slug);
     if (!isValid) return;
@@ -243,7 +208,8 @@ export default function AdminCuradoriasForm() {
       slug: slug.trim(),
       description: description.trim() || undefined,
       status,
-      toolIds: selectedTools.map((t) => t.id),
+      toolIds: selectedItems.filter((item) => item.type === "tool").map((item) => item.id),
+      items: selectedItems.map((item) => ({ type: item.type, id: item.id })),
     };
 
     if (isEditing) {
@@ -275,31 +241,31 @@ export default function AdminCuradoriasForm() {
     );
   }
 
+  if (!loadingRoles && !isAdmin) {
+    router.push("/login");
+    return null;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <main className="flex-1 container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" size="sm" onClick={() => router.push("/admin/curadorias")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <h1 className="text-2xl font-bold">
-            {isEditing ? "Editar Curadoria" : "Nova Curadoria"}
-          </h1>
+          <h1 className="text-2xl font-bold">{isEditing ? "Editar Curadoria" : "Nova Curadoria"}</h1>
         </div>
 
-        {/* Form */}
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Column 1: Form fields */}
           <div className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="title">Título *</Label>
+              <Label htmlFor="title">Titulo *</Label>
               <Input
                 id="title"
                 value={title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                placeholder="Ex: Ferramentas de IA para Estudos"
+                onChange={(event) => handleTitleChange(event.target.value)}
+                placeholder="Ex: Ferramentas de IA para estudos"
                 maxLength={100}
               />
             </div>
@@ -311,8 +277,8 @@ export default function AdminCuradoriasForm() {
                 <Input
                   id="slug"
                   value={slug}
-                  onChange={(e) => {
-                    setSlug(e.target.value);
+                  onChange={(event) => {
+                    setSlug(event.target.value);
                     setSlugManuallyEdited(true);
                     setSlugError("");
                   }}
@@ -325,37 +291,25 @@ export default function AdminCuradoriasForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Descrição</Label>
+              <Label htmlFor="description">Descricao</Label>
               <Textarea
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Uma breve descrição desta curadoria..."
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Uma breve descricao desta curadoria..."
                 rows={4}
                 maxLength={500}
               />
-              <p className="text-xs text-muted-foreground">
-                {description.length}/500 caracteres
-              </p>
+              <p className="text-xs text-muted-foreground">{description.length}/500 caracteres</p>
             </div>
 
-            {/* Actions */}
             <div className="flex flex-wrap gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => handleSave("draft")}
-                disabled={!title.trim() || isSubmitting}
-              >
-                {isSubmitting && create.variables?.status === "draft" && (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                )}
+              <Button variant="outline" onClick={() => handleSave("draft")} disabled={!title.trim() || isSubmitting}>
+                {isSubmitting && create.variables?.status === "draft" && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 <Save className="h-4 w-4 mr-2" />
                 Salvar rascunho
               </Button>
-              <Button
-                onClick={() => handleSave("published")}
-                disabled={!title.trim() || isSubmitting}
-              >
+              <Button onClick={() => handleSave("published")} disabled={!title.trim() || isSubmitting}>
                 {isSubmitting && (create.variables?.status === "published" || update.variables?.status === "published") && (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 )}
@@ -365,99 +319,82 @@ export default function AdminCuradoriasForm() {
             </div>
           </div>
 
-          {/* Column 2: Tool selector & preview */}
           <div className="space-y-6">
-            {/* Tool search */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Ferramentas</CardTitle>
-                <CardDescription>
-                  Busque e adicione ferramentas a esta curadoria.
-                </CardDescription>
+                <CardTitle className="text-lg">Itens da curadoria</CardTitle>
+                <CardDescription>Busque ferramentas, concursos e guias do acervo.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar ferramentas..."
-                    value={toolSearch}
-                    onChange={(e) => setToolSearch(e.target.value)}
+                    placeholder="Buscar no acervo..."
+                    value={itemSearch}
+                    onChange={(event) => setItemSearch(event.target.value)}
                     className="pl-10"
                   />
                 </div>
 
-                {/* Available tools dropdown */}
-                {toolSearch && availableTools.length > 0 && (
-                  <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
-                    {availableTools.slice(0, 10).map((tool) => (
-                      <div
-                        key={tool.id}
-                        className="flex items-center gap-3 p-2 hover:bg-accent cursor-pointer"
-                        onClick={() => addTool(tool)}
+                {loadingItems && <Skeleton className="h-28 w-full" />}
+
+                {itemSearch && availableItems.length > 0 && (
+                  <div className="max-h-56 overflow-y-auto border rounded-lg divide-y">
+                    {availableItems.slice(0, 12).map((item) => (
+                      <button
+                        type="button"
+                        key={`${item.type}:${item.id}`}
+                        className="flex w-full items-center gap-3 p-2 text-left hover:bg-accent"
+                        onClick={() => {
+                          setSelectedItems((prev) => [...prev, item]);
+                          setItemSearch("");
+                        }}
                       >
                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                          {tool.icon_url ? (
-                            <img
-                              src={tool.icon_url}
-                              alt={tool.name}
-                              className="w-full h-full object-contain"
-                              referrerPolicy="no-referrer"
-                            />
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                           ) : (
-                            <div className="w-4 h-4 bg-primary/10 rounded-full" />
+                            <ItemTypeIcon type={item.type} className="w-4 h-4 text-muted-foreground" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{tool.name}</p>
+                          <p className="text-sm font-medium truncate">{item.title}</p>
+                          <p className="text-xs text-muted-foreground">{itemTypeLabel(item.type)}</p>
                         </div>
                         <Plus className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
 
-                {toolSearch && availableTools.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhuma ferramenta encontrada.
-                  </p>
+                {itemSearch && availableItems.length === 0 && !loadingItems && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum item encontrado.</p>
                 )}
               </CardContent>
             </Card>
 
-            {/* Selected tools */}
             <Card>
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">
-                    Ferramentas selecionadas ({selectedTools.length})
-                  </CardTitle>
-                </div>
-                <CardDescription>
-                  Arraste para reordenar. Esta será a ordem exibida na página.
-                </CardDescription>
+                <CardTitle className="text-lg">Selecionados ({selectedItems.length})</CardTitle>
+                <CardDescription>Arraste para reordenar. A meta ideal e ter 3 itens por curadoria.</CardDescription>
               </CardHeader>
               <CardContent>
-                {selectedTools.length === 0 ? (
+                {selectedItems.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
-                    <p>Nenhuma ferramenta adicionada.</p>
+                    <p>Nenhum item adicionado.</p>
                     <p className="text-sm">Busque acima para adicionar.</p>
                   </div>
                 ) : (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={selectedTools.map((t) => t.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={selectedItems.map((item) => `${item.type}:${item.id}`)} strategy={verticalListSortingStrategy}>
                       <div className="space-y-2">
-                        {selectedTools.map((tool) => (
-                          <SortableToolItem
-                            key={tool.id}
-                            tool={tool}
-                            onRemove={() => removeTool(tool.id)}
+                        {selectedItems.map((item) => (
+                          <SortableCurationItem
+                            key={`${item.type}:${item.id}`}
+                            item={item}
+                            onRemove={() =>
+                              setSelectedItems((prev) => prev.filter((selected) => `${selected.type}:${selected.id}` !== `${item.type}:${item.id}`))
+                            }
                           />
                         ))}
                       </div>
@@ -469,7 +406,6 @@ export default function AdminCuradoriasForm() {
           </div>
         </div>
       </main>
-      
     </div>
   );
 }

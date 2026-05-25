@@ -5,11 +5,13 @@ import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 import { SaveToolButton } from "@/components/ui/save-tool-button";
 import { useCurationBySlug } from "@/hooks/useCurations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tool } from "@/hooks/useTools";
+import type { CurationContentItem } from "@/hooks/useCurations";
 
 function ToolCard({ tool }: { tool: Tool }) {
   return (
@@ -73,6 +75,57 @@ function ToolCard({ tool }: { tool: Tool }) {
               }}
             />
           </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CurationItemCard({ item }: { item: CurationContentItem }) {
+  const typeLabel = item.type === "tool" ? "Ferramenta" : item.type === "contest" ? "Concurso" : "Guia";
+
+  return (
+    <Card className="h-full hover:shadow-lg transition-shadow duration-300 flex flex-col">
+      <CardHeader>
+        <div className="grid grid-cols-[auto,1fr] gap-4 items-center mb-2">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center overflow-hidden border shadow-sm shrink-0">
+            {item.imageUrl ? (
+              <img
+                src={item.imageUrl}
+                alt={item.title}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            ) : (
+              <span className="text-xs font-semibold text-muted-foreground">{typeLabel.slice(0, 3)}</span>
+            )}
+          </div>
+          <div className="min-w-0">
+            <Badge variant="outline" className="mb-2 text-xs">
+              {typeLabel}
+            </Badge>
+            <CardTitle className="text-xl leading-tight mt-0">{item.title}</CardTitle>
+          </div>
+        </div>
+        <CardDescription className="text-sm leading-relaxed flex-1">
+          {item.description}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="mt-auto">
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {[item.category, ...(item.tags ?? [])].filter(Boolean).slice(0, 3).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link href={item.href}>{item.actionLabel}</Link>
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -150,7 +203,11 @@ export default function CuradoriaPublicNext() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                 >
-                  <ToolCard tool={item.tool as Tool} />
+                  {item.item_type === "tool" && item.tool ? (
+                    <ToolCard tool={item.tool as Tool} />
+                  ) : (
+                    <CurationItemCard item={item.content} />
+                  )}
                 </motion.div>
               ))}
             </div>

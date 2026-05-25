@@ -17,8 +17,15 @@ interface RedeemToken {
   id: string;
   token: string;
   plan_type: string;
+  plan_tier?: string | null;
   status: string;
   buyer_email: string | null;
+  cakto_order_id?: string | null;
+  cakto_ref_id?: string | null;
+  cakto_subscription_id?: string | null;
+  email_sent_at?: string | null;
+  revoked_at?: string | null;
+  revoked_reason?: string | null;
   expires_at: string;
   used_at: string | null;
   created_at: string;
@@ -65,7 +72,10 @@ const AdminPremiumTokens = () => {
     return token.toUpperCase();
   };
 
-  const handleCreateToken = async (planType: 'monthly' | 'annual' | 'trial_30d') => {
+  const handleCreateToken = async (
+    planType: 'monthly' | 'annual' | 'trial_30d' | 'lifetime',
+    planTier: 'basic' | 'premium' | 'founder' = 'premium',
+  ) => {
     setCreating(true);
     
     try {
@@ -78,6 +88,7 @@ const AdminPremiumTokens = () => {
         .insert({
           token,
           plan_type: planType,
+          plan_tier: planTier,
           status: 'new',
           expires_at: expiresAt.toISOString(),
         });
@@ -166,8 +177,14 @@ const AdminPremiumTokens = () => {
       case 'monthly': return 'Mensal';
       case 'annual': return 'Anual';
       case 'trial_30d': return 'Trial 30d';
+      case 'lifetime': return 'Vitalício';
       default: return planType;
     }
+  };
+
+  const getTierLabel = (planTier?: string | null) => {
+    if (planTier === 'founder') return 'Fundador';
+    return planTier === 'basic' ? 'Básico' : 'Premium';
   };
 
   const filteredTokens = tokens.filter(token => 
@@ -200,14 +217,20 @@ const AdminPremiumTokens = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Tokens de Resgate</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => handleCreateToken('trial_30d')} disabled={creating}>
-            + Trial 30d
+          <Button variant="outline" onClick={() => handleCreateToken('monthly', 'basic')} disabled={creating}>
+            + Básico Mensal
           </Button>
-          <Button variant="outline" onClick={() => handleCreateToken('monthly')} disabled={creating}>
-            + Mensal
+          <Button variant="outline" onClick={() => handleCreateToken('annual', 'basic')} disabled={creating}>
+            + Básico Anual
           </Button>
-          <Button onClick={() => handleCreateToken('annual')} disabled={creating}>
-            + Anual
+          <Button variant="outline" onClick={() => handleCreateToken('lifetime', 'founder')} disabled={creating}>
+            + Fundador
+          </Button>
+          <Button variant="outline" onClick={() => handleCreateToken('monthly', 'premium')} disabled={creating}>
+            + Premium Mensal
+          </Button>
+          <Button onClick={() => handleCreateToken('annual', 'premium')} disabled={creating}>
+            + Premium Anual
           </Button>
         </div>
       </div>
@@ -253,8 +276,8 @@ const AdminPremiumTokens = () => {
                         <Copy className="h-3 w-3" />
                       </Button>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <span>{getPlanLabel(token.plan_type)}</span>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
+                      <span>{getTierLabel(token.plan_tier)} {getPlanLabel(token.plan_type)}</span>
                       <span>•</span>
                       <span>Expira: {format(new Date(token.expires_at), 'dd/MM/yyyy HH:mm')}</span>
                       {token.buyer_email && (
@@ -263,6 +286,9 @@ const AdminPremiumTokens = () => {
                           <span>{token.buyer_email}</span>
                         </>
                       )}
+                      {token.cakto_order_id && <span>Cakto: {token.cakto_ref_id || token.cakto_order_id}</span>}
+                      {token.email_sent_at && <span>Email enviado</span>}
+                      {token.revoked_reason && <span>Revogado por {token.revoked_reason}</span>}
                     </div>
                   </div>
 

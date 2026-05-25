@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/navbar-next";
 import { Footer } from "@/components/layout/footer-next";
 
 function shouldShowFooter(pathname: string) {
+  if (pathname === "/pqestudar-premium") return false;
   if (pathname === "/premium") return true;
 
   const hiddenFooterRoutes = [
@@ -21,14 +22,19 @@ function shouldShowFooter(pathname: string) {
   return !hiddenFooterRoutes.some((route) => pathname === route || pathname.startsWith(route));
 }
 
+function shouldShowNavbar(pathname: string) {
+  return pathname !== "/pqestudar-premium";
+}
+
 export function PublicShellNext({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
+  const showNavbar = shouldShowNavbar(pathname);
   const showFooter = shouldShowFooter(pathname);
 
   return (
     <div className="min-h-dvh flex flex-col overflow-x-hidden w-full">
-      <Navbar />
-      <div className="flex-1 flex flex-col pt-16">{children}</div>
+      {showNavbar && <Navbar />}
+      <div className={`flex-1 flex flex-col ${showNavbar ? "pt-16" : ""}`}>{children}</div>
       {showFooter && <Footer />}
     </div>
   );

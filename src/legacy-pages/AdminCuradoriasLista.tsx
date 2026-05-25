@@ -13,6 +13,9 @@ import {
   Link2,
   ExternalLink,
   MoreHorizontal,
+  Sparkles,
+  Loader2,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,8 +60,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useUserRoles } from "@/hooks/useUserRoles";
-import { useCurationsList, useCurationMutations, CurationPage } from "@/hooks/useCurations";
+import {
+  CurationPage,
+  useCurationAutomationSources,
+  useCurationMutations,
+  useCurationsList,
+  useRecentCurationPatterns,
+} from "@/hooks/useCurations";
 import { toast } from "@/hooks/use-toast";
+import { generateAutomaticCuration } from "@/lib/curation-auto-generator";
 
 export default function AdminCuradoriasLista() {
   const router = useRouter();
@@ -73,7 +83,9 @@ export default function AdminCuradoriasLista() {
     search: search || undefined,
   });
 
-  const { delete: deleteMutation, duplicate: duplicateMutation } = useCurationMutations();
+  const { data: automationSources = [], isLoading: loadingAutomationSources } = useCurationAutomationSources();
+  const { data: recentPatterns = [] } = useRecentCurationPatterns();
+  const { create: createMutation, delete: deleteMutation, duplicate: duplicateMutation } = useCurationMutations();
 
   const handleCopyLink = (curation: CurationPage) => {
     if (curation.status !== 'published') {
@@ -104,6 +116,38 @@ export default function AdminCuradoriasLista() {
     await duplicateMutation.mutateAsync(curation.id);
   };
 
+  const handleGenerateAutomatic = async () => {
+    const suggestion = generateAutomaticCuration(automationSources, recentPatterns);
+
+    if (!suggestion) {
+      toast({
+        title: "Acervo insuficiente",
+        description: "Nao encontrei 3 itens publicados que combinem para gerar uma curadoria.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const existingSlugs = new Set((curations || []).map((curation) => curation.slug));
+    let slug = suggestion.slug;
+    let counter = 2;
+    while (existingSlugs.has(slug)) {
+      slug = `${suggestion.slug}-${counter}`;
+      counter++;
+    }
+
+    const page = await createMutation.mutateAsync({
+      title: suggestion.title,
+      slug,
+      description: suggestion.description,
+      status: "draft",
+      toolIds: suggestion.items.filter((item) => item.type === "tool").map((item) => item.id),
+      items: suggestion.items,
+    });
+
+    router.push(`/admin/curadorias/${page.id}`);
+  };
+
   // Redireciona se não for admin
   if (!loadingRoles && !isAdmin) {
     router.push("/login");
@@ -121,10 +165,24 @@ export default function AdminCuradoriasLista() {
               Gerencie suas páginas de curadoria de ferramentas.
             </p>
           </div>
-          <Button onClick={() => router.push("/admin/curadorias/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Curadoria
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={handleGenerateAutomatic}
+              disabled={loadingAutomationSources || createMutation.isPending}
+            >
+              {createMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              Gerar automática
+            </Button>
+            <Button onClick={() => router.push("/admin/curadorias/new")}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Curadoria
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -205,7 +263,7 @@ export default function AdminCuradoriasLista() {
                       })}
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
+                      <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <MoreHorizontal className="h-4 w-4" />
@@ -217,6 +275,12 @@ export default function AdminCuradoriasLista() {
                           >
                             <Edit className="h-4 w-4 mr-2" />
                             Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => router.push(`/admin/curadorias/${curation.id}/preview`)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Visualizar
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleDuplicate(curation)}

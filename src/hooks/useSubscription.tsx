@@ -7,7 +7,8 @@ export interface Subscription {
   id: string;
   user_id: string;
   status: 'active' | 'inactive' | 'expired' | 'canceled';
-  plan_type: 'monthly' | 'annual' | 'trial_30d';
+  plan_type: 'monthly' | 'annual' | 'trial_30d' | 'lifetime';
+  plan_tier: 'basic' | 'premium' | 'founder';
   starts_at: string;
   ends_at: string;
   created_at: string;
@@ -74,10 +75,13 @@ export const useSubscription = () => {
   // Get plan display name
   const getPlanName = useCallback(() => {
     if (!subscription) return null;
+    const tierLabel =
+      subscription.plan_tier === 'founder' ? 'Fundador' : subscription.plan_tier === 'basic' ? 'Básico' : 'Premium';
     switch (subscription.plan_type) {
-      case 'monthly': return 'Mensal';
-      case 'annual': return 'Anual';
-      case 'trial_30d': return 'Trial 30 dias';
+      case 'monthly': return `${tierLabel} Mensal`;
+      case 'annual': return `${tierLabel} Anual`;
+      case 'trial_30d': return `${tierLabel} Trial 30 dias`;
+      case 'lifetime': return `${tierLabel} Vitalício`;
       default: return subscription.plan_type;
     }
   }, [subscription]);

@@ -842,23 +842,29 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          item_id: string | null
+          item_type: string | null
           order: number
           page_id: string
-          tool_id: string
+          tool_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          item_id?: string | null
+          item_type?: string | null
           order?: number
           page_id: string
-          tool_id: string
+          tool_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          item_id?: string | null
+          item_type?: string | null
           order?: number
           page_id?: string
-          tool_id?: string
+          tool_id?: string | null
         }
         Relationships: [
           {
@@ -2607,10 +2613,20 @@ export type Database = {
       redeem_tokens: {
         Row: {
           buyer_email: string | null
+          cakto_event: string | null
+          cakto_offer_id: string | null
+          cakto_order_id: string | null
+          cakto_product_id: string | null
+          cakto_ref_id: string | null
+          cakto_subscription_id: string | null
           created_at: string
+          email_sent_at: string | null
           expires_at: string
           id: string
+          plan_tier: Database["public"]["Enums"]["subscription_plan_tier"]
           plan_type: Database["public"]["Enums"]["subscription_plan_type"]
+          revoked_at: string | null
+          revoked_reason: string | null
           status: Database["public"]["Enums"]["redeem_token_status"]
           token: string
           used_at: string | null
@@ -2618,10 +2634,20 @@ export type Database = {
         }
         Insert: {
           buyer_email?: string | null
+          cakto_event?: string | null
+          cakto_offer_id?: string | null
+          cakto_order_id?: string | null
+          cakto_product_id?: string | null
+          cakto_ref_id?: string | null
+          cakto_subscription_id?: string | null
           created_at?: string
+          email_sent_at?: string | null
           expires_at: string
           id?: string
+          plan_tier?: Database["public"]["Enums"]["subscription_plan_tier"]
           plan_type: Database["public"]["Enums"]["subscription_plan_type"]
+          revoked_at?: string | null
+          revoked_reason?: string | null
           status?: Database["public"]["Enums"]["redeem_token_status"]
           token: string
           used_at?: string | null
@@ -2629,10 +2655,20 @@ export type Database = {
         }
         Update: {
           buyer_email?: string | null
+          cakto_event?: string | null
+          cakto_offer_id?: string | null
+          cakto_order_id?: string | null
+          cakto_product_id?: string | null
+          cakto_ref_id?: string | null
+          cakto_subscription_id?: string | null
           created_at?: string
+          email_sent_at?: string | null
           expires_at?: string
           id?: string
+          plan_tier?: Database["public"]["Enums"]["subscription_plan_tier"]
           plan_type?: Database["public"]["Enums"]["subscription_plan_type"]
+          revoked_at?: string | null
+          revoked_reason?: string | null
           status?: Database["public"]["Enums"]["redeem_token_status"]
           token?: string
           used_at?: string | null
@@ -2866,6 +2902,7 @@ export type Database = {
           created_at: string
           ends_at: string
           id: string
+          plan_tier: Database["public"]["Enums"]["subscription_plan_tier"]
           plan_type: Database["public"]["Enums"]["subscription_plan_type"]
           starts_at: string
           status: Database["public"]["Enums"]["subscription_status"]
@@ -2876,6 +2913,7 @@ export type Database = {
           created_at?: string
           ends_at: string
           id?: string
+          plan_tier?: Database["public"]["Enums"]["subscription_plan_tier"]
           plan_type: Database["public"]["Enums"]["subscription_plan_type"]
           starts_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
@@ -2886,6 +2924,7 @@ export type Database = {
           created_at?: string
           ends_at?: string
           id?: string
+          plan_tier?: Database["public"]["Enums"]["subscription_plan_tier"]
           plan_type?: Database["public"]["Enums"]["subscription_plan_type"]
           starts_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
@@ -4118,7 +4157,8 @@ export type Database = {
       feature_status: "open" | "completed"
       premium_item_type: "course" | "job"
       redeem_token_status: "new" | "used" | "expired" | "revoked"
-      subscription_plan_type: "monthly" | "annual" | "trial_30d"
+      subscription_plan_tier: "basic" | "premium" | "founder"
+      subscription_plan_type: "monthly" | "annual" | "trial_30d" | "lifetime"
       subscription_status: "active" | "inactive" | "expired" | "canceled"
     }
     CompositeTypes: {
@@ -4253,7 +4293,8 @@ export const Constants = {
       feature_status: ["open", "completed"],
       premium_item_type: ["course", "job"],
       redeem_token_status: ["new", "used", "expired", "revoked"],
-      subscription_plan_type: ["monthly", "annual", "trial_30d"],
+      subscription_plan_tier: ["basic", "premium", "founder"],
+      subscription_plan_type: ["monthly", "annual", "trial_30d", "lifetime"],
       subscription_status: ["active", "inactive", "expired", "canceled"],
     },
   },

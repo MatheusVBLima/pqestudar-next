@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ import { PageHeader } from '@/components/admin/dashboard/PageHeader';
 import { ImageGalleryTab } from '@/components/admin/guide-flow/ImageGalleryTab';
 import { useGuideFlowKnowledge, type KnowledgeEntry, type ExtractionStatus } from '@/hooks/useGuideFlowKnowledge';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, BookOpen, Loader2, Eye, EyeOff, RefreshCw, Package, PenTool, CheckCircle2, AlertCircle, FileQuestion, Clock, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, BookOpen, Loader2, Eye, EyeOff, RefreshCw, Package, PenTool, CheckCircle2, AlertCircle, FileQuestion, Clock, Image as ImageIcon, ChevronDown, Check } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-message';
 
 const CATEGORIES = [
@@ -51,6 +51,76 @@ interface FormData {
 }
 
 const EMPTY_FORM: FormData = { title: '', content: '', category: 'geral', is_active: true, sort_order: 0 };
+const controlPillClass = "h-9 rounded-[var(--admin-radius)] border border-border bg-card px-3 text-xs font-semibold text-foreground";
+const counterPillClass = `${controlPillClass} inline-flex items-center gap-1.5`;
+
+function InlineFilterSelect({
+  value,
+  options,
+  widthClass,
+  onChange,
+}: {
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  widthClass: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const selected = options.find((option) => option.value === value) ?? options[0];
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className={`relative ${widthClass}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className={`${controlPillClass} flex w-full items-center justify-between gap-3 pl-3 pr-4 text-left transition-colors hover:bg-accent/60 focus:outline-none focus:ring-2 focus:ring-primary`}
+      >
+        <span className="truncate">{selected.label}</span>
+        <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-[calc(100%+4px)] z-50 w-full overflow-hidden rounded-[var(--admin-radius)] border border-border bg-card p-1 shadow-lg">
+          {options.map((option) => {
+            const active = option.value === value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center gap-2 rounded-[calc(var(--admin-radius)-2px)] px-2.5 py-2 text-left text-xs transition-colors ${
+                  active
+                    ? 'bg-primary/20 text-primary'
+                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                }`}
+              >
+                <Check className={`h-3.5 w-3.5 shrink-0 ${active ? 'opacity-100' : 'opacity-0'}`} />
+                <span className="truncate">{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function GuideFlowKnowledge() {
   const { entries, isLoading, isSyncing, createEntry, updateEntry, deleteEntry, syncStorage } = useGuideFlowKnowledge();
@@ -188,37 +258,71 @@ export default function GuideFlowKnowledge() {
       {/* Stats + actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="secondary" className="gap-1">
+          <Badge variant="secondary" className={counterPillClass}>
             <BookOpen className="h-3 w-3" />
             {entries.length} entrada(s) — {activeCount} ativa(s)
           </Badge>
-          <Badge variant="outline" className="gap-1 text-[10px]">
+          <Badge variant="outline" className={counterPillClass}>
             <Package className="h-3 w-3" /> {storageCount} Storage
           </Badge>
-          <Badge variant="outline" className="gap-1 text-[10px]">
+          <Badge variant="outline" className={counterPillClass}>
             <PenTool className="h-3 w-3" /> {manualCount} Manual
           </Badge>
-          <Badge variant="outline" className="gap-1 text-[10px] text-emerald-600 border-emerald-500/20">
+          <Badge variant="outline" className={`${counterPillClass} text-emerald-600 border-emerald-500/20`}>
             <CheckCircle2 className="h-3 w-3" /> {extractedCount} extraído(s)
           </Badge>
           {pendingCount > 0 && (
-            <Badge variant="outline" className="gap-1 text-[10px] text-blue-600 border-blue-500/20">
+            <Badge variant="outline" className={`${counterPillClass} text-blue-600 border-blue-500/20`}>
               <Clock className="h-3 w-3" /> {pendingCount} pendente(s)
             </Badge>
           )}
 
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-[160px] h-8 text-xs rounded-[var(--admin-radius)]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas categorias</SelectItem>
-              {CATEGORIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <InlineFilterSelect
+            value={filterCategory}
+            widthClass="w-[160px]"
+            onChange={setFilterCategory}
+            options={[
+              { value: 'all', label: 'Todas categorias' },
+              ...CATEGORIES.map((category) => ({ value: category.value, label: category.label })),
+            ]}
+          />
 
+          <InlineFilterSelect
+            value={filterSource}
+            widthClass="w-[150px]"
+            onChange={(value) => setFilterSource(value as SourceFilter)}
+            options={[
+              { value: 'all', label: 'Todas origens' },
+              { value: 'storage', label: 'Storage' },
+              { value: 'manual', label: 'Manual' },
+            ]}
+          />
+
+          <select
+            value={filterCategory}
+            onChange={(event) => setFilterCategory(event.target.value)}
+            className="hidden"
+            aria-hidden="true"
+          >
+            <option value="all">Todas categorias</option>
+            {CATEGORIES.map((category) => (
+              <option key={category.value} value={category.value}>
+                {category.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filterSource}
+            onChange={(event) => setFilterSource(event.target.value as SourceFilter)}
+            className="hidden"
+            aria-hidden="true"
+          >
+            <option value="all">Todas origens</option>
+            <option value="storage">Storage</option>
+            <option value="manual">Manual</option>
+          </select>
+          {false && (
           <Select value={filterSource} onValueChange={(v) => setFilterSource(v as SourceFilter)}>
             <SelectTrigger className="w-[130px] h-8 text-xs rounded-[var(--admin-radius)]">
               <SelectValue />
@@ -229,6 +333,7 @@ export default function GuideFlowKnowledge() {
               <SelectItem value="manual">✍️ Manual</SelectItem>
             </SelectContent>
           </Select>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -237,12 +342,12 @@ export default function GuideFlowKnowledge() {
             disabled={isSyncing}
             variant="outline"
             size="sm"
-            className="gap-1.5 rounded-[var(--admin-radius)]"
+            className={`${controlPillClass} gap-1.5 hover:bg-accent/60`}
           >
             <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
             {isSyncing ? 'Sincronizando...' : 'Sincronizar Storage'}
           </Button>
-          <Button onClick={openCreate} className="gap-1.5 rounded-[var(--admin-radius)]" size="sm">
+          <Button onClick={openCreate} className="h-9 gap-1.5 rounded-[var(--admin-radius)] px-4 text-xs font-semibold" size="sm">
             <Plus className="h-4 w-4" /> Nova entrada
           </Button>
         </div>
@@ -367,7 +472,7 @@ export default function GuideFlowKnowledge() {
       )}
 
       {/* Modal */}
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <Dialog modal={false} open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Editar entrada' : 'Nova entrada'}</DialogTitle>

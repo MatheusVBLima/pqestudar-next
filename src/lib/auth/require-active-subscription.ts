@@ -9,9 +9,18 @@ export interface ActiveSubscriptionGuardResult {
   subscription: {
     id: string;
     plan_type: string;
+    plan_tier: string;
     status: string;
     ends_at: string;
   } | null;
+}
+
+function requiredTierForPath(pathname: string): "basic" | "premium" {
+  if (pathname === "/premium/beneficios" || pathname.startsWith("/premium/beneficios/")) {
+    return "basic";
+  }
+
+  return "premium";
 }
 
 /**
@@ -36,15 +45,25 @@ export async function requireActiveSubscription(
     supabase.rpc("is_admin"),
     supabase
       .from("subscriptions")
-      .select("id, plan_type, status, ends_at")
+      .select("id, plan_type, plan_tier, status, ends_at")
       .eq("user_id", user.id)
       .maybeSingle(),
   ]);
 
   const isActive =
     !!sub && sub.status === "active" && new Date(sub.ends_at).getTime() > Date.now();
+  const planTier = sub?.plan_tier ?? "premium";
+  const hasRequiredTier = requiredTierForPath(pathname) === "basic" || planTier === "premium";
 
   if (!isAdmin && !isActive) {
+    redirect("/premium/upgrade");
+  }
+
+  if (!isAdmin && pathname === "/premium" && (planTier === "basic" || planTier === "founder")) {
+    redirect("/premium/beneficios");
+  }
+
+  if (!isAdmin && isActive && !hasRequiredTier) {
     redirect("/premium/upgrade");
   }
 
