@@ -149,9 +149,15 @@ for (const viewport of viewports) {
       }
     }
 
-    const adsenseAccount = await page.locator('meta[name="google-adsense-account"]').getAttribute("content");
-    if (adsenseAccount !== expectedAdSenseAccount) {
-      pageErrors.push(`Expected google-adsense-account ${expectedAdSenseAccount}, found ${adsenseAccount ?? "empty"}`);
+    const adsenseAccountMeta = page.locator('meta[name="google-adsense-account"]');
+    const adsenseAccountCount = await adsenseAccountMeta.count();
+    if (adsenseAccountCount !== 1) {
+      pageErrors.push(`Expected 1 google-adsense-account meta tag, found ${adsenseAccountCount}`);
+    } else {
+      const adsenseAccount = await adsenseAccountMeta.first().getAttribute("content");
+      if (adsenseAccount !== expectedAdSenseAccount) {
+        pageErrors.push(`Expected google-adsense-account ${expectedAdSenseAccount}, found ${adsenseAccount ?? "empty"}`);
+      }
     }
 
     if (pageErrors.length > 0) {
