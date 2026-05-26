@@ -14,7 +14,6 @@ import MarkdownEditor, { htmlToMarkdown } from "@/components/admin/MarkdownEdito
 import { Guide } from "@/hooks/useGuides";
 import { Plus, Trash2, Upload, Link2, X, ImageIcon, Copy, Check, Workflow, Cog, Eye } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIAS, mapInternaToPublica } from "@/lib/guide-editorial-options";
 import { useGuidePublicCategories } from "@/hooks/useGuidePublicCategories";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,9 +35,6 @@ function slugify(text: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 }
-
-// Lista legada apenas para fallback de Categoria Interna; o seletor real usa CATEGORIAS (slugs).
-const LEGACY_CATEGORIES = ["Concursos", "Ferramentas", "Oportunidades", "Produtividade", "Carreira"];
 
 interface InternalLink {
   label: string;

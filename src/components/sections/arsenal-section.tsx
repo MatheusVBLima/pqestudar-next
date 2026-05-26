@@ -47,6 +47,8 @@ const bonuses = [
 
 // Bônus será movido para a página de explorar cursos
 
+void bonuses;
+
 export function ArsenalSection() {
   return (
     <section id="arsenal-section" className="py-20 px-4 bg-gradient-to-b from-background to-accent/20">

@@ -27,7 +27,6 @@ import {
   MapPin,
   Trash2,
   RotateCcw,
-  AlertTriangle,
 } from "lucide-react";
 import { useOportunidades, useOportunidadesAdmin, OportunidadeFilters, Oportunidade } from "@/hooks/useOportunidades";
 import { useUserRoles } from "@/hooks/useUserRoles";
@@ -43,10 +42,10 @@ type OportunidadeWithViews = Oportunidade & {
   views_total?: number | null;
 };
 
-const SITUACAO_OPTIONS = ["Previsto", "Edital publicado", "Aberto", "Encerrado"];
-const TIPO_OPTIONS = ["Concurso", "Programa educacional", "Processo seletivo", "Processo Seletivo Simplificado"];
-const ESCOLARIDADE_OPTIONS = ["Fundamental", "Médio", "Superior"];
-const ABRANGENCIA_OPTIONS = ["Nacional", "Estadual", "Municipal"];
+const SITUACAO_OPTIONS: Oportunidade["situacao"][] = ["Previsto", "Edital publicado", "Aberto", "Encerrado"];
+const TIPO_OPTIONS: Oportunidade["tipo"][] = ["Concurso", "Programa educacional", "Processo seletivo", "Processo Seletivo Simplificado"];
+const ESCOLARIDADE_OPTIONS: Oportunidade["escolaridade"][] = ["Fundamental", "Médio", "Superior"];
+const ABRANGENCIA_OPTIONS: Oportunidade["abrangencia"][] = ["Nacional", "Estadual", "Municipal"];
 const SOURCE_TIPO_OPTIONS = [
   { value: "oficial", label: "Oficial" },
   { value: "diario", label: "Diário Oficial" },
@@ -234,7 +233,7 @@ export default function ConcursosNext() {
     : publicQuery;
 
   // Filter admin data client-side when in management mode
-  const displayedOportunidades = useMemo(() => {
+  const displayedOportunidades = useMemo<Oportunidade[]>(() => {
     if (!isManagementMode || !isAdmin) return oportunidades;
     
     let filtered = [...oportunidades];
@@ -252,7 +251,7 @@ export default function ConcursosNext() {
         const itemEscolaridades = item.escolaridades?.length
           ? item.escolaridades
           : [o.escolaridade];
-        return filters.escolaridade!.some(e => itemEscolaridades.includes(e));
+        return filters.escolaridade!.some(e => itemEscolaridades.includes(e as Oportunidade["escolaridade"]));
       });
     }
     if (filters.abrangencia?.length) {
@@ -287,7 +286,7 @@ export default function ConcursosNext() {
           title: oportunidade.titulo,
           url,
         });
-      } catch (e) {
+      } catch (_e) {
         // User cancelled or error
       }
     } else {
@@ -362,7 +361,7 @@ export default function ConcursosNext() {
       // Refresh both lists
       adminQueryAtivo.refetch();
       adminQueryLixeira.refetch();
-    } catch (error) {
+    } catch (_error) {
       // Error already handled by mutation
     } finally {
       setTrashDialogOpen(false);

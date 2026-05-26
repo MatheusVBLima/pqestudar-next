@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/dev-log';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { useUserRoles } from "@/hooks/useUserRoles";
@@ -51,14 +52,12 @@ type PartnerStatusFilter = "all" | "active" | "inactive";
 // Componente de card sortable
 function SortablePartnerCard({ 
   partner, 
-  index, 
   isAdmin, 
   handleEdit, 
   toggleActive, 
   setDeletePartner 
 }: { 
   partner: Partner; 
-  index: number; 
   isAdmin: boolean; 
   handleEdit: (p: Partner) => void; 
   toggleActive: (id: string, state: boolean) => void; 
@@ -225,14 +224,14 @@ export function PartnersSection() {
   };
 
   const handleDragStart = (event: DragStartEvent) => {
-    console.log('[Drag] Start', { activeId: event.active.id });
+    devLog('[Drag] Start', { activeId: event.active.id });
     setActiveId(event.active.id as string);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    console.log('[Drag] End', { 
+    devLog('[Drag] End', {
       activeId: active.id, 
       overId: over?.id,
       activeIndex: filteredPartners.findIndex(p => p.id === active.id),
@@ -381,7 +380,6 @@ export function PartnersSection() {
                   <SortablePartnerCard
                     key={partner.id}
                     partner={partner}
-                    index={filteredPartners.indexOf(partner)}
                     isAdmin={isAdmin}
                     handleEdit={handleEdit}
                     toggleActive={toggleActive}

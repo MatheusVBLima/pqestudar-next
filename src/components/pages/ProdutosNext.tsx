@@ -343,7 +343,7 @@ function ProductModal({
 
 export default function ProdutosNext() {
   const ps = usePageSettings("/produtos");
-  const { isAdmin, loading: adminLoading } = useUserRoles();
+  const { isAdmin } = useUserRoles();
   const queryClient = useQueryClient();
 
   const { isManagementMode: adminMode } = useManagementMode();

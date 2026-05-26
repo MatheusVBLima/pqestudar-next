@@ -153,7 +153,7 @@ export function SavedAccordion({
 
   return (
     <div className="space-y-4">
-      {sections.map((section, index) => {
+      {sections.map((section) => {
         const isExpanded = expandedSections.has(section.id);
         const panelId = `panel-${section.id}`;
         const headerId = `header-${section.id}`;

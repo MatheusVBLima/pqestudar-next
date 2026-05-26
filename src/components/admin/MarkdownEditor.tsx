@@ -142,7 +142,6 @@ interface MarkdownEditorProps {
   placeholder?: string;
   minWords?: number;
   rows?: number;
-  isRequired?: boolean;
   /** Compact mode: smaller height, hides help text and H2/H3 buttons */
   compact?: boolean;
   /** Whether to show heading shortcut buttons (default true) */
@@ -205,7 +204,6 @@ export default function MarkdownEditor({
   placeholder,
   minWords = 0,
   rows = 16,
-  isRequired = false,
   compact = false,
   showHeadings = true,
 }: MarkdownEditorProps) {

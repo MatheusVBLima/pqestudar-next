@@ -1,9 +1,9 @@
+import { devLog } from '@/lib/dev-log';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
-  Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -117,7 +117,7 @@ export const CourseForm = ({ course, onOpenChange, onSubmit }: CourseFormProps) 
         throw new Error('Nível selecionado não é válido');
       }
       
-      console.log('🔍 Payload level:', levelValue);
+      devLog('🔍 Payload level:', levelValue);
       
       // Mapear dados do formulário para campos existentes na tabela
       const transformedData = {
@@ -134,7 +134,7 @@ export const CourseForm = ({ course, onOpenChange, onSubmit }: CourseFormProps) 
         level: levelValue,
       };
       
-      console.log('📤 Dados enviados:', transformedData);
+      devLog('📤 Dados enviados:', transformedData);
       
       onSubmit(transformedData);
       form.reset();

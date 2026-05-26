@@ -83,7 +83,6 @@ const COMPONENT_MAP_DEFAULT: Components = {
     </a>
   ),
   img: ({ src, alt, ...props }) => (
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src as string}
       alt={alt ?? ""}

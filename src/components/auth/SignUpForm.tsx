@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/error-message'
 import { PUBLIC_SUPABASE_URL } from '@/lib/runtime-env'
+import { devInfo } from '@/lib/dev-log'
 
 interface SignUpFormProps {
   onSwitchToLogin: () => void
@@ -27,7 +28,7 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
       return
     }
 
-    console.info('[Auth] Resend confirmation start', { email })
+    devInfo('[Auth] Resend confirmation start', { email })
     setResendLoading(true)
     
     try {
@@ -42,7 +43,7 @@ export function SignUpForm({ onSwitchToLogin }: SignUpFormProps) {
         })
       })
 
-      console.info('[Auth] Resend confirmation response', { ok: response.ok, status: response.status })
+      devInfo('[Auth] Resend confirmation response', { ok: response.ok, status: response.status })
       const data = await response.json()
       
       if (!response.ok) {

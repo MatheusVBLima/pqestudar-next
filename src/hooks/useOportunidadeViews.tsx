@@ -139,7 +139,7 @@ export function useOportunidadeViewsAdmin() {
 
       toast.success("Contador zerado com sucesso!");
       return true;
-    } catch (e) {
+    } catch (_e) {
       toast.error("Erro ao zerar contador");
       return false;
     } finally {
@@ -173,7 +173,7 @@ export function useOportunidadeViewsAdmin() {
 
       toast.success(`Contador recalculado: ${data.views_total} views`);
       return data.views_total;
-    } catch (e) {
+    } catch (_e) {
       toast.error("Erro ao recontar");
       return null;
     } finally {

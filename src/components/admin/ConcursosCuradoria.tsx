@@ -37,7 +37,6 @@ import {
   ExternalLink,
   Plus,
   RefreshCw,
-  AlertCircle,
   FileText,
 } from "lucide-react";
 import { usePendingItems, PendingItem } from "@/hooks/useConcursosAdmin";

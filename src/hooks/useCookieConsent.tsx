@@ -1,5 +1,6 @@
 import { useCallback, useState, useEffect } from 'react';
 import { loadAdSenseAfterIdle } from '@/lib/adsense';
+import { devLog } from '@/lib/dev-log';
 
 export interface CookiePreferences {
   necessary: boolean;
@@ -28,24 +29,24 @@ const defaultPreferences: CookiePreferences = {
 // Apply cookie preferences to third-party services.
 function applyCookiePreferences(preferences: CookiePreferences) {
   if (preferences.analytics) {
-    console.log('Analytics cookies enabled');
+    devLog('Analytics cookies enabled');
   } else {
-    console.log('Analytics cookies disabled');
+    devLog('Analytics cookies disabled');
   }
 
   if (preferences.marketing) {
     loadAdSenseAfterIdle({
       personalizedAds: true,
     });
-    console.log('Marketing cookies enabled');
+    devLog('Marketing cookies enabled');
   } else {
-    console.log('Marketing cookies disabled');
+    devLog('Marketing cookies disabled');
   }
 
   if (preferences.functional) {
-    console.log('Functional cookies enabled');
+    devLog('Functional cookies enabled');
   } else {
-    console.log('Functional cookies disabled');
+    devLog('Functional cookies disabled');
   }
 }
 

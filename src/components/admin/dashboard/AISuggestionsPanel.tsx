@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/dev-log';
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -130,9 +131,9 @@ export function AISuggestionsPanel({
       });
 
       if (IS_DEV) {
-        console.log('[AI Panel] Provider:', provider);
-        console.log('[AI Panel] Suggestions:', suggestions);
-        console.log('[AI Panel] Changed:', fieldSuggestions.filter(s => s.changed).map(s => s.key));
+        devLog('[AI Panel] Provider:', provider);
+        devLog('[AI Panel] Suggestions:', suggestions);
+        devLog('[AI Panel] Changed:', fieldSuggestions.filter(s => s.changed).map(s => s.key));
       }
 
       setResult({

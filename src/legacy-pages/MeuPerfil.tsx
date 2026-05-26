@@ -12,7 +12,7 @@ import { AchievementBadge } from "@/components/ui/achievement-badge";
 import { useGamification } from "@/hooks/useGamification";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useToast } from "@/hooks/use-toast";
-import { User, Trophy, Calendar, Star, Edit, Save, X, Crown, Target, Trash2, AlertTriangle, Shield } from "lucide-react";
+import { User, Trophy, Calendar, Edit, Save, X, Crown, Target, Trash2, AlertTriangle, Shield } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 

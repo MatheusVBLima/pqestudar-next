@@ -10,20 +10,6 @@ interface PremiumBackButtonProps {
   fallbackLabel?: string;
 }
 
-function labelFromPath(path: string): string {
-  const segments = path.replace(/^\//, '').split('/').filter(Boolean);
-  const last = segments[segments.length - 1];
-  if (!last) return 'premium';
-  const map: Record<string, string> = {
-    premium: 'premium',
-    cursos: 'cursos',
-    vagas: 'vagas',
-    beneficios: 'benefícios',
-    atualizacoes: 'atualizações',
-    salvos: 'salvos',
-  };
-  return map[last] || last;
-}
 
 export function PremiumBackButton({ fallbackPath, fallbackLabel = 'Voltar' }: PremiumBackButtonProps) {
   const router = useRouter();

@@ -516,7 +516,7 @@ export const useCurationMutations = () => {
 
       return { id: data.id };
     },
-    onSuccess: (result) => {
+      onSuccess: (_result) => {
       queryClient.invalidateQueries({ queryKey: curationKeys.all });
       void revalidateCurationsAction();
       toast({ title: 'Sucesso', description: 'Curadoria atualizada com sucesso!' });

@@ -8,6 +8,7 @@ import {
   reorderToolsAction,
   updateToolAction,
 } from '@/app/actions/tools';
+import { devLog } from '@/lib/dev-log';
 
 export interface Tool {
   id: string;
@@ -239,7 +240,7 @@ export const useTools = (options: UseToolsOptions = {}) => {
 
   const reorderTools = async (reorderedTools: Tool[]) => {
     const startTime = Date.now();
-    console.log('[Tools Reorder] Starting reorder operation', {
+    devLog('[Tools Reorder] Starting reorder operation', {
       count: reorderedTools.length,
       items: reorderedTools.map((t, idx) => ({ id: t.id, name: t.name, newOrder: idx })),
     });
@@ -254,7 +255,7 @@ export const useTools = (options: UseToolsOptions = {}) => {
       if (error) throw new Error(error);
 
       const duration = Date.now() - startTime;
-      console.log('[Tools Reorder] Success', { duration: `${duration}ms` });
+      devLog('[Tools Reorder] Success', { duration: `${duration}ms` });
 
       invalidateAll();
       toast({ title: 'Ordem atualizada', description: 'A ordem das ferramentas foi salva com sucesso.' });

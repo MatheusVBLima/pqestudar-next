@@ -9,9 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, Edit, Trash2, Eye, EyeOff, Ticket, ArrowLeft, Copy } from 'lucide-react';
+import { Search, Ticket, ArrowLeft, Copy } from 'lucide-react';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 interface RedeemToken {
   id: string;

@@ -1,5 +1,6 @@
 "use client";
 
+import { devLog } from '@/lib/dev-log';
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -15,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useGamification, type Badge as BadgeType } from "@/hooks/useGamification";
 import { BadgeNotification } from "@/components/ui/badge-notification";
 import { AINewsService, type NewsArticle } from "@/services/ai-news-service";
-import { RealNewsService, type ValidatedNews } from "@/services/real-news-service";
+import type { ValidatedNews } from "@/services/real-news-service";
 import { DailyNewsLimitService } from "@/services/daily-news-limit";
 import NewsStorageService from "@/services/news-storage";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,18 +32,17 @@ const Noticias = () => {
   const [filtroAtivo, setFiltroAtivo] = useState<string>("Todas");
   const [noticias, setNoticias] = useState<NewsItem[]>([]);
   const [expandedNews, setExpandedNews] = useState<Set<number>>(new Set());
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [_isGenerating, setIsGenerating] = useState(false);
   const [isSearchingReal, setIsSearchingReal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [lastSearchTime, setLastSearchTime] = useState<number>(0);
   const [newBadge, setNewBadge] = useState<BadgeType | null>(null);
   const { adicionarFavorito, removerFavorito, isFavorito } = useFavoritos();
   const { toast } = useToast();
-  const { recordHelpAction, userProfile } = useGamification(isAdmin);
+  const { recordHelpAction } = useGamification(isAdmin);
 
   // Daily global and user limits
   const dailyData = DailyNewsLimitService.getDailyData();
-  const userData = DailyNewsLimitService.getUserDailyData(user?.id);
   const globalCount = dailyData.count;
   const maxDaily = DailyNewsLimitService.getMaxDaily();
   const userCount = DailyNewsLimitService.getUserContributionCount(user?.id);
@@ -59,11 +59,11 @@ const Noticias = () => {
 
   // Load stored news on mount
   useEffect(() => {
-    console.log("Loading stored news...");
+    devLog("Loading stored news...");
     const storedNews = NewsStorageService.getAllNews();
     if (storedNews.length > 0) {
       setNoticias(storedNews);
-      console.log(`Loaded ${storedNews.length} stored news articles`);
+      devLog(`Loaded ${storedNews.length} stored news articles`);
     }
   }, []);
 
@@ -91,7 +91,7 @@ const Noticias = () => {
 
         // Se mais de 60% das palavras são iguais, considerar duplicata
         if (similarity > 0.6) {
-          console.log(
+          devLog(
             `Duplicate detected: "${newsItem.titulo}" is similar to "${existing.titulo}" (${Math.round(similarity * 100)}% similar)`,
           );
           return true;
@@ -122,7 +122,7 @@ const Noticias = () => {
     window.location.reload();
   };
 
-  const removeNewsByTitle = (titleToRemove: string) => {
+  const _removeNewsByTitle = (titleToRemove: string) => {
     const allNews = NewsStorageService.getAllNews();
     const filtered = allNews.filter((n) => n.titulo !== titleToRemove);
 
@@ -339,7 +339,7 @@ const Noticias = () => {
     }
   };
 
-  const generateMoreNews = () => {
+  const _generateMoreNews = () => {
     setIsGenerating(true);
 
     // Simulate AI generation delay for better UX
@@ -443,7 +443,7 @@ const Noticias = () => {
    * - Evita truncar HTML no meio de tags
    * - Mantém saída segura via sanitizeHtml
    */
-  const getSafePreviewHtml = (html: string, max = 400) => {
+  const _getSafePreviewHtml = (html: string, max = 400) => {
     const text = toPlainText(html);
     const preview = text.length > max ? `${text.slice(0, max)}...` : text;
     // Re-encapsula em <p> e sanitiza novamente por garantia

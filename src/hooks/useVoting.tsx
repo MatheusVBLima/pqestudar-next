@@ -5,14 +5,6 @@ import { toast } from '@/hooks/use-toast';
 
 export type VoteType = 'up' | 'down';
 
-interface CourseVote {
-  id: string;
-  user_id: string;
-  course_id: string;
-  vote_type: VoteType;
-  created_at: string;
-}
-
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : 'Erro inesperado';
 

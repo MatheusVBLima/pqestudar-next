@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import logoLight from "@/assets/logo-light.png";
-import logoDark from "@/assets/logo-dark.png";
 
 export interface NavItem {
   id: string;
@@ -27,6 +25,8 @@ export interface NavSettings {
 
 const NAV_CACHE_KEY = "pqe_nav_items_cache";
 const NAV_SETTINGS_CACHE_KEY = "pqe_nav_settings_cache";
+const FALLBACK_LOGO_LIGHT = "/images/logo-light.png";
+const FALLBACK_LOGO_DARK = "/images/logo-dark.png";
 
 function readCache<T>(key: string): T | null {
   if (typeof window === "undefined") return null;
@@ -121,10 +121,8 @@ export function useNavConfig() {
 
   const settings = settingsQuery.data ?? cachedSettings ?? FALLBACK_SETTINGS;
 
-  // Next.js converts static image imports to StaticImageData objects; <img>
-  // expects a string URL, so use .src for the fallback to avoid "[object Object]" 404s.
-  const resolvedLogoLight = settings.logo_light_url || logoLight.src;
-  const resolvedLogoDark = settings.logo_dark_url || logoDark.src;
+  const resolvedLogoLight = settings.logo_light_url || FALLBACK_LOGO_LIGHT;
+  const resolvedLogoDark = settings.logo_dark_url || FALLBACK_LOGO_DARK;
 
   return {
     items,

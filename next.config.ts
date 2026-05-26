@@ -32,11 +32,6 @@ const nextConfig: NextConfig = {
   images: {
     disableStaticImages: true,
   },
-  typescript: {
-    // 77 pre-existing TS errors (mojibake in legacy strings, type drift in admin
-    // forms). Fix incrementally; not blocking Wave 7 cleanup.
-    ignoreBuildErrors: true,
-  },
   experimental: {
     staleTimes: {
       dynamic: 30,

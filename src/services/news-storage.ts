@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/dev-log';
 // Service for storing and retrieving news articles
 import { NewsArticle } from './ai-news-service';
 import { ValidatedNews } from './real-news-service';
@@ -24,7 +25,7 @@ class NewsStorageService {
       const newsObject = Object.fromEntries(this.news);
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(newsObject));
       localStorage.setItem(this.YEAR_KEY, currentYear.toString());
-      console.log(`Fresh ${currentYear} news stored successfully:`, newsArray.length, 'items');
+      devLog(`Fresh ${currentYear} news stored successfully:`, newsArray.length, 'items');
     } catch (error) {
       console.warn('Could not save news to localStorage:', error);
     }
@@ -94,7 +95,7 @@ class NewsStorageService {
       const currentYear = new Date().getFullYear();
       
       if (storedYear && parseInt(storedYear) !== currentYear) {
-        console.log(`Clearing old news from ${storedYear}, updating to ${currentYear}`);
+        devLog(`Clearing old news from ${storedYear}, updating to ${currentYear}`);
         this.clearNews();
       }
     } catch (error) {

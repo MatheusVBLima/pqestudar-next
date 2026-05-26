@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
   useSensor, useSensors, type DragEndEvent,
@@ -9,13 +9,12 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
   GripVertical, Type, Search, FileText, Image, ListChecks,
-  MessageSquare, Link2, Megaphone, ChevronDown, ChevronRight,
+  Link2, Megaphone, ChevronDown, ChevronRight,
   Pencil, Check, X,
 } from 'lucide-react';
 import type { GeneratedGuideData } from './GuideFlowPreview';

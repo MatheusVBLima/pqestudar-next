@@ -2,146 +2,38 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { getErrorMessage } from '@/lib/error-message'
-import { PUBLIC_SUPABASE_URL } from '@/lib/runtime-env'
 
 interface LoginFormProps {
-  onSwitchToSignUp: () => void
+  onSwitchToSignUp?: () => void
 }
 
-export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+export function LoginForm(_props: LoginFormProps = {}) {
   const [googleLoading, setGoogleLoading] = useState(false)
-  const [resetLoading, setResetLoading] = useState(false)
-  const [showForgotPassword, setShowForgotPassword] = useState(false)
-  const [resendLoading, setResendLoading] = useState(false)
-  const { signIn, signInWithGoogle, resetPassword } = useAuth()
-  const router = useRouter()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    const { error } = await signIn(email, password)
-    
-    if (error) {
-      let errorMessage = 'Erro ao fazer login'
-      
-      if (error.message?.includes('Invalid login credentials')) {
-        errorMessage = 'Email ou senha incorretos. Verifique suas credenciais ou tente recuperar sua senha.'
-      } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Email não confirmado.'
-        toast.error(errorMessage, {
-          action: {
-            label: 'Reenviar confirmação',
-            onClick: () => handleResendConfirmation()
-          }
-        })
-        setLoading(false)
-        return
-      } else {
-        errorMessage = error.message
-      }
-      
-      toast.error(errorMessage)
-    } else {
-      toast.success('Login realizado com sucesso!')
-      router.push('/')
-    }
-    
-    setLoading(false)
-  }
+  const { signInWithGoogle } = useAuth()
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true)
     const { error } = await signInWithGoogle()
-    
+
     if (error) {
       toast.error('Erro ao fazer login com Google: ' + error.message)
       setGoogleLoading(false)
-    }
-    // Não definimos loading como false aqui porque o usuário será redirecionado
-  }
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!email) {
-      toast.error('Digite seu email para recuperar a senha')
-      return
-    }
-
-    setResetLoading(true)
-    const { error } = await resetPassword(email)
-    
-    if (error) {
-      toast.error('Erro ao enviar email de recuperação: ' + error.message)
-    } else {
-      toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.')
-      setShowForgotPassword(false)
-    }
-    
-    setResetLoading(false)
-  }
-
-  const handleResendConfirmation = async () => {
-    if (!email) {
-      toast.error('Digite seu email para reenviar a confirmação')
-      return
-    }
-
-    console.info('[Auth] Resend confirmation start', { email })
-    setResendLoading(true)
-    
-    try {
-      const response = await fetch(`${PUBLIC_SUPABASE_URL}/functions/v1/auth-resend-confirmation`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          redirectTo: window.location.origin + '/login'
-        })
-      })
-
-      console.info('[Auth] Resend confirmation response', { ok: response.ok, status: response.status })
-      const data = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Falha no reenvio')
-      }
-
-      toast.success('E-mail enviado. Verifique sua caixa de entrada e spam.')
-    } catch (error: unknown) {
-      console.error('[Auth] Resend confirmation error', error)
-      toast.error(getErrorMessage(error, 'Erro ao reenviar. Tente novamente.'))
-    } finally {
-      setResendLoading(false)
     }
   }
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        {/* Logo */}
         <div className="flex justify-center mb-4">
           <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             PqEstudar?
           </span>
         </div>
         <CardTitle>Entrar</CardTitle>
-        <CardDescription>
-          Acesse com Google para continuar
-        </CardDescription>
+        <CardDescription>Acesse com Google para continuar</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center">
         <Button

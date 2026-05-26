@@ -1,6 +1,6 @@
 "use client";
 
-﻿import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
@@ -192,7 +192,7 @@ export default function AdminMenu() {
   });
 
   // ── Items state ──
-  const items = itemsQuery.data ?? [];
+  const items = useMemo(() => itemsQuery.data ?? [], [itemsQuery.data]);
 
   // ── DnD ──
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));

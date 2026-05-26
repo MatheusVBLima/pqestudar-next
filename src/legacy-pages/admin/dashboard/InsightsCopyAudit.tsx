@@ -14,7 +14,7 @@ import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Too
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { Play, Pencil, History, RotateCcw } from 'lucide-react';
+import { Play, Pencil, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
 import { buildAuditUrls, runIframeAudit } from '@/lib/iframe-audit-engine';
@@ -38,7 +38,7 @@ export default function InsightsCopyAudit() {
   const qc = useQueryClient();
   const [period, setPeriod] = useState<Period>('all');
   const [drawerIdx, setDrawerIdx] = useState<number | null>(null);
-  const [drawerTab, setDrawerTab] = useState<'diagnostico' | 'editor' | 'historico'>('diagnostico');
+  const [_drawerTab, setDrawerTab] = useState<'diagnostico' | 'editor' | 'historico'>('diagnostico');
   const [auditProgress, setAuditProgress] = useState<{ current: number; total: number; path: string } | null>(null);
   const range = periodToRange(period);
 

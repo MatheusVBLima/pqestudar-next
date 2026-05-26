@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { devLog } from '@/lib/dev-log';
 
 export interface Notification {
   id: string;
@@ -50,11 +51,11 @@ export const useNotifications = () => {
       read: false
     };
 
-    console.log('🔔 Adicionando notificação:', newNotification);
+    devLog('🔔 Adicionando notificação:', newNotification);
 
     setNotifications(prev => {
       const updated = [newNotification, ...prev].slice(0, MAX_NOTIFICATIONS);
-      console.log('📋 Total de notificações:', updated.length, 'Não lidas:', updated.filter(n => !n.read).length);
+      devLog('📋 Total de notificações:', updated.length, 'Não lidas:', updated.filter(n => !n.read).length);
       return updated;
     });
 

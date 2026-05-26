@@ -251,8 +251,18 @@ const NoticiaDetalhes = () => {
       return;
     }
 
+    const noticiaId = Number(noticia.id);
+    if (!Number.isFinite(noticiaId)) {
+      toast({
+        title: "Erro ao salvar",
+        description: "NÃ£o foi possÃ­vel identificar esta notÃ­cia.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const noticiaFavorito = {
-      id: noticia.id,
+      id: noticiaId,
       titulo: noticia.titulo,
       descricao: noticia.descricao,
       categoria: noticia.categoria,
@@ -260,8 +270,8 @@ const NoticiaDetalhes = () => {
       tipo: "noticia" as const,
     };
 
-    if (isFavorito(noticia.id, "noticia")) {
-      removerFavorito(noticia.id, "noticia");
+    if (isFavorito(noticiaId, "noticia")) {
+      removerFavorito(noticiaId, "noticia");
       toast({
         title: "Removido dos favoritos",
         description: "A notícia foi removida da sua lista de favoritos.",
@@ -332,12 +342,12 @@ const NoticiaDetalhes = () => {
                 onClick={() => handleSalvarNoticia(noticia)}
                 className={!user ? "opacity-70" : ""}
               >
-                {isFavorito(noticia.id, "noticia") ? (
+                {isFavorito(Number(noticia.id), "noticia") ? (
                   <BookmarkCheck className="h-4 w-4 mr-2 text-primary" />
                 ) : (
                   <Bookmark className="h-4 w-4 mr-2" />
                 )}
-                {!user ? "Login p/ salvar" : isFavorito(noticia.id, "noticia") ? "Salvo" : "Salvar"}
+                {!user ? "Login p/ salvar" : isFavorito(Number(noticia.id), "noticia") ? "Salvo" : "Salvar"}
               </Button>
             </div>
           </CardContent>

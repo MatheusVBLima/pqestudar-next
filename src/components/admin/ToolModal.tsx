@@ -360,7 +360,7 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
         try {
           const id = tool?.id || crypto.randomUUID();
           finalIconUrl = await uploadLogoToStorage(uploadedFile, id);
-        } catch (err) {
+        } catch (_err) {
           toast.error("Erro ao fazer upload da logo");
           setSaving(false);
           setUploading(false);
@@ -375,7 +375,7 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
         try {
           const id = tool?.id || crypto.randomUUID();
           finalAttachmentUrl = await uploadAttachmentToStorage(uploadedAttachment, id);
-        } catch (err) {
+        } catch (_err) {
           toast.error("Erro ao fazer upload do anexo");
           setSaving(false);
           setAttachmentUploading(false);

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronRight, ChevronLeft, BookOpen, Compass, Target, FolderOpen, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { findOption, TIPOS_GUIA, CATEGORIAS, INTENCOES, type GuideOption } from '@/lib/guide-editorial-options';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface EditorialSummaryPanelProps {
   tipo: string;

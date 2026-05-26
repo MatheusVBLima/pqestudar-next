@@ -14,7 +14,7 @@ interface SaveToolButtonProps {
   className?: string;
 }
 
-export function SaveToolButton({ toolId, toolName, metadata, className }: SaveToolButtonProps) {
+export function SaveToolButton({ toolId, metadata, className }: SaveToolButtonProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { isSaved, toggleSave, isToggling } = useSavedItems();

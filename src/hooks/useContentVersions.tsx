@@ -40,7 +40,7 @@ export interface ContentVersion {
   audit_score_after: number | null;
 }
 
-async function getAuthHeaders() {
+async function _getAuthHeaders() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) throw new Error('Não autenticado');
   return { Authorization: `Bearer ${session.access_token}` };
@@ -51,12 +51,6 @@ export function useLoadEntityFields(path: string | null) {
     queryKey: ['content-version-load', path],
     enabled: !!path,
     queryFn: async () => {
-      const headers = await getAuthHeaders();
-      const resp = await supabase.functions.invoke('admin-content-versions', {
-        method: 'GET',
-        headers,
-        body: undefined,
-      });
       // workaround: use fetch directly since invoke doesn't support GET with query params well
       const { data: { session } } = await supabase.auth.getSession();
       const baseUrl = `${PUBLIC_SUPABASE_URL}/functions/v1/admin-content-versions`;

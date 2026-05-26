@@ -100,8 +100,6 @@ export class AINewsService {
 
   static generateNews(count: number = 5): NewsArticle[] {
     const news: NewsArticle[] = [];
-    const currentYear = new Date().getFullYear();
-    
     for (let i = 0; i < count; i++) {
       const categoria = this.getRandomItem(this.newsTopics);
       const titulo = this.getRandomItem(this.newsTemplates[categoria]);
@@ -131,7 +129,7 @@ export class AINewsService {
     return news.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
   }
 
-  private static generateFullContent(categoria: string, titulo: string): string {
+  private static generateFullContent(categoria: string, _titulo: string): string {
     const currentYear = new Date().getFullYear();
     const contentTemplates: Record<string, string[]> = {
       "ENEM": [
@@ -314,7 +312,7 @@ export class AINewsService {
     return array[Math.floor(Math.random() * array.length)];
   }
 
-  private static fillTemplate(template: string, year: number): string {
+  private static fillTemplate(template: string, _year: number): string {
     // Templates já são específicos e otimizados, não precisam de replacements
     return template;
   }

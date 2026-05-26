@@ -28,7 +28,7 @@ import { SourcesNode } from './flow-nodes/SourcesNode';
 import { ImageNode } from './flow-nodes/ImageNode';
 import { NodeEditorSheet } from './NodeEditorSheet';
 import { ImagePromptEditor } from './ImagePromptEditor';
-import type { GeneratedGuideData, ImagePrompt } from './GuideFlowPreview';
+import type { GeneratedGuideData } from './GuideFlowPreview';
 import type { GuideFlowInputs } from './GuideFlowForm';
 import type { GuideFlowSources } from '@/hooks/useGuideFlowSources';
 
@@ -110,7 +110,6 @@ export function buildGeneratedLayout(data: GeneratedGuideData, structureNames: s
   }, 0, 1);
 
   // Cover image node (column 0, row 2) — always show if prompt exists
-  const allImages = data.generated_images ?? data.image_prompts ?? [];
   // Merge: generated_images override image_prompts by position
   const imagePrompts = data.image_prompts ?? [];
   const generatedMap = new Map((data.generated_images ?? []).map(img => [img.position, img]));

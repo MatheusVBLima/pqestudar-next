@@ -34,6 +34,7 @@ export interface Guide {
   }>;
   is_published: boolean;
   is_featured: boolean;
+  views_count?: number | null;
   sort_order: number;
   author_name: string;
   cover_image_url: string | null;

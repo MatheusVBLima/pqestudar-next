@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { PageHeader } from "@/components/admin/dashboard/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +55,6 @@ const getStatusBadge = (s: string) => {
 const HISTORY_PAGE_SIZE = 20;
 
 export default function AdminConcursosHistorico() {
-  const queryClient = useQueryClient();
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [drillDownOpen, setDrillDownOpen] = useState(false);
   const [page, setPage] = useState(1);

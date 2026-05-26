@@ -380,18 +380,25 @@ export default function PrivacidadeNext() {
                               className="text-left break-words flex-1"
                               dangerouslySetInnerHTML={{ __html: highlightText(section.title || "") }}
                             />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 flex-shrink-0"
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              aria-label="Copiar link"
+                              className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                               onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyLink(section.id);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key !== "Enter" && e.key !== " ") return;
+                                e.preventDefault();
                                 e.stopPropagation();
                                 handleCopyLink(section.id);
                               }}
                             >
                               <Link2 className="h-4 w-4" />
                               <span className="sr-only">Copiar link</span>
-                            </Button>
+                            </span>
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="text-muted-foreground pb-4 sm:pb-6 pt-2 leading-relaxed [&>div]:break-words">

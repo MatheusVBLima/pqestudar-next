@@ -366,7 +366,7 @@ export default function ExploreCoursesNext() {
                       onToggleFavorite={toggleFavorite}
                       isManagementMode={isAdmin && managementMode}
                       onEdit={(course) => {
-                        setEditingCourse(course);
+                        setEditingCourse(course as unknown as Course);
                         setShowCourseForm(true);
                       }}
                       onDelete={handleDeleteCourse}

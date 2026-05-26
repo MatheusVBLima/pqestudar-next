@@ -124,9 +124,9 @@ async function fetchPremiumUpdateBySlug(slug: string) {
   const { data: items } = await supabase
     .from("weekly_update_items")
     .select(
-      "id, weekly_update_id, premium_item_id, sort_order, premium_items(id, title, slug, description_short, logo_url, external_url, tags, item_type, status)",
+      "id, update_id, item_id, sort_order, section, premium_items(id, title, slug, description_short, logo_url, external_url, tags, item_type, status)",
     )
-    .eq("weekly_update_id", update.id)
+    .eq("update_id", update.id)
     .order("sort_order", { ascending: true });
 
   return { update, items: items ?? [] };

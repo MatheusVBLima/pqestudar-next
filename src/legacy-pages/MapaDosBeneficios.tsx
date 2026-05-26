@@ -1,8 +1,9 @@
 "use client";
 
+import { devLog } from '@/lib/dev-log';
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, CheckCircle, X, FileText, Users, Award, RefreshCw, Heart, Gift, Check, Shield, ChevronDown, Clock, Volume2 } from "lucide-react";
+import { Flame, CheckCircle, X, FileText, Users, Award, Gift, Check, Shield, Clock, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -165,7 +166,7 @@ const FAQ_DATA = [{
   answer: "O guia foi pensado para todas as idades, desde jovens a partir dos 16 anos (ID Jovem, ProUni) até idosos (BPC, isenções). O material inclui benefícios que se adaptam a diferentes fases da vida e necessidades."
 }];
 const track = (event: string, data: Record<string, string>) => {
-  console.log("[Analytics]", event, data);
+  devLog("[Analytics]", event, data);
 };
 
 // ============================================
@@ -1467,7 +1468,7 @@ interface MapaDosBeneficiosProps {
   affiliateSlug?: string;
 }
 
-const MapaDosBeneficios = ({ checkoutBasico, checkoutPremium, affiliateSlug }: MapaDosBeneficiosProps = {}) => {
+const MapaDosBeneficios = ({ checkoutBasico, checkoutPremium, affiliateSlug: _affiliateSlug }: MapaDosBeneficiosProps = {}) => {
   const links = React.useMemo(
     () => ({
       basico: checkoutBasico || DEFAULT_CHECKOUT_BASICO,

@@ -1,3 +1,4 @@
+import { devDebug } from '@/lib/dev-log';
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -338,7 +339,7 @@ export default function ConcursosColeta() {
         };
       }
 
-      console.debug("[Coleta UI] Executing:", { method, ...payload });
+      devDebug("[Coleta UI] Executing:", { method, ...payload });
 
       const response = await fetch(
         `${PUBLIC_SUPABASE_URL}/functions/v1/concursos-coleta`,

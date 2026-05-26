@@ -293,7 +293,7 @@ export default function GuideFlow() {
 
       toast({ title: 'Regenerando imagem...', description: `Posição: ${position}` });
 
-      const resp = await fetch(
+      await fetch(
         `${PUBLIC_SUPABASE_URL}/functions/v1/guide-flow-generate`,
         {
           method: 'POST',

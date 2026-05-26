@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/dev-log';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getErrorMessage } from '@/lib/error-message';
@@ -50,7 +51,7 @@ export function useGuideStorageSources(): StorageSources {
       // Accept ALL items except the placeholder — don't filter by metadata.size or id
       const files = (data ?? []).filter(f => f.name !== '.emptyFolderPlaceholder');
       
-      console.log('[guide-structure] Raw items from Storage:', data?.length, 'Filtered:', files.length, files.map(f => f.name));
+      devLog('[guide-structure] Raw items from Storage:', data?.length, 'Filtered:', files.length, files.map(f => f.name));
 
       setStructureFiles(files.map(f => ({
         name: f.name,
@@ -83,7 +84,7 @@ export function useGuideStorageSources(): StorageSources {
 
       const items = (data ?? []).filter(i => i.name !== '.emptyFolderPlaceholder');
 
-      console.log('[guide-library] Raw items from Storage:', data?.length, 'Filtered:', items.length, items.map(i => ({ name: i.name, id: i.id, metaSize: i.metadata?.size })));
+      devLog('[guide-library] Raw items from Storage:', data?.length, 'Filtered:', items.length, items.map(i => ({ name: i.name, id: i.id, metaSize: i.metadata?.size })));
 
       const folders: string[] = [];
       const rootFiles: StorageFile[] = [];

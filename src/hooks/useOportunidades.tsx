@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -64,8 +64,6 @@ export type OportunidadeInput = Omit<Oportunidade, "id" | "visualizacoes" | "cre
 };
 
 export function useOportunidades(filters?: OportunidadeFilters) {
-  const queryClient = useQueryClient();
-
   // Fetch public oportunidades (published only)
   const {
     data: oportunidades = [],
@@ -83,7 +81,7 @@ export function useOportunidades(filters?: OportunidadeFilters) {
 
       if (error) throw error;
 
-      let result = ((data || []) as unknown as OportunidadeRow[]).map(o => ({
+      let result: Oportunidade[] = ((data || []) as unknown as OportunidadeRow[]).map(o => ({
         ...o,
         // Normalize: ensure escolaridades array exists (backward compat)
         escolaridades: o.escolaridades?.length
@@ -102,7 +100,7 @@ export function useOportunidades(filters?: OportunidadeFilters) {
         // Multi-select intersection: item has ANY of the selected escolaridades
         result = result.filter(o => {
           const itemEscolaridades = o.escolaridades || [o.escolaridade];
-          return filters.escolaridade!.some(e => itemEscolaridades.includes(e));
+          return filters.escolaridade!.some(e => itemEscolaridades.includes(e as Oportunidade["escolaridade"]));
         });
       }
       if (filters?.abrangencia?.length) {

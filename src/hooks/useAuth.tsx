@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/integrations/supabase/client'
 import { getErrorMessage } from '@/lib/error-message'
+import { devInfo } from '@/lib/dev-log'
 
 type AuthActionError = { message: string; isExistingUser?: boolean } | null
 type AuthActionResult = Promise<{ error: AuthActionError }>
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string): AuthActionResult => {
-    console.info('[Auth] Login start', { email })
+    devInfo('[Auth] Login start', { email })
     
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -55,14 +56,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error('[Auth] Login error', { error: error.message })
     } else {
-      console.info('[Auth] Login success')
+      devInfo('[Auth] Login success')
     }
     
     return { error }
   }
 
   const signUp = async (email: string, password: string): AuthActionResult => {
-    console.info('[Auth] Signup start', { email })
+    devInfo('[Auth] Signup start', { email })
     
     const redirectUrl = `${window.location.origin}/login`
     
@@ -79,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error }
     }
     
-    console.info('[Auth] Signup response', { 
+    devInfo('[Auth] Signup response', {
       hasUser: !!data?.user, 
       hasSession: !!data?.session,
       identitiesCount: data?.user?.identities?.length || 0

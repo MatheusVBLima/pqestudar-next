@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { ShieldCheck, CheckCircle2, AlertTriangle, XCircle, MinusCircle, HelpCircle, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { GeneratedGuideData } from '../GuideFlowPreview';
-import { resolveStructureMapping, STRUCTURE_DIMENSIONS, type StructureMapping } from '@/lib/guide-structure-mapping';
+import { resolveStructureMapping } from '@/lib/guide-structure-mapping';
 
 type ComplianceStatus = 'conforme' | 'parcial' | 'nao_conforme' | 'nao_verificado' | 'nao_aplicavel' | 'sem_fonte';
 

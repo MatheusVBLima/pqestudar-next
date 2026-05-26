@@ -48,7 +48,7 @@ import {
   AlertTriangle,
   Lock
 } from "lucide-react";
-import { useOportunidadesAdmin, Oportunidade, FonteOportunidade, type OportunidadeInput } from "@/hooks/useOportunidades";
+import { useOportunidadesAdmin, Oportunidade, type OportunidadeInput } from "@/hooks/useOportunidades";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import MarkdownEditor, { countMarkdownWords, markdownToHtml } from "./MarkdownEditor";
 import { getErrorMessage } from "@/lib/error-message";

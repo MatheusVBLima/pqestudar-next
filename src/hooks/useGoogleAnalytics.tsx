@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useCookieConsent } from './useCookieConsent';
+import { devLog } from '@/lib/dev-log';
 
 const GA_MEASUREMENT_ID = 'G-2N5LG0E1Q5';
 
@@ -39,7 +40,7 @@ export const useGoogleAnalytics = () => {
       'security_storage': 'granted', // Always granted for essential cookies
     });
 
-    console.log('[GA] Consent Mode v2 initialized with default denied values');
+    devLog('[GA] Consent Mode v2 initialized with default denied values');
     consentInitializedRef.current = true;
   }, []);
 
@@ -62,7 +63,7 @@ export const useGoogleAnalytics = () => {
 
     // Update consent mode
     window.gtag('consent', 'update', consentUpdate);
-    console.log('[GA] Consent Mode updated:', consentUpdate);
+    devLog('[GA] Consent Mode updated:', consentUpdate);
 
     // Load GA script only if analytics is granted and not already loaded
     if (preferences.analytics && !gaLoadedRef.current) {
@@ -72,13 +73,13 @@ export const useGoogleAnalytics = () => {
     // If analytics is denied after being granted, we can't unload the script
     // but the Consent Mode will prevent new cookies and tracking
     if (!preferences.analytics && gaLoadedRef.current) {
-      console.log('[GA] Analytics consent denied - tracking paused via Consent Mode');
+      devLog('[GA] Analytics consent denied - tracking paused via Consent Mode');
     }
   }, [consentData]);
 
   const loadGoogleAnalytics = () => {
     if (gaLoadedRef.current) {
-      console.log('[GA] Already loaded, skipping duplicate load');
+      devLog('[GA] Already loaded, skipping duplicate load');
       return;
     }
 
@@ -95,7 +96,7 @@ export const useGoogleAnalytics = () => {
         'cookie_flags': 'SameSite=None;Secure', // Modern cookie security
       });
       
-      console.log('[GA] Google Analytics loaded and initialized:', GA_MEASUREMENT_ID);
+      devLog('[GA] Google Analytics loaded and initialized:', GA_MEASUREMENT_ID);
       gaLoadedRef.current = true;
     };
 
@@ -104,7 +105,7 @@ export const useGoogleAnalytics = () => {
     };
 
     document.head.appendChild(script);
-    console.log('[GA] Loading Google Analytics script...');
+    devLog('[GA] Loading Google Analytics script...');
   };
 
   return {
@@ -112,9 +113,9 @@ export const useGoogleAnalytics = () => {
     trackEvent: (eventName: string, eventParams?: Record<string, unknown>) => {
       if (window.gtag && consentData.preferences.analytics) {
         window.gtag('event', eventName, eventParams);
-        console.log('[GA] Event tracked:', eventName, eventParams);
+        devLog('[GA] Event tracked:', eventName, eventParams);
       } else {
-        console.log('[GA] Event not tracked (analytics not consented):', eventName);
+        devLog('[GA] Event not tracked (analytics not consented):', eventName);
       }
     },
   };

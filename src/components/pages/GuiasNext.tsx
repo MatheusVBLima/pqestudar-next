@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import { PageHero } from "@/components/layout/PageHero";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -21,6 +20,7 @@ import { useManagementMode } from "@/hooks/useManagementMode";
 import { useGuides, Guide, useGuidesMutations } from "@/hooks/useGuides";
 import { useGuidePublicCategories } from "@/hooks/useGuidePublicCategories";
 import { usePageSettings } from "@/hooks/usePageSettings";
+import type { TablesInsert } from "@/integrations/supabase/types";
 import { GuideModal } from "@/components/admin/GuideModal";
 import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { FeaturedGuideCard } from "@/components/guides/FeaturedGuideCard";
@@ -163,7 +163,7 @@ export default function GuiasNext() {
       await updateGuide.mutateAsync(data as Partial<Guide> & { id: string });
       return;
     }
-    await createGuide.mutateAsync(data);
+    await createGuide.mutateAsync(data as TablesInsert<"guides">);
   };
 
   const handleEdit = (guide: Guide) => {

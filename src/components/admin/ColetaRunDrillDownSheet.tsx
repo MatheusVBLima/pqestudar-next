@@ -1,5 +1,6 @@
+import { devDebug } from '@/lib/dev-log';
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sheet,
   SheetContent,
@@ -12,12 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
   ExternalLink,
   RefreshCw,
-  Loader2,
   CheckCircle2,
   AlertCircle,
   XCircle,
@@ -27,7 +27,6 @@ import {
   Calendar,
   Hash,
 } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -82,7 +81,6 @@ const MOTIVO_OPTIONS = [
 const ITEMS_PER_PAGE = 20;
 
 export default function ColetaRunDrillDownSheet({ runId, open, onOpenChange, onReplay }: Props) {
-  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<{
     tipo?: string;
@@ -114,7 +112,7 @@ export default function ColetaRunDrillDownSheet({ runId, open, onOpenChange, onR
     queryFn: async () => {
       if (!runId) return null;
       
-      console.debug("[Coletas] Fetching run details:", runId);
+      devDebug("[Coletas] Fetching run details:", runId);
       
       const { data, error } = await supabase
         .from("coleta_runs")
@@ -131,7 +129,7 @@ export default function ColetaRunDrillDownSheet({ runId, open, onOpenChange, onR
         throw new Error("Execução não encontrada");
       }
       
-      console.debug("[Coletas] Run loaded:", {
+      devDebug("[Coletas] Run loaded:", {
         runId,
         status: data.status_execucao,
         totals: {
@@ -221,19 +219,6 @@ export default function ColetaRunDrillDownSheet({ runId, open, onOpenChange, onR
         return <XCircle className="h-4 w-4 text-destructive" />;
       default:
         return <FileText className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
-
-  const getStatusBadge = (s: string) => {
-    switch (s) {
-      case "novo":
-        return <Badge className="bg-emerald-600 text-white">Novo</Badge>;
-      case "ignorado":
-        return <Badge variant="secondary">Ignorado</Badge>;
-      case "erro":
-        return <Badge variant="destructive">Erro</Badge>;
-      default:
-        return <Badge variant="outline">{s ?? "—"}</Badge>;
     }
   };
 

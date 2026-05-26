@@ -1,3 +1,4 @@
+import { devLog } from '@/lib/dev-log';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -77,7 +78,7 @@ export function PartnerModal({ open, onOpenChange, partner, onSave }: PartnerMod
         sort_order: 0
       };
       
-      console.log('[PartnerModal] Resetting form with values:', values);
+      devLog('[PartnerModal] Resetting form with values:', values);
       form.reset(values);
     }
   }, [partner, open, form]);

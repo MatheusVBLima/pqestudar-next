@@ -322,18 +322,6 @@ export default function GuideFlowKnowledge() {
             <option value="storage">Storage</option>
             <option value="manual">Manual</option>
           </select>
-          {false && (
-          <Select value={filterSource} onValueChange={(v) => setFilterSource(v as SourceFilter)}>
-            <SelectTrigger className="w-[130px] h-8 text-xs rounded-[var(--admin-radius)]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas origens</SelectItem>
-              <SelectItem value="storage">📦 Storage</SelectItem>
-              <SelectItem value="manual">✍️ Manual</SelectItem>
-            </SelectContent>
-          </Select>
-          )}
         </div>
 
         <div className="flex items-center gap-2">

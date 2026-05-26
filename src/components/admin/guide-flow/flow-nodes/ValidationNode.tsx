@@ -1,6 +1,5 @@
 import { memo, useMemo } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Badge } from '@/components/ui/badge';
 import { ShieldCheck, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { GeneratedGuideData } from '../GuideFlowPreview';

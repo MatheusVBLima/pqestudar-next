@@ -263,17 +263,24 @@ export default function TermosNext() {
                         <AccordionTrigger className="text-left hover:no-underline py-6">
                           <div className="flex items-start justify-between w-full pr-4">
                             <span className="font-semibold text-lg">{section.title}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              aria-label="Copiar link"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleCopyLink(section.id);
                               }}
-                              className="shrink-0 gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onKeyDown={(e) => {
+                                if (e.key !== "Enter" && e.key !== " ") return;
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleCopyLink(section.id);
+                              }}
+                              className="inline-flex h-8 shrink-0 items-center justify-center gap-2 rounded-md px-2 text-muted-foreground opacity-0 transition-colors hover:bg-accent hover:text-accent-foreground group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                             >
                               <Link2 className="w-4 h-4" />
-                            </Button>
+                            </span>
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="text-muted-foreground leading-relaxed pb-6 pt-2">

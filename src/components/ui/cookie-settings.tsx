@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './car
 import { Badge } from './badge';
 import { useCookieConsent, CookiePreferences } from '@/hooks/useCookieConsent';
 import { useToast } from '@/hooks/use-toast';
+import { devLog } from '@/lib/dev-log';
 
 interface CookieSettingsProps {
   onClose?: () => void;
@@ -29,7 +30,7 @@ export const CookieSettings = ({ onClose }: CookieSettingsProps) => {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'cookieConsent' && e.newValue) {
-        console.log('[CookieSettings] Cross-tab sync detected');
+        devLog('[CookieSettings] Cross-tab sync detected');
         // Hook will auto-update consentData
       }
     };
@@ -48,7 +49,7 @@ export const CookieSettings = ({ onClose }: CookieSettingsProps) => {
   };
 
   const handleSavePreferences = () => {
-    console.log('[CookieSettings] Saving preferences:', tempPreferences);
+    devLog('[CookieSettings] Saving preferences:', tempPreferences);
     updatePreferences(tempPreferences);
     
     toast({
@@ -60,7 +61,7 @@ export const CookieSettings = ({ onClose }: CookieSettingsProps) => {
   };
 
   const handleResetConsent = () => {
-    console.log('[CookieSettings] Resetting consent');
+    devLog('[CookieSettings] Resetting consent');
     resetConsent();
     
     toast({

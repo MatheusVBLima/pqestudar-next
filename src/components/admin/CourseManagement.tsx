@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog } from '@/components/ui/dialog';
 import { CourseForm } from './CourseForm';
 import { useCourses, Course, type CreateCourseData } from '@/hooks/useCourses';
 import { useToast } from '@/hooks/use-toast';
@@ -200,17 +201,23 @@ export const CourseManagement = () => {
         ))}
       </div>
 
-      {/* Course Form Modal */}
-      <CourseForm
-        course={editingCourse}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsFormOpen(false);
-            setEditingCourse(null);
-          }
-        }}
-        onSubmit={editingCourse ? handleUpdateCourse : handleCreateCourse}
-      />
+      <Dialog open={isFormOpen || !!editingCourse} onOpenChange={(open) => {
+        if (!open) {
+          setIsFormOpen(false);
+          setEditingCourse(null);
+        }
+      }}>
+        <CourseForm
+          course={editingCourse}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsFormOpen(false);
+              setEditingCourse(null);
+            }
+          }}
+          onSubmit={editingCourse ? handleUpdateCourse : handleCreateCourse}
+        />
+      </Dialog>
     </div>
   );
 };

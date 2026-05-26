@@ -1,5 +1,5 @@
+import { devLog } from '@/lib/dev-log';
 // Service for fetching and validating real news from multiple sources
-import { NewsArticle } from './ai-news-service';
 
 export interface NewsSource {
   name: string;
@@ -97,9 +97,9 @@ export class RealNewsService {
               this.usedKeywords.set(validatedArticle.categoria, Date.now());
             } else {
               if (isDuplicate) {
-                console.log(`Tema duplicado ignorado: "${validatedArticle.titulo}"`);
+                devLog(`Tema duplicado ignorado: "${validatedArticle.titulo}"`);
               } else {
-                console.log(`Categoria "${validatedArticle.categoria}" já tem muitos artigos, diversificando...`);
+                devLog(`Categoria "${validatedArticle.categoria}" já tem muitos artigos, diversificando...`);
               }
             }
           }
@@ -118,7 +118,7 @@ export class RealNewsService {
   private static async searchNewsForKeyword(keyword: string): Promise<{ keyword: string; sources: NewsSource[] }> {
     try {
       // Use web search to find recent news about the keyword
-      const searchQuery = `${keyword} notícias educação Brasil site:${this.NEWS_SITES.join(' OR site:')}`;
+      const _searchQuery = `${keyword} notícias educação Brasil site:${this.NEWS_SITES.join(' OR site:')}`;
       
       // This would normally use a web search API
       // For now, we'll simulate finding sources
@@ -161,7 +161,7 @@ export class RealNewsService {
 
   private static generateRealisticContent(keyword: string): string {
     const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
+    const _currentMonth = new Date().getMonth() + 1;
     
     const templates = {
       'ENEM': [
@@ -407,7 +407,7 @@ export class RealNewsService {
       const mentionedYear = parseInt(yearMatch[1]);
       // If mentions a past year (except last year for results), reject
       if (mentionedYear < currentYear - 1) {
-        console.log(`Notícia desatualizada (ano ${mentionedYear}): "${article.titulo}"`);
+        devLog(`Notícia desatualizada (ano ${mentionedYear}): "${article.titulo}"`);
         return false;
       }
     }
@@ -430,7 +430,7 @@ export class RealNewsService {
     
     for (const { months, pattern, reason } of outdatedPatterns) {
       if (months.includes(currentMonth) && pattern.test(title)) {
-        console.log(`Notícia desatualizada (${reason}): "${article.titulo}"`);
+        devLog(`Notícia desatualizada (${reason}): "${article.titulo}"`);
         return false;
       }
     }
@@ -479,14 +479,14 @@ export class RealNewsService {
       
       // Check 1: Exact title match (case insensitive)
       if (newTitle === existingTitle) {
-        console.log(`❌ DUPLICATA EXATA: "${newArticle.titulo}"`);
+        devLog(`❌ DUPLICATA EXATA: "${newArticle.titulo}"`);
         return true;
       }
       
       // Check 2: Very similar titles (Levenshtein-style check)
       const titleSimilarity = this.calculateStringSimilarity(newTitle, existingTitle);
       if (titleSimilarity > 0.85) {
-        console.log(`❌ DUPLICATA POR TÍTULO SIMILAR (${(titleSimilarity * 100).toFixed(0)}%): "${newArticle.titulo}" vs "${existing.titulo}"`);
+        devLog(`❌ DUPLICATA POR TÍTULO SIMILAR (${(titleSimilarity * 100).toFixed(0)}%): "${newArticle.titulo}" vs "${existing.titulo}"`);
         return true;
       }
       
@@ -503,7 +503,7 @@ export class RealNewsService {
         const overlapRatio = intersection.size / smallerSet;
         
         if (overlapRatio >= 0.7) {
-          console.log(`❌ DUPLICATA POR TEMA (${(overlapRatio * 100).toFixed(0)}% overlap, categoria: ${newArticle.categoria}): "${newArticle.titulo}" vs "${existing.titulo}"`);
+          devLog(`❌ DUPLICATA POR TEMA (${(overlapRatio * 100).toFixed(0)}% overlap, categoria: ${newArticle.categoria}): "${newArticle.titulo}" vs "${existing.titulo}"`);
           return true;
         }
       }
@@ -515,12 +515,12 @@ export class RealNewsService {
       // If 2+ key keywords match, likely duplicate
       const matchingKeywords = newKeywords.filter(k => existingKeywords.includes(k));
       if (matchingKeywords.length >= 2) {
-        console.log(`❌ DUPLICATA POR KEYWORDS (${matchingKeywords.join(', ')}): "${newArticle.titulo}" vs "${existing.titulo}"`);
+        devLog(`❌ DUPLICATA POR KEYWORDS (${matchingKeywords.join(', ')}): "${newArticle.titulo}" vs "${existing.titulo}"`);
         return true;
       }
     }
     
-    console.log(`✅ NOTÍCIA ÚNICA: "${newArticle.titulo}"`);
+    devLog(`✅ NOTÍCIA ÚNICA: "${newArticle.titulo}"`);
     return false;
   }
 

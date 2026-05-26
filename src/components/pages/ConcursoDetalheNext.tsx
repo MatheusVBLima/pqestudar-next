@@ -299,7 +299,7 @@ export default function ConcursoDetalheNext() {
           title: oportunidade?.titulo,
           url,
         });
-      } catch (e) {
+      } catch (_e) {
         // User cancelled
       }
     } else {

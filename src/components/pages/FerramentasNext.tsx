@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Suspense, lazy, useState, useEffect, useMemo, useRef } from "react";
+import { Suspense, lazy, useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHero } from "@/components/layout/PageHero";
 import { useManagementMode } from "@/hooks/useManagementMode";
@@ -604,14 +604,14 @@ export default function Ferramentas() {
     setSelectedTags([tag]);
   };
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = useCallback((newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       const params = new URLSearchParams(window.location.search);
       params.set("page", String(newPage));
       router.replace(`${pathname}?${params.toString()}`);
       setCurrentPage(newPage);
     }
-  };
+  }, [pathname, router, totalPages]);
 
   const handleKeyDown = (
   e: React.KeyboardEvent<HTMLDivElement>,
@@ -641,7 +641,7 @@ export default function Ferramentas() {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentPage, totalPages, isManagementMode]);
+  }, [currentPage, totalPages, isManagementMode, handlePageChange]);
 
   const handleAddTool = () => {
     setEditingTool(null);
@@ -662,7 +662,7 @@ export default function Ferramentas() {
       }
       setModalOpen(false);
       setEditingTool(null);
-    } catch (error) {
+    } catch (_error) {
       // Error toast already shown by useTools hook
     }
   };
