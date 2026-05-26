@@ -18,6 +18,7 @@ export async function generateMetadata({ params }: BonusPageProps): Promise<Meta
   return {
     title: `${page.title} – PqEstudar`,
     description: page.intro,
+    alternates: { canonical: `/bonus/${slug}` },
     robots: { index: false, follow: false },
   };
 }

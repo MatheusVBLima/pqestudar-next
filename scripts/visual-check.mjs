@@ -2,15 +2,24 @@ import { chromium } from "playwright";
 import { mkdir } from "node:fs/promises";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
+const canonicalOrigin = process.env.CANONICAL_ORIGIN ?? "https://www.pqestudar.com.br";
 const outDir = "test-results/visual-check";
 
 const routes = [
-  "/",
-  "/login",
-  "/ferramentas",
-  "/concursos",
-  "/privacidade",
-  "/termos",
+  { path: "/", name: "home" },
+  { path: "/login", name: "login", requireLogo: false },
+  { path: "/ferramentas", name: "ferramentas" },
+  { path: "/concursos", name: "concursos" },
+  { path: "/produtos", name: "produtos" },
+  { path: "/guias", name: "guias" },
+  { path: "/votacoes", name: "votacoes" },
+  { path: "/salvos", name: "salvos", expectedCanonicalPath: "/login" },
+  { path: "/explorar-cursos", name: "explorar-cursos" },
+  { path: "/faq", name: "faq" },
+  { path: "/sobre-pqestudar", name: "sobre-pqestudar" },
+  { path: "/configuracoes-cookies", name: "configuracoes-cookies" },
+  { path: "/privacidade", name: "privacidade" },
+  { path: "/termos", name: "termos" },
 ];
 
 const viewports = [
@@ -25,7 +34,13 @@ const ignoredConsoleFragments = [
 ];
 
 function slugRoute(route) {
-  return route === "/" ? "home" : route.replace(/^\/+/, "").replace(/[/:?#[\]@!$&'()*+,;=.]+/g, "-");
+  return route.name ?? (route.path === "/" ? "home" : route.path.replace(/^\/+/, "").replace(/[/:?#[\]@!$&'()*+,;=.]+/g, "-"));
+}
+
+function expectedCanonicalUrl(route) {
+  const expectedPath = route.expectedCanonicalPath ?? route.path;
+  if (expectedPath === "/") return canonicalOrigin;
+  return new URL(expectedPath, canonicalOrigin).toString();
 }
 
 async function setCookieConsent(page) {
@@ -77,7 +92,7 @@ for (const viewport of viewports) {
 
     await setCookieConsent(page);
 
-    const url = new URL(route, baseUrl).toString();
+    const url = new URL(route.path, baseUrl).toString();
     const response = await page.goto(url, { waitUntil: "networkidle", timeout: 30_000 });
 
     if (!response || !response.ok()) {
@@ -90,14 +105,26 @@ for (const viewport of viewports) {
     });
 
     const logoCount = await page.locator('img[alt="PqEstudar"]').count();
-    if (route !== "/login" && logoCount === 0) {
+    if (route.requireLogo !== false && logoCount === 0) {
       pageErrors.push("Logo PqEstudar not found");
+    }
+
+    const canonicalLinks = page.locator('link[rel="canonical"]');
+    const canonicalCount = await canonicalLinks.count();
+    if (canonicalCount !== 1) {
+      pageErrors.push(`Expected 1 canonical link, found ${canonicalCount}`);
+    } else {
+      const canonicalHref = await canonicalLinks.first().getAttribute("href");
+      const expectedHref = expectedCanonicalUrl(route);
+      if (canonicalHref !== expectedHref) {
+        pageErrors.push(`Expected canonical ${expectedHref}, found ${canonicalHref ?? "empty"}`);
+      }
     }
 
     if (pageErrors.length > 0) {
       failures.push({
         viewport: viewport.name,
-        route,
+        route: route.path,
         errors: pageErrors,
       });
     }

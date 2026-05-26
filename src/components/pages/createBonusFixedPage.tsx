@@ -10,6 +10,7 @@ export function createBonusFixedPage(slug: string) {
     return {
       title: `${page.title} – PqEstudar`,
       description: page.intro,
+      alternates: { canonical: slug },
       robots: { index: false, follow: false },
     };
   }

@@ -19,6 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       data?.meta_description ??
       "Explore ferramentas, concursos e guias passo a passo para estudar melhor. Veja destaques, salve recursos e acompanhe atualizacoes.",
+    alternates: { canonical: "/" },
   };
 }
 
