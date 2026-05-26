@@ -10,7 +10,6 @@ function shouldShowFooter(pathname: string) {
   if (pathname === "/premium") return true;
 
   const hiddenFooterRoutes = [
-    "/assine",
     "/login",
     "/meu-perfil",
     "/meus-materiais",

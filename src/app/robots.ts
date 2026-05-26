@@ -22,7 +22,6 @@ export default function robots(): MetadataRoute.Robots {
           "/bonus/",
           "/breve",
           "/kit",
-          "/assine",
           "/faq",
           "/mapa-dos-beneficios/",
           "/acesso-kit-partida-8h3z",
