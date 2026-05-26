@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: SITE_NAME,
   publisher: SITE_NAME,
+  other: {
+    "google-adsense-account": "ca-pub-1740357621806249",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

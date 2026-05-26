@@ -4,6 +4,8 @@ import { mkdir } from "node:fs/promises";
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const canonicalOrigin = process.env.CANONICAL_ORIGIN ?? "https://www.pqestudar.com.br";
 const outDir = "test-results/visual-check";
+const expectedAdsTxt = "google.com, pub-1740357621806249, DIRECT, f08c47fec0942fa0";
+const expectedAdSenseAccount = "ca-pub-1740357621806249";
 
 const routes = [
   { path: "/", name: "home" },
@@ -66,8 +68,34 @@ await mkdir(outDir, { recursive: true });
 const browser = await chromium.launch();
 const failures = [];
 
+async function checkTextEndpoint(context, path, expectedContent) {
+  const response = await context.request.get(new URL(path, baseUrl).toString());
+  const errors = [];
+
+  if (!response.ok()) {
+    errors.push(`HTTP ${response.status()} for ${path}`);
+  } else {
+    const content = (await response.text()).trim();
+    if (content !== expectedContent) {
+      errors.push(`Expected "${expectedContent}", found "${content || "empty"}"`);
+    }
+  }
+
+  if (errors.length > 0) {
+    failures.push({
+      viewport: "endpoint",
+      route: path,
+      errors,
+    });
+  }
+}
+
 for (const viewport of viewports) {
   const context = await browser.newContext({ viewport });
+
+  if (viewport.name === "desktop") {
+    await checkTextEndpoint(context, "/ads.txt", expectedAdsTxt);
+  }
 
   for (const route of routes) {
     const page = await context.newPage();
@@ -119,6 +147,11 @@ for (const viewport of viewports) {
       if (canonicalHref !== expectedHref) {
         pageErrors.push(`Expected canonical ${expectedHref}, found ${canonicalHref ?? "empty"}`);
       }
+    }
+
+    const adsenseAccount = await page.locator('meta[name="google-adsense-account"]').getAttribute("content");
+    if (adsenseAccount !== expectedAdSenseAccount) {
+      pageErrors.push(`Expected google-adsense-account ${expectedAdSenseAccount}, found ${adsenseAccount ?? "empty"}`);
     }
 
     if (pageErrors.length > 0) {
