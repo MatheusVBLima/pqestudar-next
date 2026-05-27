@@ -1,32 +1,27 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
+import { Search, BookOpen } from "lucide-react";
 import { PageHero } from "@/components/layout/PageHero";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Search, BookOpen } from "lucide-react";
-import { useUserRoles } from "@/hooks/useUserRoles";
-import { useManagementMode } from "@/hooks/useManagementMode";
-import { useGuides, Guide, useGuidesMutations } from "@/hooks/useGuides";
-import { useGuidePublicCategories } from "@/hooks/useGuidePublicCategories";
-import { usePageSettings } from "@/hooks/usePageSettings";
-import type { TablesInsert } from "@/integrations/supabase/types";
-import { GuideModal } from "@/components/admin/GuideModal";
-import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { FeaturedGuideCard } from "@/components/guides/FeaturedGuideCard";
 import { GuideListItem } from "@/components/guides/GuideListItem";
 import { GuideSearchOverlay } from "@/components/guides/GuideSearchOverlay";
+import { useGuidePublicCategories } from "@/hooks/useGuidePublicCategories";
+import { useGuides, Guide } from "@/hooks/useGuides";
+import { useManagementMode } from "@/hooks/useManagementMode";
+import { usePageSettings } from "@/hooks/usePageSettings";
+import { useUserRoles } from "@/hooks/useUserRoles";
 import { cn } from "@/lib/utils";
+
+const GuidesAdminView = lazy(() => import("@/components/pages/GuidesAdminView"));
+
+const noopAdminActions = {
+  onEdit: (_guide: Guide) => {},
+  onDelete: (_guide: Guide) => {},
+  onTogglePublished: (_guide: Guide) => {},
+  onToggleFeatured: (_guide: Guide) => {},
+};
 
 function GuidesList({
   guides,
@@ -116,20 +111,12 @@ export default function GuiasNext() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [adminTab, setAdminTab] = useState<"published" | "drafts">("published");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editGuide, setEditGuide] = useState<Guide | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Guide | null>(null);
 
   const showAdmin = isAdmin && isManagementMode;
   const { data: guides, isLoading } = useGuides(showAdmin);
-  const { createGuide, updateGuide, deleteGuide, togglePublished, toggleFeatured } = useGuidesMutations();
-
-  const publishedCount = useMemo(() => guides?.filter((g) => g.is_published).length ?? 0, [guides]);
-  const draftsCount = useMemo(() => guides?.filter((g) => !g.is_published).length ?? 0, [guides]);
 
   const { data: publicCategoriesRows } = useGuidePublicCategories();
-  const PUBLIC_CATEGORIES = (publicCategoriesRows ?? []).map((c) => c.name);
+  const publicCategories = (publicCategoriesRows ?? []).map((c) => c.name);
 
   const publicGuides = useMemo(() => {
     if (!guides) return [] as Guide[];
@@ -137,14 +124,8 @@ export default function GuiasNext() {
   }, [guides]);
 
   const filtered = useMemo(() => {
-    if (!guides) return [];
+    if (!guides) return [] as Guide[];
     let list = guides;
-
-    if (showAdmin) {
-      list = list.filter((g) =>
-        adminTab === "published" ? g.is_published : !g.is_published
-      );
-    }
 
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
@@ -156,36 +137,9 @@ export default function GuiasNext() {
     }
 
     return list;
-  }, [guides, showAdmin, adminTab, searchTerm, categoryFilter]);
+  }, [guides, searchTerm, categoryFilter]);
 
-  const handleSave = async (data: Partial<Guide>) => {
-    if (data.id) {
-      await updateGuide.mutateAsync(data as Partial<Guide> & { id: string });
-      return;
-    }
-    await createGuide.mutateAsync(data as TablesInsert<"guides">);
-  };
-
-  const handleEdit = (guide: Guide) => {
-    setEditGuide(guide);
-    setModalOpen(true);
-  };
-
-  const handleNew = () => {
-    setEditGuide(null);
-    setModalOpen(true);
-  };
-
-  const adminActions = {
-    onEdit: handleEdit,
-    onDelete: (guide: Guide) => setDeleteTarget(guide),
-    onTogglePublished: (guide: Guide) =>
-      togglePublished.mutate({ id: guide.id, is_published: !guide.is_published }),
-    onToggleFeatured: (guide: Guide) =>
-      toggleFeatured.mutate({ id: guide.id, is_featured: !guide.is_featured }),
-  };
-
-  const renderContent = () => {
+  const renderPublicContent = () => {
     if (isLoading) {
       return (
         <div className="space-y-6">
@@ -199,9 +153,9 @@ export default function GuiasNext() {
     return (
       <GuidesList
         guides={filtered}
-        showAdmin={showAdmin}
-        adminActions={adminActions}
-        showFeatured={!showAdmin || adminTab === "published"}
+        showAdmin={false}
+        adminActions={noopAdminActions}
+        showFeatured
       />
     );
   };
@@ -212,19 +166,11 @@ export default function GuiasNext() {
         title={ps.headerTitle || "Guias"}
         description={
           ps.headerDescription ||
-          "Conteúdos práticos e evergreen para estudar com mais clareza e aproveitar oportunidades."
+          "Conteudos praticos e evergreen para estudar com mais clareza e aproveitar oportunidades."
         }
       />
 
       <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 pb-16">
-        {showAdmin && (
-          <ManagementToolbar
-            createLabel="Novo guia"
-            onCreate={handleNew}
-            hint="Edite, publique ou exclua guias. Use as abas para revisar publicados e rascunhos."
-          />
-        )}
-
         <div className="mb-8 flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <nav
@@ -232,7 +178,7 @@ export default function GuiasNext() {
               className="flex-1 min-w-0 -mx-1 overflow-x-auto scrollbar-none overscroll-x-contain"
             >
               <ul className="flex items-center gap-1.5 px-1 whitespace-nowrap">
-                {[{ value: "all", label: "Todas" }, ...PUBLIC_CATEGORIES.map((c) => ({ value: c, label: c }))].map((cat) => {
+                {[{ value: "all", label: "Todas" }, ...publicCategories.map((c) => ({ value: c, label: c }))].map((cat) => {
                   const active = categoryFilter === cat.value;
                   return (
                     <li key={cat.value} className="shrink-0">
@@ -263,56 +209,17 @@ export default function GuiasNext() {
             >
               <Search className="h-4 w-4" />
             </button>
-
           </div>
         </div>
 
         {showAdmin ? (
-          <Tabs value={adminTab} onValueChange={(v) => setAdminTab(v as "published" | "drafts")}>
-            <TabsList className="mb-6">
-              <TabsTrigger value="published">Publicados ({publishedCount})</TabsTrigger>
-              <TabsTrigger value="drafts">Rascunhos ({draftsCount})</TabsTrigger>
-            </TabsList>
-            <TabsContent value="published">{renderContent()}</TabsContent>
-            <TabsContent value="drafts">{renderContent()}</TabsContent>
-          </Tabs>
+          <Suspense fallback={<Skeleton className="h-64 rounded-[1.2rem]" />}>
+            <GuidesAdminView guides={guides} isLoading={isLoading} filteredGuides={filtered} />
+          </Suspense>
         ) : (
-          renderContent()
+          renderPublicContent()
         )}
       </main>
-
-      <GuideModal
-        open={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setEditGuide(null);
-        }}
-        onSave={handleSave}
-        guide={editGuide}
-      />
-
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir guia</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir &quot;{deleteTarget?.title}&quot;? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (!deleteTarget) return;
-                deleteGuide.mutate(deleteTarget.id);
-                setDeleteTarget(null);
-              }}
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <GuideSearchOverlay
         open={searchOpen}

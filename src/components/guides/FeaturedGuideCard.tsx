@@ -66,6 +66,9 @@ export function FeaturedGuideCard({
                 src={guide.cover_image_url}
                 alt={guide.title}
                 className="w-full h-full object-cover"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
                 referrerPolicy="no-referrer"
               />
             ) : (

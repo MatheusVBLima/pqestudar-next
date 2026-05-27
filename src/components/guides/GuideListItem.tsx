@@ -58,6 +58,9 @@ export function GuideListItem({
             src={guide.cover_image_url}
             alt={guide.title}
             className="w-full h-full object-cover"
+            loading="lazy"
+            fetchPriority="low"
+            decoding="async"
             referrerPolicy="no-referrer"
           />
         ) : (

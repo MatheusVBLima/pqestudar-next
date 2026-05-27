@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { Json, Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
-import { toast } from '@/hooks/use-toast';
-import { revalidateGuidesAction } from '@/app/actions/revalidate';
+import type { Json, Tables } from '@/integrations/supabase/types';
 
 export interface Guide {
   id: string;
@@ -52,10 +50,9 @@ type GuideContestRelation = Pick<Tables<'guide_related_contests'>, 'contest_id'>
 type GuideGuideRelation = Pick<Tables<'guide_related_guides'>, 'related_guide_id'>;
 type GuidePreview = Pick<Tables<'guides'>, 'slug' | 'cover_image_url' | 'category' | 'title'>;
 
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : 'Erro inesperado';
-
 const GUIDES_KEY = ['guides'];
+const GUIDE_LIST_SELECT =
+  'id,internal_code,title,slug,category,public_category,short_description,is_published,is_featured,sort_order,author_name,cover_image_url,created_at,updated_at';
 
 export function useGuides(includeUnpublished = false) {
   return useQuery({
@@ -63,7 +60,7 @@ export function useGuides(includeUnpublished = false) {
     queryFn: async () => {
       let query = supabase
         .from('guides')
-        .select('*')
+        .select(includeUnpublished ? '*' : GUIDE_LIST_SELECT)
         .order('sort_order', { ascending: true });
 
       // When not including unpublished, RLS already filters — but explicit is safer
@@ -228,101 +225,3 @@ export function useGuideLinkPreviews(
   });
 }
 
-// Admin mutations
-export function useGuidesMutations() {
-  const queryClient = useQueryClient();
-
-  const invalidate = (slug?: string) => {
-    queryClient.invalidateQueries({ queryKey: GUIDES_KEY });
-    void revalidateGuidesAction(slug);
-  };
-
-  const createGuide = useMutation({
-    mutationFn: async (guide: TablesInsert<'guides'>) => {
-      const { data, error } = await supabase
-        .from('guides')
-        .insert(guide)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as unknown as Guide;
-    },
-    onSuccess: () => {
-      invalidate();
-      toast({ title: 'Guia criado com sucesso' });
-    },
-    onError: (err: unknown) => {
-      toast({ title: 'Erro ao criar guia', description: getErrorMessage(err), variant: 'destructive' });
-    },
-  });
-
-  const updateGuide = useMutation({
-    mutationFn: async ({ id, ...updates }: TablesUpdate<'guides'> & { id: string }) => {
-      const { error } = await supabase
-        .from('guides')
-        .update(updates)
-        .eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      invalidate();
-      toast({ title: 'Guia atualizado' });
-    },
-    onError: (err: unknown) => {
-      toast({ title: 'Erro ao atualizar guia', description: getErrorMessage(err), variant: 'destructive' });
-    },
-  });
-
-  const deleteGuide = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('guides')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      invalidate();
-      toast({ title: 'Guia excluído' });
-    },
-    onError: (err: unknown) => {
-      toast({ title: 'Erro ao excluir guia', description: getErrorMessage(err), variant: 'destructive' });
-    },
-  });
-
-  const togglePublished = useMutation({
-    mutationFn: async ({ id, is_published }: { id: string; is_published: boolean }) => {
-      const { error } = await supabase
-        .from('guides')
-        .update({ is_published })
-        .eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: (_, vars) => {
-      invalidate();
-      toast({ title: vars.is_published ? 'Guia publicado' : 'Guia despublicado' });
-    },
-  });
-
-  const toggleFeatured = useMutation({
-    mutationFn: async ({ id, is_featured }: { id: string; is_featured: boolean }) => {
-      const { error } = await supabase
-        .from('guides')
-        .update({ is_featured })
-        .eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: (_, vars) => {
-      invalidate();
-      toast({ title: vars.is_featured ? 'Guia em destaque' : 'Destaque removido' });
-    },
-  });
-
-  return {
-    createGuide,
-    updateGuide,
-    deleteGuide,
-    togglePublished,
-    toggleFeatured,
-  };
-}

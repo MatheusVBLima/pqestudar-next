@@ -3,6 +3,8 @@ import { unstable_cache } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export const GUIDES_TAG = "guides";
+const GUIDE_LIST_SELECT =
+  "id,internal_code,title,slug,category,public_category,short_description,is_published,is_featured,sort_order,author_name,cover_image_url,created_at,updated_at";
 
 export function guideSlugTag(slug: string): string {
   return `guide:${slug}`;
@@ -12,7 +14,7 @@ async function fetchPublishedGuides() {
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
     .from("guides")
-    .select("*")
+    .select(GUIDE_LIST_SELECT)
     .eq("is_published", true)
     .order("sort_order", { ascending: true });
   return data ?? [];

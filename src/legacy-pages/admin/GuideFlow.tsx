@@ -10,7 +10,7 @@ import type { GeneratedGuideData, ImagePrompt } from '@/components/admin/guide-f
 import { DEFAULT_GUIDE_FLOW_INPUTS, type GuideFlowInputs } from '@/components/admin/guide-flow/GuideFlowForm';
 import { hasValidationErrors } from '@/components/admin/guide-flow/GuideFlowValidation';
 import { findOption, TIPOS_GUIA, CATEGORIAS, INTENCOES, mapInternaToPublica } from '@/lib/guide-editorial-options';
-import { useGuidesMutations } from '@/hooks/useGuides';
+import { useGuidesMutations } from '@/hooks/useGuidesMutations';
 import { useGuideFlowSources } from '@/hooks/useGuideFlowSources';
 import { createToolAction, updateToolAction } from '@/app/actions/tools';
 import { supabase } from '@/integrations/supabase/client';
