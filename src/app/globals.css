@@ -72,25 +72,22 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* #232323 = hsl(0 0% 13.7%) */
-    --background: 0 0% 13.7%;
+    --background: 300 6% 12%;
     --foreground: 0 0% 93%;
 
-    /* #2b2b2b */
-    --card: 0 0% 16.9%;
+    --card: 300 5% 16%;
     --card-foreground: 0 0% 93%;
 
-    /* #303030 */
-    --popover: 0 0% 18.8%;
+    --popover: 300 5% 18%;
     --popover-foreground: 0 0% 93%;
 
     --primary: 300 80% 60%;
     --primary-foreground: 0 0% 8%;
 
-    --secondary: 0 0% 20%;
+    --secondary: 300 5% 20%;
     --secondary-foreground: 0 0% 93%;
 
-    --muted: 0 0% 18%;
+    --muted: 300 4% 18%;
     --muted-foreground: 0 0% 65%;
 
     --accent: 300 20% 22%;
@@ -99,15 +96,14 @@ All colors MUST be HSL.
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    /* #3a3a3a */
-    --border: 0 0% 22.7%;
-    --input: 0 0% 22.7%;
+    --border: 300 6% 24%;
+    --input: 300 6% 24%;
     --ring: 300 80% 60%;
     
     /* Custom brand colors for dark mode */
     --brand-purple: 300 80% 60%;
     --brand-dark: 0 0% 5%;
-    --brand-light: 0 0% 20%;
+    --brand-light: 300 5% 20%;
     
     /* Gradients for dark mode */
     --gradient-primary: linear-gradient(135deg, hsl(300 80% 60%), hsl(300 70% 70%));
@@ -117,13 +113,13 @@ All colors MUST be HSL.
     --shadow-purple: 0 10px 40px -15px hsl(300 80% 60% / 0.4);
     --shadow-card: 0 4px 20px -8px hsl(0 0% 10% / 0.5);
 
-    --sidebar-background: 0 0% 13.7%;
+    --sidebar-background: 300 6% 12%;
     --sidebar-foreground: 0 0% 93%;
     --sidebar-primary: 300 80% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent: 300 4% 18%;
     --sidebar-accent-foreground: 0 0% 93%;
-    --sidebar-border: 0 0% 22.7%;
+    --sidebar-border: 300 6% 24%;
     --sidebar-ring: 300 80% 60%;
   }
 }

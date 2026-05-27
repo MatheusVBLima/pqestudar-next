@@ -12,7 +12,6 @@ export const CookieBanner = () => {
     acceptAll,
     acceptNecessaryOnly,
     updatePreferences,
-    setShowBanner,
     consentData
   } = useCookieConsent();
   
@@ -177,12 +176,14 @@ export const CookieBanner = () => {
               </div>
 
               <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowBanner(false)}
-                className="flex-shrink-0 h-8 w-8 p-0"
+                variant="outline"
+                size="icon"
+                onClick={acceptNecessaryOnly}
+                aria-label="Fechar aviso e continuar apenas com cookies necessários"
+                title="Fechar aviso e continuar apenas com cookies necessários"
+                className="flex-shrink-0 rounded-full border-border bg-background text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </Button>
             </div>
           </div>
