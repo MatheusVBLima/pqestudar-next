@@ -46,7 +46,7 @@ export function GuideListItem({
 
   return (
     <article
-      className="flex gap-4 sm:gap-5 p-4 rounded-[1.2rem] border border-border/50 bg-card hover:shadow-md transition-shadow"
+      className="flex gap-4 sm:gap-5 p-4 rounded-[1.2rem] border border-border/50 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
     >
       {/* Thumbnail - Link principal */}
       <Link

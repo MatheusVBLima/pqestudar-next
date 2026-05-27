@@ -199,9 +199,9 @@ function PublicToolCard({ tool }: {tool: Tool;}) {
     <div className="relative group h-full">
       <Card
         onClick={handleCardClick}
-        className={`h-full transition-all duration-300 flex flex-col ${
+        className={`h-full transition-all duration-300 flex flex-col hover:-translate-y-1 hover:shadow-lg ${
           detailHref ? "cursor-pointer" : ""
-        } ${featured ? "ring-2 ring-violet-500/60 shadow-md" : "transition-shadow hover:shadow-lg"}`}
+        } ${featured ? "ring-2 ring-violet-500/60 shadow-md" : ""}`}
       >
         <CardHeader>
           <div className="grid grid-cols-[auto,1fr] gap-4 items-center mb-2">

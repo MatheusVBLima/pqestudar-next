@@ -707,7 +707,7 @@ function OportunidadeCard({
   const isInTrash = item.status_admin === "lixeira" || isTrashMode;
 
   return (
-    <Card className={`h-full flex flex-col ${
+    <Card className={`h-full flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
       isInTrash 
         ? "opacity-70 border-destructive/30 bg-destructive/5" 
         : !item.publicado 

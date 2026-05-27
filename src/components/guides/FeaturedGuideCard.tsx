@@ -54,7 +54,7 @@ export function FeaturedGuideCard({
         </span>
       </div>
 
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <Card className="overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
         <div className="flex flex-col md:flex-row">
           {/* Thumbnail - Link real */}
           <Link 

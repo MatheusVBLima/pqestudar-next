@@ -100,7 +100,7 @@ function ProductCard({
   const detailHref = `/produtos/${slugifyProductTitle(product.title)}`;
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden relative">
+    <Card className="flex flex-col h-full overflow-hidden relative transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
       <div className="absolute top-3 right-3 z-10">
         <span className="inline-flex items-center gap-1 rounded-full bg-background/80 backdrop-blur-sm border px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-sm">
           <Eye className="h-3 w-3" />
