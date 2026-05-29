@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Sparkles, Loader2, CheckCircle2, AlertTriangle, ImageIcon, FileText, Cog, Eye, Upload } from 'lucide-react';
+import { Sparkles, Loader2, CheckCircle2, AlertTriangle, ImageIcon, FileText, Cog, Eye, Upload, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { TIPOS_GUIA, CATEGORIAS, INTENCOES, CATEGORIAS_PUBLICAS, mapInternaToPublica } from '@/lib/guide-editorial-options';
 import {
   AI_MODEL_OPTIONS,
@@ -30,6 +30,104 @@ interface InputNodeData {
   onAutoSuggest?: (tema: string, palavraChave: string) => void;
   onInputsChange?: (inputs: GuideFlowInputs) => void;
   onTargetTypeChange?: (targetType: GuideFlowInputs['targetType']) => void;
+}
+
+interface FlowSelectOption {
+  value: string;
+  label: string;
+}
+
+function FlowSelect({
+  value,
+  onValueChange,
+  options,
+  placeholder,
+  className,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: FlowSelectOption[];
+  placeholder?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const selected = options.find((option) => option.value === value);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [open]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Escape') {
+      setOpen(false);
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setOpen((current) => !current);
+    }
+  };
+
+  return (
+    <div ref={rootRef} className="nodrag nopan relative">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        onKeyDown={handleKeyDown}
+        className={cn(
+          "flex h-8 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-left text-xs ring-offset-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          open && "border-primary ring-2 ring-ring ring-offset-2",
+          className
+        )}
+      >
+        <span className={cn("truncate", !selected && "text-muted-foreground")}>
+          {selected?.label ?? placeholder}
+        </span>
+        <ChevronDown className={cn("ml-2 h-3.5 w-3.5 shrink-0 opacity-50 transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          className="absolute left-0 top-[calc(100%+4px)] z-[1000] max-h-52 w-full min-w-[var(--radix-select-trigger-width)] overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
+        >
+          {options.map((option) => {
+            const isSelected = option.value === value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => {
+                  onValueChange(option.value);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "flex min-h-8 w-full items-center rounded-sm px-3 py-1.5 text-left text-xs outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                  isSelected && "bg-accent text-accent-foreground"
+                )}
+              >
+                <span className="truncate">{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function InputNodeComponent({ data }: { data: InputNodeData }) {
@@ -111,7 +209,7 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
   };
 
   return (
-    <div className="bg-card border-2 border-primary/40 rounded-[1.2rem] shadow-card w-[400px] overflow-hidden">
+    <div className="bg-card border-2 border-primary/40 rounded-[1.2rem] shadow-card w-[400px] overflow-visible">
       <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3 !border-2 !border-card" />
 
       <div className="bg-primary/10 px-4 py-2.5 border-b border-primary/20 flex items-center gap-2">
@@ -122,7 +220,7 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
         <div className="p-4 space-y-3">
         <div className="space-y-1">
           <Label className="text-xs">Destino</Label>
-          <Select
+          <FlowSelect
             value={inputs.targetType}
             onValueChange={(v) => {
               const targetType = v as GuideFlowInputs['targetType'];
@@ -134,13 +232,11 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
                 categoriaPublica: targetType === 'tool' ? (p.categoriaPublica || 'Ferramentas') : p.categoriaPublica,
               }));
             }}
-          >
-            <SelectTrigger className="rounded-lg text-xs h-8"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="guide" className="text-xs">Guia</SelectItem>
-              <SelectItem value="tool" className="text-xs">Ferramenta</SelectItem>
-            </SelectContent>
-          </Select>
+            options={[
+              { value: 'guide', label: 'Guia' },
+              { value: 'tool', label: 'Ferramenta' },
+            ]}
+          />
         </div>
 
         {/* Source status indicators */}
@@ -176,7 +272,7 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
         <div className="grid grid-cols-2 gap-2 rounded-lg border border-primary/20 bg-primary/5 p-2">
           <div className="space-y-1">
             <Label className="text-xs">IA do texto</Label>
-            <Select
+            <FlowSelect
               value={inputs.aiProvider}
               onValueChange={(v) => {
                 const aiProvider = v as GuideFlowAiProvider;
@@ -186,25 +282,18 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
                   textModel: AI_MODEL_OPTIONS[aiProvider][0],
                 }));
               }}
-            >
-              <SelectTrigger className="rounded-lg text-xs h-8 bg-background"><SelectValue placeholder="IA..." /></SelectTrigger>
-              <SelectContent>
-                {AI_PROVIDER_OPTIONS.map((provider) => (
-                  <SelectItem key={provider.value} value={provider.value} className="text-xs">{provider.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={AI_PROVIDER_OPTIONS}
+              placeholder="IA..."
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Modelo</Label>
-            <Select value={inputs.textModel} onValueChange={(v) => setInputs((p) => ({ ...p, textModel: v }))}>
-              <SelectTrigger className="rounded-lg text-xs h-8 bg-background"><SelectValue placeholder="Modelo..." /></SelectTrigger>
-              <SelectContent>
-                {AI_MODEL_OPTIONS[inputs.aiProvider].map((model) => (
-                  <SelectItem key={model} value={model} className="text-xs">{model}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FlowSelect
+              value={inputs.textModel}
+              onValueChange={(v) => setInputs((p) => ({ ...p, textModel: v }))}
+              options={AI_MODEL_OPTIONS[inputs.aiProvider].map((model) => ({ value: model, label: model }))}
+              placeholder="Modelo..."
+            />
           </div>
           <p className="col-span-2 text-[9px] text-muted-foreground leading-tight">
             Usa a secret correspondente configurada na Edge Function.
@@ -215,28 +304,24 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <Label className="text-xs">Tipo de guia</Label>
-            <Select value={inputs.tipo} onValueChange={(v) => setInputs((p) => ({ ...p, tipo: v }))}>
-              <SelectTrigger className="rounded-lg text-xs h-8"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-              <SelectContent>
-                {TIPOS_GUIA.map((t) => (
-                  <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FlowSelect
+              value={inputs.tipo}
+              onValueChange={(v) => setInputs((p) => ({ ...p, tipo: v }))}
+              options={TIPOS_GUIA}
+              placeholder="Selecione..."
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-xs flex items-center gap-1">
               <Cog className="h-2.5 w-2.5 text-primary/70" />
               Categoria Interna *
             </Label>
-            <Select value={inputs.categoria} onValueChange={handleCategoriaInternaChange}>
-              <SelectTrigger className="rounded-lg text-xs h-8"><SelectValue placeholder="Editorial..." /></SelectTrigger>
-              <SelectContent>
-                {CATEGORIAS.map((c) => (
-                  <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FlowSelect
+              value={inputs.categoria}
+              onValueChange={handleCategoriaInternaChange}
+              options={CATEGORIAS}
+              placeholder="Editorial..."
+            />
             <p className="text-[9px] text-muted-foreground leading-tight">Guia a IA · não exibida ao público</p>
           </div>
         </div>
@@ -248,14 +333,12 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
             <Eye className="h-2.5 w-2.5 text-emerald-600" />
             Categoria Pública *
           </Label>
-          <Select value={inputs.categoriaPublica} onValueChange={(v) => setInputs((p) => ({ ...p, categoriaPublica: v }))}>
-            <SelectTrigger className="rounded-lg text-xs h-8"><SelectValue placeholder="Badge no site..." /></SelectTrigger>
-            <SelectContent>
-              {CATEGORIAS_PUBLICAS.map((c) => (
-                <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FlowSelect
+            value={inputs.categoriaPublica}
+            onValueChange={(v) => setInputs((p) => ({ ...p, categoriaPublica: v }))}
+            options={CATEGORIAS_PUBLICAS.map((category) => ({ value: category, label: category }))}
+            placeholder="Badge no site..."
+          />
           <p className="text-[9px] text-muted-foreground leading-tight">Apenas badge visual · não influencia geração</p>
         </div>
         )}
@@ -272,14 +355,12 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Intenção</Label>
-            <Select value={inputs.intencao} onValueChange={(v) => setInputs((p) => ({ ...p, intencao: v }))}>
-              <SelectTrigger className="rounded-lg text-xs h-8"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-              <SelectContent>
-                {INTENCOES.map((i) => (
-                  <SelectItem key={i.value} value={i.value} className="text-xs">{i.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FlowSelect
+              value={inputs.intencao}
+              onValueChange={(v) => setInputs((p) => ({ ...p, intencao: v }))}
+              options={INTENCOES}
+              placeholder="Selecione..."
+            />
           </div>
         </div>
 
