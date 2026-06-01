@@ -197,7 +197,7 @@ function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
   };
 
   return (
-    <div className="w-[420px] overflow-visible rounded-[1.2rem] border-2 border-primary/35 bg-card shadow-card">
+    <div className="w-[400px] overflow-visible rounded-[1.2rem] border-2 border-primary/35 bg-card shadow-card">
       <div className="flex items-center justify-between gap-2 border-b border-primary/20 bg-primary/10 px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Route className="h-4 w-4 text-primary" />

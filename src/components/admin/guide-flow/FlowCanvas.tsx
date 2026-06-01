@@ -51,6 +51,12 @@ const GAP_X = 80;
 const GAP_Y = 60;
 const START_X = 60;
 const START_Y = 60;
+const INITIAL_INPUT_X = START_X + NODE_W + GAP_X + 100;
+const INITIAL_INPUT_Y = START_Y + 480;
+const INITIAL_TRAIL_X = INITIAL_INPUT_X;
+const INITIAL_TRAIL_Y = START_Y - 240;
+const INITIAL_SOURCES_X = START_X;
+const INITIAL_SOURCES_Y = INITIAL_INPUT_Y + 220;
 
 type FlowNodeData = Record<string, unknown>;
 
@@ -66,19 +72,19 @@ function buildInitialNodes(): Node[] {
     {
       id: 'sources',
       type: 'sourcesNode',
-      position: { x: START_X, y: START_Y },
+      position: { x: INITIAL_SOURCES_X, y: INITIAL_SOURCES_Y },
       data: {},
     },
     {
       id: 'input',
       type: 'inputNode',
-      position: { x: START_X + NODE_W + GAP_X + 40, y: START_Y + 40 },
+      position: { x: INITIAL_INPUT_X, y: INITIAL_INPUT_Y },
       data: {},
     },
     {
       id: 'trail-planner',
       type: 'trailPlannerNode',
-      position: { x: START_X + NODE_W + GAP_X + 40, y: START_Y - 300 },
+      position: { x: INITIAL_TRAIL_X, y: INITIAL_TRAIL_Y },
       data: {},
     },
   ];
@@ -281,6 +287,7 @@ interface FlowCanvasProps {
 
 export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataChange, sources, onInputsChange, onTargetTypeChange, onRegenerateImage, onUpdateImagePrompt }: FlowCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const initialLayoutAppliedRef = useRef(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorData, setEditorData] = useState<EditorNodeData | null>(null);
   const [imageEditorPosition, setImageEditorPosition] = useState<string | null>(null);
@@ -315,9 +322,27 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
   const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges);
 
   useEffect(() => {
+    if (guideData?.title || initialLayoutAppliedRef.current) return;
+
+    initialLayoutAppliedRef.current = true;
+    setNodes((currentNodes) => currentNodes.map((node) => {
+      if (node.id === 'sources') return { ...node, position: { x: INITIAL_SOURCES_X, y: INITIAL_SOURCES_Y } };
+      if (node.id === 'input') return { ...node, position: { x: INITIAL_INPUT_X, y: INITIAL_INPUT_Y } };
+      if (node.id === 'trail-planner') return { ...node, position: { x: INITIAL_TRAIL_X, y: INITIAL_TRAIL_Y } };
+      return node;
+    }));
+  }, [guideData?.title, setNodes]);
+
+  useEffect(() => {
     setEdges((currentEdges) => currentEdges.map((edge) => {
-      if (edge.id === 'e-sources-input') return { ...edge, targetHandle: 'sources' };
-      if (edge.id === 'e-trail-input') return { ...edge, targetHandle: 'trail' };
+      if (edge.id === 'e-sources-input') {
+        const { type: _type, ...rest } = edge;
+        return { ...rest, targetHandle: 'sources' };
+      }
+      if (edge.id === 'e-trail-input') {
+        const { type: _type, ...rest } = edge;
+        return { ...rest, targetHandle: 'trail' };
+      }
       return edge;
     }));
   }, [setEdges]);
