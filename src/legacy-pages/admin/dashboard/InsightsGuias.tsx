@@ -21,6 +21,8 @@ interface GuideRankingRow {
   opens: number;
   cta_clicks: number;
   internal_link_clicks: number;
+  avg_read_seconds?: number;
+  avg_max_scroll?: number;
 }
 
 interface ScrollStatRow {
@@ -144,14 +146,53 @@ export default function InsightsGuias() {
     return `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`;
   };
 
-  const rankingChart = (ranking.data ?? []).slice(0, 10).map((r) => ({
-    label: (r.guide_label || "").slice(0, 24),
-    views: Number(r.views),
-    cta: Number(r.cta_clicks),
-  }));
+  const rankingChart = (ranking.data ?? [])
+    .map((r) => ({
+      label: (r.guide_label || "").slice(0, 24),
+      views: Number(r.views ?? 0),
+      cta: Number(r.cta_clicks ?? 0),
+    }))
+    .filter((r) => r.views > 0 || r.cta > 0)
+    .slice(0, 10);
 
-  const scrollChart = (scroll.data ?? []).slice(0, 10);
-  const readChart = (read.data ?? []).slice(0, 10);
+  const scrollChartFromStats = (scroll.data ?? [])
+    .map((r) => ({
+      guide_label: r.guide_label,
+      avg_max_scroll: Number(r.avg_max_scroll ?? 0),
+    }))
+    .filter((r) => r.avg_max_scroll > 0)
+    .slice(0, 10);
+
+  const scrollChartFromRanking = (ranking.data ?? [])
+    .map((r) => ({
+      guide_label: r.guide_label,
+      avg_max_scroll: Number(r.avg_max_scroll ?? 0),
+    }))
+    .filter((r) => r.avg_max_scroll > 0)
+    .slice(0, 10);
+
+  const readChartFromStats = (read.data ?? [])
+    .map((r) => ({
+      guide_label: r.guide_label,
+      avg_read_seconds: Number(r.avg_read_seconds ?? 0),
+    }))
+    .filter((r) => r.avg_read_seconds > 0)
+    .slice(0, 10);
+
+  const readChartFromRanking = (ranking.data ?? [])
+    .map((r) => ({
+      guide_label: r.guide_label,
+      avg_read_seconds: Number(r.avg_read_seconds ?? 0),
+    }))
+    .filter((r) => r.avg_read_seconds > 0)
+    .slice(0, 10);
+
+  const scrollChart = scrollChartFromStats.length > 0 ? scrollChartFromStats : scrollChartFromRanking;
+  const readChart = readChartFromStats.length > 0 ? readChartFromStats : readChartFromRanking;
+  const hasOverviewViews = Number(ov.total_views ?? 0) > 0;
+  const detailedAnalyticsMessage = hasOverviewViews
+    ? "Há visualizações registradas no contador simples, mas ainda não há eventos detalhados de analytics para montar este ranking."
+    : "Sem dados detalhados no período.";
 
   return (
     <div className="space-y-6">
@@ -207,7 +248,11 @@ export default function InsightsGuias() {
                 <Bar dataKey="cta" name="Cliques CTA" fill="hsl(var(--primary) / 0.4)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          ) : undefined}
+          ) : (
+            <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-muted-foreground">
+              {detailedAnalyticsMessage}
+            </div>
+          )}
         </ChartCard>
 
         <ChartCard title="Profundidade de rolagem" description="Scroll médio (%) por guia — Top 10">
@@ -239,7 +284,11 @@ export default function InsightsGuias() {
                 />
               </BarChart>
             </ResponsiveContainer>
-          ) : undefined}
+          ) : (
+            <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-muted-foreground">
+              {detailedAnalyticsMessage}
+            </div>
+          )}
         </ChartCard>
 
         <ChartCard title="Tempo médio de leitura" description="Top 10 por segundos">
@@ -271,7 +320,11 @@ export default function InsightsGuias() {
                 />
               </BarChart>
             </ResponsiveContainer>
-          ) : undefined}
+          ) : (
+            <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-muted-foreground">
+              {detailedAnalyticsMessage}
+            </div>
+          )}
         </ChartCard>
 
         <HorizontalBarsCard
@@ -302,6 +355,7 @@ export default function InsightsGuias() {
           cta_clicks: String(r.cta_clicks),
           internal_link_clicks: String(r.internal_link_clicks),
         }))}
+        emptyMessage={detailedAnalyticsMessage}
       />
 
       <DataTable

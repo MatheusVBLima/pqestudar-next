@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Home } from 'lucide-react';
 
 const routeTitles: Record<string, string> = {
-  '/admin': 'Overview',
-  '/admin/insights/ferramentas': 'Insights — Ferramentas',
-  '/admin/insights/concursos-leitura': 'Insights — Concursos (Leitura)',
-  '/admin/insights/concursos-eventos': 'Insights — Concursos (Eventos)',
-  '/admin/insights/seo-audit': 'Insights — SEO Audit',
-  '/admin/insights/copy-audit': 'Insights — Copy Audit',
+  '/admin': 'Visão geral',
+  '/admin/insights/ferramentas': 'Análises — Ferramentas',
+  '/admin/insights/concursos': 'Análises — Concursos',
+  '/admin/insights/concursos-leitura': 'Análises — Concursos',
+  '/admin/insights/concursos-eventos': 'Análises — Concursos',
+  '/admin/insights/guias': 'Análises — Guias',
+  '/admin/insights/auditorias': 'Análises — Auditorias',
+  '/admin/insights/seo-audit': 'Análises — Auditorias',
+  '/admin/insights/copy-audit': 'Análises — Auditorias',
   '/admin/curadorias': 'Curadorias',
   '/admin/fluxo-guias': 'Fluxos',
   '/admin/fluxo-guias/biblioteca': 'Biblioteca',

@@ -1,5 +1,5 @@
-import InsightsCopyAuditClient from "@/components/pages/admin/InsightsCopyAuditClient";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <InsightsCopyAuditClient />;
+  redirect("/admin/insights/auditorias?tab=copy");
 }

@@ -1,5 +1,5 @@
-import InsightsSeoAuditClient from "@/components/pages/admin/InsightsSeoAuditClient";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <InsightsSeoAuditClient />;
+  redirect("/admin/insights/auditorias?tab=seo");
 }

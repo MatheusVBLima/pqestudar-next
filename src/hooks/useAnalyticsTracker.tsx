@@ -22,34 +22,44 @@ interface TrackEventParams {
   entity_id?: string;
   path?: string;
   meta?: Record<string, unknown>;
+  allowAnonymous?: boolean;
 }
 
 export function useAnalyticsTracker() {
   const { user } = useAuth();
   const { isAdmin, loading: rolesLoading } = useUserRoles();
   const { consentData } = useCookieConsent();
+  const anonymousSessionRef = useRef<string | null>(null);
 
   const track = useCallback(
     async (params: TrackEventParams) => {
       try {
-        if (!isAdmin && (!consentData.hasConsented || !consentData.preferences.analytics)) {
+        const canUseConsentedAnalytics = isAdmin || (consentData.hasConsented && consentData.preferences.analytics);
+        const canUseAnonymousAggregate = params.allowAnonymous && !isAdmin;
+
+        if (!canUseConsentedAnalytics && !canUseAnonymousAggregate) {
           return;
         }
 
-        // Determine actor type based on auth + role
-        const actor_type = rolesLoading
-          ? 'unknown'
-          : isAdmin
-            ? 'admin'
-            : 'public';
+        if (!anonymousSessionRef.current) {
+          anonymousSessionRef.current = crypto.randomUUID();
+        }
+
+        const actor_type = canUseAnonymousAggregate && !canUseConsentedAnalytics
+          ? 'anonymous'
+          : rolesLoading
+            ? 'unknown'
+            : isAdmin
+              ? 'admin'
+              : 'public';
 
         const payload: TablesInsert<'analytics_events'> = {
           event_name: params.event_name,
           entity_type: params.entity_type ?? null,
           entity_id: params.entity_id ?? null,
           path: params.path ?? window.location.pathname,
-          session_id: getSessionId(),
-          user_id: user?.id ?? null,
+          session_id: canUseConsentedAnalytics ? getSessionId() : anonymousSessionRef.current,
+          user_id: canUseConsentedAnalytics ? (user?.id ?? null) : null,
           meta: (params.meta ?? {}) as Json,
           actor_type,
         };

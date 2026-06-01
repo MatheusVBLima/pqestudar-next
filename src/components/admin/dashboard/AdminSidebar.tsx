@@ -1,9 +1,10 @@
 "use client";
 
+import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-  LayoutDashboard, BarChart3, Wrench, BookOpen, MousePointerClick, Search, FileText,
+  LayoutDashboard, BarChart3, Wrench, BookOpen, Search, FileText,
   Crown, Users, Ticket, ChevronDown, Settings2, UserCog,
   Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Moon, Sun, Sparkles, Share2,
 } from 'lucide-react';
@@ -20,16 +21,14 @@ import { Button } from '@/components/ui/button';
 
 const insightsItems = [
   { title: 'Ferramentas', href: '/admin/insights/ferramentas', icon: Wrench },
-  { title: 'Concursos — Leitura', href: '/admin/insights/concursos-leitura', icon: BookOpen },
-  { title: 'Concursos — Eventos', href: '/admin/insights/concursos-eventos', icon: MousePointerClick },
-  { title: 'Guias — Leitura', href: '/admin/insights/guias', icon: BookOpen },
-  { title: 'SEO Audit', href: '/admin/insights/seo-audit', icon: Search },
-  { title: 'Copy Audit', href: '/admin/insights/copy-audit', icon: FileText },
-  { title: 'Atividade Admin', href: '/admin/insights/atividade-admin', icon: Shield },
+  { title: 'Concursos', href: '/admin/insights/concursos', icon: BookOpen },
+  { title: 'Guias', href: '/admin/insights/guias', icon: BookOpen },
+  { title: 'Auditorias', href: '/admin/insights/auditorias', icon: Search },
+  { title: 'Atividade', href: '/admin/insights/atividade-admin', icon: Shield },
 ];
 
 const concursosItems = [
-  { title: 'Overview', href: '/admin/concursos', icon: LayoutDashboard },
+  { title: 'Visão geral', href: '/admin/concursos', icon: LayoutDashboard },
   { title: 'Coleta', href: '/admin/concursos/coleta', icon: Database },
   { title: 'Curadoria', href: '/admin/concursos/curadoria', icon: ClipboardCheck },
   { title: 'Config. de Busca', href: '/admin/concursos/busca', icon: Search },
@@ -53,24 +52,31 @@ export function AdminSidebar() {
   const { logos } = useNavConfig();
   const { isDark, toggleTheme } = useTheme();
 
-  const groupClass = "px-0 py-1";
+  const groupClass = "px-0 py-0.5";
+  const sectionLabelClass = "px-3 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-sidebar-foreground/40";
   const itemClass = (active: boolean) => cn(
-    "h-9 rounded-[calc(var(--admin-radius)-0.35rem)] px-3 text-[13px] font-semibold tracking-normal text-sidebar-foreground/85 transition-colors",
-    "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground",
+    "relative h-9 rounded-lg px-3 text-[13px] font-semibold tracking-normal text-sidebar-foreground/75 transition-all",
+    "hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
     "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-sidebar-foreground/65",
-    active && "border border-primary/30 bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.08)] [&>svg]:text-primary"
+    active && "border border-primary/25 bg-primary/10 pl-4 text-sidebar-foreground shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.07),0_10px_28px_hsl(var(--primary)/0.08)] before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-primary [&>svg]:text-primary"
   );
   const triggerClass = (active: boolean) => cn(
-    "flex h-9 w-full items-center justify-between rounded-[calc(var(--admin-radius)-0.35rem)] px-3 text-[13px] font-semibold tracking-normal transition-colors",
-    "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground",
-    active ? "text-sidebar-foreground" : "text-sidebar-foreground/58"
-  );
-  const expandableSubListClass = "ml-4 mt-1 border-sidebar-border/70 px-2.5 py-1";
-  const expandableSubItemClass = (active: boolean) => cn(
-    "h-8 rounded-[calc(var(--admin-radius)-0.45rem)] px-2 text-[13px] font-medium tracking-normal transition-colors",
+    "relative flex h-9 w-full items-center justify-between rounded-lg px-3 text-[13px] font-semibold tracking-normal transition-all",
+    "hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
     active
-      ? "border border-primary/25 bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.06)]"
-      : "text-sidebar-foreground/68 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
+      ? "border border-primary/20 bg-primary/10 pl-4 text-sidebar-foreground shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.06)] before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-primary"
+      : "text-sidebar-foreground/60"
+  );
+  const expandableSubListClass = "ml-4 mt-1 border-l border-sidebar-border/70 px-2.5 py-1";
+  const expandableSubItemClass = (active: boolean) => cn(
+    "h-8 rounded-md px-2 text-[12px] font-medium tracking-normal transition-colors",
+    active
+      ? "border border-primary/20 bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.06)]"
+      : "text-sidebar-foreground/60 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
+  );
+
+  const SectionLabel = ({ children }: { children: ReactNode }) => (
+    <p className={sectionLabelClass}>{children}</p>
   );
 
   return (
@@ -84,7 +90,8 @@ export function AdminSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="gap-1 px-3 py-4">
+      <SidebarContent className="gap-0 px-3 py-3">
+        <SectionLabel>Painel</SectionLabel>
         {/* Overview */}
         <SidebarGroup className={groupClass}>
           <SidebarGroupContent>
@@ -93,12 +100,12 @@ export function AdminSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === '/admin'}
-                  tooltip="Overview"
+                  tooltip="Visão geral"
                   className={itemClass(pathname === '/admin')}
                 >
                   <Link href="/admin">
                     <LayoutDashboard className="h-4 w-4" />
-                    <span>Overview</span>
+                    <span>Visão geral</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -114,7 +121,7 @@ export function AdminSidebar() {
             >
               <div className="flex items-center gap-2">
                 <BarChart3 className={cn('h-4 w-4', isInsightsActive ? 'text-primary' : 'text-sidebar-foreground/55')} />
-                <span>Insights</span>
+                <span>Análises</span>
               </div>
               <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
             </CollapsibleTrigger>
@@ -144,6 +151,7 @@ export function AdminSidebar() {
           </Collapsible>
         </SidebarGroup>
 
+        <SectionLabel>Conteúdo</SectionLabel>
         {/* Curadorias */}
         <SidebarGroup className={groupClass}>
           <SidebarGroupContent>
@@ -245,6 +253,7 @@ export function AdminSidebar() {
           </Collapsible>
         </SidebarGroup>
 
+        <SectionLabel>Site</SectionLabel>
         {/* Page Settings */}
         <SidebarGroup className={groupClass}>
           <SidebarGroupContent>
@@ -253,12 +262,12 @@ export function AdminSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === '/admin/pages'}
-                  tooltip="Page Settings"
+                  tooltip="Configurações"
                   className={itemClass(pathname === '/admin/pages')}
                 >
                   <Link href="/admin/pages">
                     <Settings2 className="h-4 w-4" />
-                    <span>Page Settings</span>
+                    <span>Configurações</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -274,12 +283,12 @@ export function AdminSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === '/admin/menu'}
-                  tooltip="Menu"
+                  tooltip="Navegação"
                   className={itemClass(pathname === '/admin/menu')}
                 >
                   <Link href="/admin/menu">
                     <MenuIcon className="h-4 w-4" />
-                    <span>Menu</span>
+                    <span>Navegação</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -329,6 +338,7 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        <SectionLabel>Admin</SectionLabel>
         {/* Controle Admin */}
         <SidebarGroup>
           <SidebarGroupContent>

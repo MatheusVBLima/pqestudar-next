@@ -1,5 +1,5 @@
-import InsightsConcursosEventosClient from "@/components/pages/admin/InsightsConcursosEventosClient";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <InsightsConcursosEventosClient />;
+  redirect("/admin/insights/concursos?tab=eventos");
 }

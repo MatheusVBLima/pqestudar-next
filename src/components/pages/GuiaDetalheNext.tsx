@@ -59,6 +59,31 @@ function CtaBlock({
   );
 }
 
+function getGuideTrafficContext() {
+  if (typeof window === "undefined") {
+    return { source: "Direto", referrer_host: "" };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const utmSource = params.get("utm_source");
+
+  try {
+    if (!document.referrer) {
+      return { source: utmSource || "Direto", referrer_host: "" };
+    }
+
+    const referrer = new URL(document.referrer);
+    if (referrer.hostname === window.location.hostname) {
+      return { source: utmSource || "Interno", referrer_host: "" };
+    }
+
+    const referrerHost = referrer.hostname.replace(/^www\./, "");
+    return { source: utmSource || referrerHost, referrer_host: referrerHost };
+  } catch {
+    return { source: utmSource || "Direto", referrer_host: "" };
+  }
+}
+
 export default function GuiaDetalheNext() {
   const params = useParams<{ slug?: string | string[] }>();
   const router = useRouter();
@@ -84,11 +109,17 @@ export default function GuiaDetalheNext() {
       supabase.rpc("increment_guide_view", { p_slug: slug }).then(({ error }) => {
         if (error) console.warn("Guide view track error:", error.message);
       });
+      const traffic = getGuideTrafficContext();
       track({
         event_name: "guide_detail_open",
         entity_type: "guide",
         entity_id: guide.id,
-        meta: { guide_slug: slug },
+        meta: {
+          guide_slug: slug,
+          source: traffic.source,
+          referrer_host: traffic.referrer_host,
+        },
+        allowAnonymous: true,
       });
     }
   }, [slug, guide, track]);
@@ -103,6 +134,7 @@ export default function GuiaDetalheNext() {
         entity_type: "guide",
         entity_id: guideId,
         meta: { guide_slug: slug, read_seconds_increment: 15 },
+        allowAnonymous: true,
       });
     }, 15_000);
     return () => clearInterval(interval);
@@ -124,6 +156,7 @@ export default function GuiaDetalheNext() {
             entity_type: "guide",
             entity_id: guideId,
             meta: { guide_slug: slug, scroll_depth: threshold },
+            allowAnonymous: true,
           });
         }
       }
@@ -140,6 +173,7 @@ export default function GuiaDetalheNext() {
         entity_type: "guide",
         entity_id: guide.id,
         meta: { guide_slug: slug, cta_position: position, cta_label: label, cta_url: url },
+        allowAnonymous: true,
       });
     },
     [guide?.id, slug, track],
@@ -153,6 +187,7 @@ export default function GuiaDetalheNext() {
         entity_type: "guide",
         entity_id: guide.id,
         meta: { guide_slug: slug, link_label: label, link_url: url },
+        allowAnonymous: true,
       });
     },
     [guide?.id, slug, track],

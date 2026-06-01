@@ -1,5 +1,5 @@
-import InsightsConcursosLeituraClient from "@/components/pages/admin/InsightsConcursosLeituraClient";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <InsightsConcursosLeituraClient />;
+  redirect("/admin/insights/concursos?tab=leitura");
 }

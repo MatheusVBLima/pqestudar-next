@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/admin/dashboard/PageHeader';
 import { PeriodSelector, Period } from '@/components/admin/dashboard/PeriodSelector';
 import { ChartCard } from '@/components/admin/dashboard/ChartCard';
@@ -9,9 +9,13 @@ import { periodToRange } from '@/components/admin/dashboard/periodHelper';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Button } from '@/components/ui/button';
+
+const RANKING_PAGE_SIZE = 10;
 
 export default function InsightsConcursosEventos() {
   const [period, setPeriod] = useState<Period>('month');
+  const [rankingPage, setRankingPage] = useState(1);
   const range = periodToRange(period);
 
   const { data: eventData } = useQuery({
@@ -54,7 +58,26 @@ export default function InsightsConcursosEventos() {
     saves: String(r.saves),
     shares: String(r.shares),
     editalClicks: String(r.edital_clicks),
-  }));
+  })) ?? [];
+
+  const totalRankingPages = Math.max(1, Math.ceil(tableRows.length / RANKING_PAGE_SIZE));
+  const safeRankingPage = Math.min(rankingPage, totalRankingPages);
+  const paginatedRows = useMemo(
+    () => tableRows.slice((safeRankingPage - 1) * RANKING_PAGE_SIZE, safeRankingPage * RANKING_PAGE_SIZE),
+    [safeRankingPage, tableRows]
+  );
+  const rankingStart = tableRows.length === 0 ? 0 : (safeRankingPage - 1) * RANKING_PAGE_SIZE + 1;
+  const rankingEnd = Math.min(safeRankingPage * RANKING_PAGE_SIZE, tableRows.length);
+
+  useEffect(() => {
+    setRankingPage(1);
+  }, [period]);
+
+  useEffect(() => {
+    if (rankingPage > totalRankingPages) {
+      setRankingPage(totalRankingPages);
+    }
+  }, [rankingPage, totalRankingPages]);
 
   return (
     <div className="space-y-6">
@@ -96,12 +119,30 @@ export default function InsightsConcursosEventos() {
       <DataTable
         title="Concursos com mais interações"
         columns={[
-          { key: 'title', label: 'Concurso' },
-          { key: 'saves', label: 'Salvamentos' },
-          { key: 'shares', label: 'Compartilhamentos' },
-          { key: 'editalClicks', label: 'Cliques edital' },
+          { key: 'title', label: 'Concurso', className: 'w-[420px] min-w-[420px] max-w-[420px] truncate' },
+          { key: 'saves', label: 'Salvamentos', className: 'w-[160px] min-w-[160px] max-w-[160px]' },
+          { key: 'shares', label: 'Compartilhamentos', className: 'w-[200px] min-w-[200px] max-w-[200px]' },
+          { key: 'editalClicks', label: 'Cliques edital', className: 'w-[180px] min-w-[180px] max-w-[180px]' },
         ]}
-        rows={tableRows}
+        rows={paginatedRows}
+        footer={
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-muted-foreground">
+              Mostrando {rankingStart}-{rankingEnd} de {tableRows.length} concursos
+            </p>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-xs" disabled={safeRankingPage <= 1} onClick={() => setRankingPage((page) => Math.max(1, page - 1))}>
+                Anterior
+              </Button>
+              <span className="min-w-20 text-center text-xs font-medium text-muted-foreground">
+                Página {safeRankingPage} de {totalRankingPages}
+              </span>
+              <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-xs" disabled={safeRankingPage >= totalRankingPages} onClick={() => setRankingPage((page) => Math.min(totalRankingPages, page + 1))}>
+                Próxima
+              </Button>
+            </div>
+          </div>
+        }
       />
     </div>
   );

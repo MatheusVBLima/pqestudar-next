@@ -5,6 +5,8 @@ import { ReactNode } from 'react';
 interface Column {
   key: string;
   label: string;
+  className?: string;
+  headerClassName?: string;
 }
 
 interface DataTableProps {
@@ -13,9 +15,10 @@ interface DataTableProps {
   rows?: Record<string, ReactNode>[];
   emptyMessage?: string;
   onRowClick?: (index: number) => void;
+  footer?: ReactNode;
 }
 
-export function DataTable({ title, columns, rows, emptyMessage = 'Nenhum dado disponível', onRowClick }: DataTableProps) {
+export function DataTable({ title, columns, rows, emptyMessage = 'Nenhum dado disponível', onRowClick, footer }: DataTableProps) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -26,7 +29,7 @@ export function DataTable({ title, columns, rows, emptyMessage = 'Nenhum dado di
           <TableHeader>
             <TableRow>
               {columns.map((col) => (
-                <TableHead key={col.key}>{col.label}</TableHead>
+                <TableHead key={col.key} className={col.headerClassName ?? col.className}>{col.label}</TableHead>
               ))}
             </TableRow>
           </TableHeader>
@@ -39,7 +42,7 @@ export function DataTable({ title, columns, rows, emptyMessage = 'Nenhum dado di
                   onClick={() => onRowClick?.(i)}
                 >
                   {columns.map((col) => (
-                    <TableCell key={col.key}>{row[col.key] ?? '—'}</TableCell>
+                    <TableCell key={col.key} className={col.className}>{row[col.key] ?? '—'}</TableCell>
                   ))}
                 </TableRow>
               ))
@@ -53,6 +56,11 @@ export function DataTable({ title, columns, rows, emptyMessage = 'Nenhum dado di
             )}
           </TableBody>
         </Table>
+        {footer && (
+          <div className="mt-4 border-t border-border pt-3">
+            {footer}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
