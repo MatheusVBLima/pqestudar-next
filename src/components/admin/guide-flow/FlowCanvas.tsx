@@ -26,6 +26,7 @@ import { LinksNode } from './flow-nodes/LinksNode';
 import { IntegrityNode } from './flow-nodes/IntegrityNode';
 import { SourcesNode } from './flow-nodes/SourcesNode';
 import { ImageNode } from './flow-nodes/ImageNode';
+import { TrailPlannerNode } from './flow-nodes/TrailPlannerNode';
 import { NodeEditorSheet } from './NodeEditorSheet';
 import { ImagePromptEditor } from './ImagePromptEditor';
 import type { GeneratedGuideData } from './GuideFlowPreview';
@@ -42,6 +43,7 @@ const nodeTypes: NodeTypes = {
   integrityNode: IntegrityNode,
   sourcesNode: SourcesNode,
   imageNode: ImageNode,
+  trailPlannerNode: TrailPlannerNode,
 };
 
 const NODE_W = 320;
@@ -73,6 +75,12 @@ function buildInitialNodes(): Node[] {
       position: { x: START_X + NODE_W + GAP_X + 40, y: START_Y + 40 },
       data: {},
     },
+    {
+      id: 'trail-planner',
+      type: 'trailPlannerNode',
+      position: { x: START_X + NODE_W + GAP_X + 40, y: START_Y - 300 },
+      data: {},
+    },
   ];
 }
 
@@ -82,8 +90,17 @@ function buildInitialEdges(): Edge[] {
       id: 'e-sources-input',
       source: 'sources',
       target: 'input',
+      targetHandle: 'sources',
       animated: true,
       style: { stroke: 'hsl(var(--primary) / 0.4)' },
+    },
+    {
+      id: 'e-trail-input',
+      source: 'trail-planner',
+      target: 'input',
+      targetHandle: 'trail',
+      animated: true,
+      style: { stroke: 'hsl(var(--primary) / 0.35)', strokeDasharray: '5 5' },
     },
   ];
 }
@@ -268,6 +285,8 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
   const [editorData, setEditorData] = useState<EditorNodeData | null>(null);
   const [imageEditorPosition, setImageEditorPosition] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [inputPatch, setInputPatch] = useState<{ id: number; patch: Partial<GuideFlowInputs> } | null>(null);
+  const [flowTargetType, setFlowTargetType] = useState<GuideFlowInputs['targetType']>('guide');
 
   const structureNames = useMemo(
     () => sources.activeStructureEntries.map(e => e.source_path ?? e.title),
@@ -296,6 +315,14 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
   const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges);
 
   useEffect(() => {
+    setEdges((currentEdges) => currentEdges.map((edge) => {
+      if (edge.id === 'e-sources-input') return { ...edge, targetHandle: 'sources' };
+      if (edge.id === 'e-trail-input') return { ...edge, targetHandle: 'trail' };
+      return edge;
+    }));
+  }, [setEdges]);
+
+  useEffect(() => {
     if (guideData && guideData.title) {
       const layout = buildGeneratedLayout(guideData, structureNames, libraryName, onRegenerateImage, handleEditImagePrompt);
       setNodes(layout.nodes);
@@ -320,6 +347,16 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
     onGuideDataChange(updated);
   }, [onGuideDataChange]);
 
+  const handleInputsChange = useCallback((inputs: GuideFlowInputs) => {
+    setFlowTargetType(inputs.targetType);
+    onInputsChange?.(inputs);
+  }, [onInputsChange]);
+
+  const handleTargetTypeChange = useCallback((targetType: GuideFlowInputs['targetType']) => {
+    setFlowTargetType(targetType);
+    onTargetTypeChange?.(targetType);
+  }, [onTargetTypeChange]);
+
   // Inject dynamic data into special nodes
   const nodesWithCallbacks = useMemo(() => {
     return nodes.map((node) => {
@@ -334,8 +371,17 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
             hasLibrary: sources.activeLibraryEntries.length > 0,
             selectedLibrary: libraryName,
             onAutoSuggest: sources.autoSuggest,
-            onInputsChange,
-            onTargetTypeChange,
+            onInputsChange: handleInputsChange,
+            onTargetTypeChange: handleTargetTypeChange,
+            inputPatch,
+          },
+        };
+      }
+      if (node.type === 'trailPlannerNode') {
+        return {
+          ...node,
+          data: {
+            onApplyInputs: (patch: Partial<GuideFlowInputs>) => setInputPatch({ id: Date.now(), patch }),
           },
         };
       }
@@ -362,7 +408,17 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
       }
       return node;
     });
-  }, [nodes, onGenerate, isGenerating, sources, libraryName, onInputsChange, onTargetTypeChange]);
+  }, [nodes, onGenerate, isGenerating, sources, libraryName, handleInputsChange, handleTargetTypeChange, inputPatch]);
+
+  const visibleNodes = useMemo(() => {
+    if (flowTargetType !== 'tool') return nodesWithCallbacks;
+    return nodesWithCallbacks.filter((node) => node.id !== 'trail-planner');
+  }, [flowTargetType, nodesWithCallbacks]);
+
+  const visibleEdges = useMemo(() => {
+    if (flowTargetType !== 'tool') return edges;
+    return edges.filter((edge) => edge.source !== 'trail-planner' && edge.target !== 'trail-planner');
+  }, [edges, flowTargetType]);
 
   useEffect(() => {
     if (!isFullscreen) return;
@@ -420,8 +476,8 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
       }
     >
       <ReactFlow
-        nodes={nodesWithCallbacks}
-        edges={edges}
+        nodes={visibleNodes}
+        edges={visibleEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}

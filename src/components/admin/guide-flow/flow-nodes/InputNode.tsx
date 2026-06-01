@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Sparkles, Loader2, CheckCircle2, AlertTriangle, ImageIcon, FileText, Cog, Eye, Upload, ChevronDown } from 'lucide-react';
+import { Sparkles, Loader2, CheckCircle2, AlertTriangle, ImageIcon, FileText, Cog, Eye, Upload, ChevronDown, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TIPOS_GUIA, CATEGORIAS, INTENCOES, CATEGORIAS_PUBLICAS, mapInternaToPublica } from '@/lib/guide-editorial-options';
+import { useTools, type Tool } from '@/hooks/useTools';
 import {
   AI_MODEL_OPTIONS,
   AI_PROVIDER_OPTIONS,
@@ -30,6 +31,7 @@ interface InputNodeData {
   onAutoSuggest?: (tema: string, palavraChave: string) => void;
   onInputsChange?: (inputs: GuideFlowInputs) => void;
   onTargetTypeChange?: (targetType: GuideFlowInputs['targetType']) => void;
+  inputPatch?: { id: number; patch: Partial<GuideFlowInputs> } | null;
 }
 
 interface FlowSelectOption {
@@ -130,8 +132,107 @@ function FlowSelect({
   );
 }
 
+function ToolPicker({
+  value,
+  tools,
+  onSelect,
+}: {
+  value: string;
+  tools: Tool[];
+  onSelect: (tool: Tool) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const selectedTool = tools.find((tool) => tool.name === value);
+  const filteredTools = tools
+    .filter((tool) => {
+      const haystack = [tool.name, tool.description, ...(tool.tags ?? [])].join(' ').toLowerCase();
+      return haystack.includes(query.toLowerCase());
+    })
+    .slice(0, 20);
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="nodrag nopan relative">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className={cn(
+          "flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-input bg-background px-3 py-2 text-left text-xs ring-offset-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          open && "border-primary ring-2 ring-ring ring-offset-2"
+        )}
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded bg-muted">
+            {selectedTool?.icon_url ? (
+              <img src={selectedTool.icon_url} alt="" className="h-full w-full object-contain" referrerPolicy="no-referrer" />
+            ) : (
+              <Wrench className="h-3 w-3 text-primary" />
+            )}
+          </span>
+          <span className={cn("truncate", !value && "text-muted-foreground")}>
+            {value || 'Selecione uma ferramenta...'}
+          </span>
+        </span>
+        <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 opacity-50 transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-[calc(100%+4px)] z-[1000] w-full overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-md">
+          <div className="border-b border-border p-1.5">
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar ferramenta..."
+              className="h-8 rounded-md text-xs"
+            />
+          </div>
+          <div className="max-h-56 overflow-y-auto p-1">
+            {filteredTools.length > 0 ? filteredTools.map((tool) => (
+              <button
+                key={tool.id}
+                type="button"
+                onClick={() => {
+                  onSelect(tool);
+                  setQuery('');
+                  setOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+                  {tool.icon_url ? (
+                    <img src={tool.icon_url} alt="" className="h-full w-full object-contain" referrerPolicy="no-referrer" />
+                  ) : (
+                    <Wrench className="h-4 w-4 text-primary" />
+                  )}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-semibold">{tool.name}</span>
+                  <span className="block truncate text-[10px] text-muted-foreground">{tool.description}</span>
+                </span>
+              </button>
+            )) : (
+              <p className="px-2 py-3 text-center text-[10px] text-muted-foreground">Nenhuma ferramenta encontrada.</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function InputNodeComponent({ data }: { data: InputNodeData }) {
-  const { onGenerate, isGenerating, hasValidSources, hasLibrary, selectedLibrary, onAutoSuggest, onInputsChange, onTargetTypeChange } = data;
+  const { onGenerate, isGenerating, hasValidSources, hasLibrary, selectedLibrary, onAutoSuggest, onInputsChange, onTargetTypeChange, inputPatch } = data;
+  const { tools } = useTools({ includeInvisible: true, pageSize: 100 });
   const [inputs, setInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
   const [isParsingPdf, setIsParsingPdf] = useState(false);
   const [pdfName, setPdfName] = useState<string | null>(null);
@@ -146,6 +247,11 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
   useEffect(() => {
     onTargetTypeChange?.(inputs.targetType);
   }, [inputs.targetType, onTargetTypeChange]);
+
+  useEffect(() => {
+    if (!inputPatch) return;
+    setInputs((current) => ({ ...current, ...inputPatch.patch }));
+  }, [inputPatch?.id]);
 
   // Auto-suggest library when tema or palavraChave changes
   useEffect(() => {
@@ -210,7 +316,18 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
 
   return (
     <div className="bg-card border-2 border-primary/40 rounded-[1.2rem] shadow-card w-[400px] overflow-visible">
-      <Handle type="target" position={Position.Left} className="!bg-primary !w-3 !h-3 !border-2 !border-card" />
+      <Handle
+        id="sources"
+        type="target"
+        position={Position.Left}
+        className="!bg-primary !w-3 !h-3 !border-2 !border-card"
+      />
+      <Handle
+        id="trail"
+        type="target"
+        position={Position.Top}
+        className="!bg-primary !w-3 !h-3 !border-2 !border-card"
+      />
 
       <div className="bg-primary/10 px-4 py-2.5 border-b border-primary/20 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-primary" />
@@ -261,12 +378,30 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
 
         <div className="space-y-1">
           <Label className="text-xs">{isTool ? 'Nome da ferramenta *' : 'Tema do guia *'}</Label>
-          <Input
-            placeholder={isTool ? 'Ex: Todas do ENEM' : 'Ex: Como organizar uma rotina de estudos'}
-            value={inputs.tema}
-            onChange={(e) => setInputs((p) => ({ ...p, tema: e.target.value }))}
-            className="rounded-lg text-xs h-8"
-          />
+          {isTool ? (
+            <ToolPicker
+              value={inputs.tema}
+              tools={tools}
+              onSelect={(tool) => setInputs((p) => ({
+                ...p,
+                tema: tool.name,
+                palavraChave: p.palavraChave || tool.name,
+                categoria: tool.tags?.[0] || p.categoria,
+                categoriaPublica: tool.tags?.[0] || p.categoriaPublica || 'Ferramentas',
+                contextoAdicional: [
+                  p.contextoAdicional,
+                  `Ferramenta selecionada: ${tool.name}\nDescrição: ${tool.description}\nURL atual: ${tool.slug ? `/ferramentas/${tool.slug}` : tool.url ?? ''}`,
+                ].filter(Boolean).join('\n\n'),
+              }))}
+            />
+          ) : (
+            <Input
+              placeholder="Ex: Como organizar uma rotina de estudos"
+              value={inputs.tema}
+              onChange={(e) => setInputs((p) => ({ ...p, tema: e.target.value }))}
+              className="rounded-lg text-xs h-8"
+            />
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-2 rounded-lg border border-primary/20 bg-primary/5 p-2">

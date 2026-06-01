@@ -22,6 +22,7 @@ export const AI_MODEL_OPTIONS: Record<GuideFlowAiProvider, string[]> = {
 
 export const DEFAULT_GUIDE_FLOW_INPUTS: GuideFlowInputs = {
   targetType: 'guide',
+  assuntoPrincipal: '',
   tema: '',
   tipo: '',
   categoria: '',
@@ -37,6 +38,7 @@ export const DEFAULT_GUIDE_FLOW_INPUTS: GuideFlowInputs = {
 
 export interface GuideFlowInputs {
   targetType: FlowTargetType;
+  assuntoPrincipal: string;
   tema: string;
   tipo: string;
   categoria: string;          // Categoria Interna
