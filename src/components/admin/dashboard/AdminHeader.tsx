@@ -1,11 +1,8 @@
 "use client";
 
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
-import { Home } from 'lucide-react';
 
 const routeTitles: Record<string, string> = {
   '/admin': 'Visão geral',
@@ -34,14 +31,6 @@ export function AdminHeader() {
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="h-6" />
       <h1 className="text-sm font-semibold truncate">{title}</h1>
-      <div className="ml-auto">
-      <Button variant="ghost" size="sm" className="rounded-[1.2rem]" asChild>
-          <Link href="/">
-            <Home className="h-4 w-4 mr-1.5" />
-            Voltar ao site
-          </Link>
-        </Button>
-      </div>
     </header>
   );
 }

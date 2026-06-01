@@ -1,12 +1,12 @@
 "use client";
 
 import type { ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, BarChart3, Wrench, BookOpen, Search, FileText,
   Crown, Users, Ticket, ChevronDown, Settings2, UserCog,
-  Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Moon, Sun, Sparkles, Share2,
+  Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Moon, Sun, Sparkles, Share2, Bookmark, LogOut, Home,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -17,7 +17,17 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { useNavConfig } from '@/hooks/useNavConfig';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
 
 const insightsItems = [
   { title: 'Ferramentas', href: '/admin/insights/ferramentas', icon: Wrench },
@@ -44,6 +54,7 @@ const premiumItems = [
 ];
 
 export function AdminSidebar() {
+  const router = useRouter();
   const pathname = usePathname() ?? "";
   const isActive = (href: string) => pathname === href;
   const isInsightsActive = pathname.startsWith('/admin/insights');
@@ -51,6 +62,7 @@ export function AdminSidebar() {
   const isConcursosActive = pathname.startsWith('/admin/concursos');
   const { logos } = useNavConfig();
   const { isDark, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
 
   const groupClass = "px-0 py-0.5";
   const sectionLabelClass = "px-3 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-sidebar-foreground/40";
@@ -78,6 +90,29 @@ export function AdminSidebar() {
   const SectionLabel = ({ children }: { children: ReactNode }) => (
     <p className={sectionLabelClass}>{children}</p>
   );
+
+  const getUserInitials = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name
+        .split(' ')
+        .map((name: string) => name[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    if (user?.email) return user.email[0].toUpperCase();
+    return 'U';
+  };
+
+  const getUserDisplayName = () => {
+    return user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Logout realizado com sucesso!');
+    router.push('/');
+  };
 
   return (
     <Sidebar className="border-none bg-transparent" collapsible="offcanvas" data-slot="admin-sidebar">
@@ -398,15 +433,72 @@ export function AdminSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border/70 p-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleTheme}
-          className="h-9 w-full justify-start gap-2 rounded-[calc(var(--admin-radius)-0.35rem)] px-3 text-[13px] font-semibold text-sidebar-foreground/68 hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground"
-        >
-          {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          <span>{isDark ? 'Modo claro' : 'Modo escuro'}</span>
-        </Button>
+        <div className="flex items-center justify-start gap-2">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full p-0 hover:bg-sidebar-accent/80"
+                aria-label="Menu da conta"
+              >
+                <Avatar className="h-8 w-8 ring-1 ring-sidebar-border">
+                  <AvatarImage
+                    src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture}
+                    alt={getUserDisplayName()}
+                  />
+                  <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="top" className="w-56 bg-popover">
+              <div className="flex min-w-0 flex-col gap-1 p-2">
+                <p className="truncate text-sm font-medium">{getUserDisplayName()}</p>
+                {user?.email && <p className="truncate text-xs text-muted-foreground">{user.email}</p>}
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/premium')} className="cursor-pointer">
+                <Crown className="mr-2 h-4 w-4" />
+                Área Premium
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/salvos')} className="cursor-pointer">
+                <Bookmark className="mr-2 h-4 w-4" />
+                Salvos
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="h-9 w-9 rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground"
+            aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+            title={isDark ? 'Modo claro' : 'Modo escuro'}
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            className="h-9 w-9 rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground"
+            aria-label="Voltar ao site"
+            title="Voltar ao site"
+          >
+            <Link href="/">
+              <Home className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

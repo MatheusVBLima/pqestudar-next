@@ -371,36 +371,12 @@ All colors MUST be HSL.
 }
 
 .admin-radius [data-slot="admin-sidebar"] [data-sidebar="content"] {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--sidebar-foreground) / 0.22) transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .admin-radius [data-slot="admin-sidebar"] [data-sidebar="content"]::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.admin-radius [data-slot="admin-sidebar"] [data-sidebar="content"]::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.admin-radius [data-slot="admin-sidebar"] [data-sidebar="content"]::-webkit-scrollbar-thumb {
-  background: hsl(var(--sidebar-foreground) / 0.22);
-  border-radius: 999px;
-}
-
-.admin-radius [data-slot="admin-sidebar"] [data-sidebar="content"]::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary) / 0.65);
-}
-
-.admin-radius [data-slot="admin-sidebar"] [data-sidebar="content"]::-webkit-scrollbar-button {
   display: none;
-  width: 0;
-  height: 0;
-}
-
-.admin-radius [data-slot="admin-sidebar"] [data-sidebar="content"]::-webkit-scrollbar-corner {
-  background: transparent;
 }
 
 .admin-radius [data-slot="admin-sidebar"] .admin-sidebar-collapsible-content {
