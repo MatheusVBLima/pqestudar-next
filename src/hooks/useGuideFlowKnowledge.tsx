@@ -31,10 +31,25 @@ export interface SyncResult {
   details: Array<{ bucket: string; file: string; status: string; extraction_status?: string; error?: string }>;
 }
 
+export interface AnalyzeWebsiteInput {
+  url: string;
+  notes?: string;
+  aiProvider: 'lovable' | 'openai';
+  textModel: string;
+}
+
+export interface AnalyzeWebsiteResult {
+  title: string;
+  content: string;
+  category: string;
+  source_path?: string;
+}
+
 export function useGuideFlowKnowledge() {
   const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const fetchEntries = useCallback(async () => {
     setIsLoading(true);
@@ -135,5 +150,30 @@ export function useGuideFlowKnowledge() {
     }
   };
 
-  return { entries, isLoading, isSyncing, fetchEntries, createEntry, updateEntry, deleteEntry, syncStorage };
+  const analyzeWebsite = async (input: AnalyzeWebsiteInput): Promise<AnalyzeWebsiteResult | null> => {
+    setIsAnalyzing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+      const resp = await fetch(
+        `${PUBLIC_SUPABASE_URL}/functions/v1/guide-flow-knowledge`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ action: 'analyze-url', ...input }),
+        }
+      );
+      if (!resp.ok) { const e = await resp.json(); throw new Error(e.error); }
+      const result = await resp.json() as AnalyzeWebsiteResult;
+      await fetchEntries();
+      return result;
+    } catch (err: unknown) {
+      toast({ title: 'Erro na análise', description: getErrorMessage(err), variant: 'destructive' });
+      return null;
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  return { entries, isLoading, isSyncing, isAnalyzing, fetchEntries, createEntry, updateEntry, deleteEntry, syncStorage, analyzeWebsite };
 }

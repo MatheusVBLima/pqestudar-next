@@ -15,8 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/admin/dashboard/PageHeader';
 import { ImageGalleryTab } from '@/components/admin/guide-flow/ImageGalleryTab';
 import { useGuideFlowKnowledge, type KnowledgeEntry, type ExtractionStatus } from '@/hooks/useGuideFlowKnowledge';
+import { AI_MODEL_OPTIONS, AI_PROVIDER_OPTIONS, type GuideFlowAiProvider } from '@/components/admin/guide-flow/GuideFlowForm';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, BookOpen, Loader2, Eye, EyeOff, RefreshCw, Package, PenTool, CheckCircle2, AlertCircle, FileQuestion, Clock, Image as ImageIcon, ChevronDown, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, BookOpen, Loader2, Eye, EyeOff, RefreshCw, Package, PenTool, CheckCircle2, AlertCircle, FileQuestion, Clock, Image as ImageIcon, ChevronDown, Check, Globe2, Sparkles } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-message';
 
 const CATEGORIES = [
@@ -123,13 +124,17 @@ function InlineFilterSelect({
 }
 
 export default function GuideFlowKnowledge() {
-  const { entries, isLoading, isSyncing, createEntry, updateEntry, deleteEntry, syncStorage } = useGuideFlowKnowledge();
+  const { entries, isLoading, isSyncing, isAnalyzing, createEntry, updateEntry, deleteEntry, syncStorage, analyzeWebsite } = useGuideFlowKnowledge();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [isSaving, setIsSaving] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterSource, setFilterSource] = useState<SourceFilter>('all');
+  const [analysisUrl, setAnalysisUrl] = useState('');
+  const [analysisNotes, setAnalysisNotes] = useState('');
+  const [analysisProvider, setAnalysisProvider] = useState<GuideFlowAiProvider>('lovable');
+  const [analysisModel, setAnalysisModel] = useState(AI_MODEL_OPTIONS.lovable[0]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -199,6 +204,27 @@ export default function GuideFlowKnowledge() {
     }
   };
 
+  const handleAnalyzeUrl = async () => {
+    const url = analysisUrl.trim();
+    if (!url) {
+      toast({ title: 'Link obrigatório', description: 'Informe a URL do site que deve ser analisado.', variant: 'destructive' });
+      return;
+    }
+
+    const result = await analyzeWebsite({
+      url,
+      notes: analysisNotes,
+      aiProvider: analysisProvider,
+      textModel: analysisModel,
+    });
+
+    if (!result) return;
+    toast({
+      title: 'Contexto salvo na Biblioteca',
+      description: `${result.title}${result.source_path ? ` — ${result.source_path}` : ''}`,
+    });
+  };
+
   const storageCount = entries.filter((e) => e.source_type === 'storage').length;
   const manualCount = entries.filter((e) => e.source_type === 'manual').length;
   const extractedCount = entries.filter((e) => e.extraction_status === 'success').length;
@@ -254,6 +280,91 @@ export default function GuideFlowKnowledge() {
         </TabsContent>
 
         <TabsContent value="knowledge" className="mt-4 space-y-4">
+
+      <Card className="rounded-[var(--admin-radius)] border-primary/20 bg-primary/5">
+        <CardContent className="space-y-4 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                <Globe2 className="h-4 w-4 text-primary" />
+                Analisar site por link
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Gera um arquivo .txt em Markdown no bucket guide-library e adiciona como contexto extraído.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_240px]">
+            <div className="space-y-1.5">
+              <Label>Link do site ou ferramenta</Label>
+              <Input
+                value={analysisUrl}
+                onChange={(event) => setAnalysisUrl(event.target.value)}
+                placeholder="https://exemplo.com"
+                className="h-9 rounded-[var(--admin-radius)] bg-background"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>IA da análise</Label>
+              <Select
+                value={analysisProvider}
+                onValueChange={(value) => {
+                  const provider = value as GuideFlowAiProvider;
+                  setAnalysisProvider(provider);
+                  setAnalysisModel(AI_MODEL_OPTIONS[provider][0]);
+                }}
+              >
+                <SelectTrigger className="h-9 rounded-[var(--admin-radius)] bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AI_PROVIDER_OPTIONS.map((provider) => (
+                    <SelectItem key={provider.value} value={provider.value}>{provider.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Modelo</Label>
+              <Select value={analysisModel} onValueChange={setAnalysisModel}>
+                <SelectTrigger className="h-9 rounded-[var(--admin-radius)] bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AI_MODEL_OPTIONS[analysisProvider].map((model) => (
+                    <SelectItem key={model} value={model}>{model}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="space-y-1.5">
+              <Label>Orientação opcional</Label>
+              <Textarea
+                value={analysisNotes}
+                onChange={(event) => setAnalysisNotes(event.target.value)}
+                placeholder="Ex: foco em cursos gratuitos com certificado, regras de acesso e limites de aceitação."
+                rows={2}
+                className="rounded-[var(--admin-radius)] bg-background text-xs"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={handleAnalyzeUrl}
+              disabled={isAnalyzing || !analysisUrl.trim()}
+              className="h-9 gap-1.5 rounded-[var(--admin-radius)] px-4 text-xs font-semibold"
+            >
+              {isAnalyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              {isAnalyzing ? 'Analisando...' : 'Analisar link'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats + actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">

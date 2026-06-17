@@ -104,7 +104,7 @@ export default function GuiaDetalheNext() {
   const firedDepths = useRef(new Set<number>());
 
   useEffect(() => {
-    if (slug && guide && viewTracked.current !== slug) {
+    if (slug && guide?.is_published && viewTracked.current !== slug) {
       viewTracked.current = slug;
       supabase.rpc("increment_guide_view", { p_slug: slug }).then(({ error }) => {
         if (error) console.warn("Guide view track error:", error.message);
@@ -125,7 +125,7 @@ export default function GuiaDetalheNext() {
   }, [slug, guide, track]);
 
   useEffect(() => {
-    if (!guide?.id) return;
+    if (!guide?.id || !guide.is_published) return;
     const guideId = guide.id;
     const interval = setInterval(() => {
       if (document.visibilityState !== "visible") return;
@@ -138,10 +138,10 @@ export default function GuiaDetalheNext() {
       });
     }, 15_000);
     return () => clearInterval(interval);
-  }, [guide?.id, slug, track]);
+  }, [guide?.id, guide?.is_published, slug, track]);
 
   useEffect(() => {
-    if (!guide?.id) return;
+    if (!guide?.id || !guide.is_published) return;
     firedDepths.current.clear();
     const guideId = guide.id;
     const handler = () => {
@@ -163,11 +163,11 @@ export default function GuiaDetalheNext() {
     };
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
-  }, [guide?.id, slug, track]);
+  }, [guide?.id, guide?.is_published, slug, track]);
 
   const trackCta = useCallback(
     (position: "top" | "middle" | "final", label: string | null, url: string | null) => {
-      if (!guide?.id || !label || !url) return;
+      if (!guide?.id || !guide.is_published || !label || !url) return;
       track({
         event_name: "guide_cta_click",
         entity_type: "guide",
@@ -176,12 +176,12 @@ export default function GuiaDetalheNext() {
         allowAnonymous: true,
       });
     },
-    [guide?.id, slug, track],
+    [guide?.id, guide?.is_published, slug, track],
   );
 
   const trackInternalLink = useCallback(
     (label: string, url: string) => {
-      if (!guide?.id) return;
+      if (!guide?.id || !guide.is_published) return;
       track({
         event_name: "guide_internal_link_click",
         entity_type: "guide",
@@ -190,7 +190,7 @@ export default function GuiaDetalheNext() {
         allowAnonymous: true,
       });
     },
-    [guide?.id, slug, track],
+    [guide?.id, guide?.is_published, slug, track],
   );
 
   if (isLoading) {

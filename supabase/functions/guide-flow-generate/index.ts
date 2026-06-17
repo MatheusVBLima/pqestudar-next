@@ -201,27 +201,34 @@ ${editorialParts.join("\n\n")}`
 
     const toolEditorialInstruction = isToolTarget
       ? `\n\n## FORMATO EDITORIAL PARA PAGINA DE FERRAMENTA
-Voce esta gerando uma pagina editorial para uma ferramenta do PqEstudar, nao um guia generico.
+Voce esta editando o corpo editorial de uma pagina de ferramenta ja existente no PqEstudar.
+
+REGRAS DE PRESERVACAO:
+- Nao altere nome/titulo da ferramenta.
+- Nao altere slug.
+- Nao altere descricao curta.
+- Nao altere hero, logo, capa, categoria visual, destaque ou dados de catalogo.
+- O foco e atualizar apenas o corpo do texto da pagina, como se estivesse editando a pagina da ferramenta escolhida.
 
 Use este formato no content_markdown:
-- Introducao curta, independente e honesta
-- ## O que e [ferramenta]
-- ## Resposta rapida
-- ## O que da para fazer com ela
+- Introducao curta, independente e honesta, sem repetir a hero.
+- ## Como usar
+- ## O que e
+- ## O que da para fazer ou encontrar
 - ## Para quem faz mais sentido
-- ## Plano gratuito, pago ou limitacoes de acesso
-- ## Pontos de atencao antes de usar
-- ## Como usar do jeito certo
-- ## Quando ela pode nao ser a melhor opcao
-- ## Como comecar
-- ## FAQ — Perguntas Frequentes
+- ## Planos
+- ## Beneficios
+- ## Quando nao e a melhor opcao
+- ## FAQ - Perguntas Frequentes
 
 Regras:
 - Escreva como curadoria independente, nao como propaganda.
 - Aponte limites, cuidados e situacoes em que a ferramenta nao e ideal.
+- Inclua a secao "## Planos" apenas se houver informacao suficiente sobre plano gratuito, pago, assinatura, acesso ou limitacoes. Se nao houver, omita essa secao.
+- O FAQ deve ter de 4 a 6 perguntas objetivas.
 - Nao gere links internos no texto. As relacoes de ferramentas sao feitas automaticamente pela pagina.
 - CTAs podem ser null se nao houver contexto forte.
-- O campo "category" deve representar a principal tag/publico da ferramenta, como "ENEM", "Cursos Gratuitos", "Redacao", "Simulados" ou "IA".
+- Mesmo que o JSON tenha campos de titulo, slug, descricao ou capa, eles devem refletir os dados originais da ferramenta e nao uma nova pagina.
 `
       : "";
 
@@ -295,6 +302,9 @@ ${existingContests || "Nenhum concurso publicado."}
 ## Formato obrigatorio de FAQ
 Use sempre o titulo: ## FAQ — Perguntas Frequentes
 
+## Regra para titulo principal de guias
+Quando o destino nao for ferramenta, o campo "title" deve sempre comecar com a primeira palavra em maiuscula. Exemplo correto: "Entender carteirinha de estudante sem complicacao". Exemplo incorreto: "entender carteirinha de estudante sem complicacao".
+
 ## Regras de output
 Retorne exclusivamente um JSON valido, sem markdown code fences e sem texto fora do JSON.`;
 
@@ -325,9 +335,9 @@ ${selectedLibrary ? `- Biblioteca factual: ${selectedLibrary}` : "- ATENCAO: Nen
 
 Retorne um JSON com esta estrutura exata:
 {
-  "title": "${isToolTarget ? "nome da ferramenta" : "titulo do guia"}",
-  "slug": "${isToolTarget ? "slug-da-ferramenta" : "slug-do-guia"}",
-  "short_description": "${isToolTarget ? "descricao curta da ferramenta, max 180 chars" : "descricao curta, max 160 chars"}",
+  "title": "${isToolTarget ? "mesmo nome exato da ferramenta recebida" : "titulo do guia"}",
+  "slug": "${isToolTarget ? "mesmo slug exato da ferramenta recebida" : "slug-do-guia"}",
+  "short_description": "${isToolTarget ? "mantenha a descricao curta original da ferramenta" : "descricao curta, max 160 chars"}",
   "seo_title": "titulo SEO, max 60 chars",
   "seo_description": "meta description, max 160 chars",
   "category": "${editorialMeta?.categoria?.label || categoria || "Ferramentas"}",

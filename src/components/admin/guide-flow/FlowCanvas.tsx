@@ -12,6 +12,7 @@ import {
   type Edge,
   type Connection,
   type NodeTypes,
+  type NodeChange,
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -27,11 +28,14 @@ import { IntegrityNode } from './flow-nodes/IntegrityNode';
 import { SourcesNode } from './flow-nodes/SourcesNode';
 import { ImageNode } from './flow-nodes/ImageNode';
 import { TrailPlannerNode } from './flow-nodes/TrailPlannerNode';
+import { TrailGuidesNode, type TrailGuidesNodeData } from './flow-nodes/TrailGuidesNode';
 import { NodeEditorSheet } from './NodeEditorSheet';
 import { ImagePromptEditor } from './ImagePromptEditor';
 import type { GeneratedGuideData } from './GuideFlowPreview';
 import type { GuideFlowInputs } from './GuideFlowForm';
 import type { GuideFlowSources } from '@/hooks/useGuideFlowSources';
+import type { TrailStage } from '@/lib/guide-trail-planner';
+import type { Guide } from '@/hooks/useGuides';
 
 const nodeTypes: NodeTypes = {
   inputNode: InputNode,
@@ -44,6 +48,7 @@ const nodeTypes: NodeTypes = {
   sourcesNode: SourcesNode,
   imageNode: ImageNode,
   trailPlannerNode: TrailPlannerNode,
+  trailGuidesNode: TrailGuidesNode,
 };
 
 const NODE_W = 320;
@@ -59,6 +64,10 @@ const INITIAL_SOURCES_X = START_X;
 const INITIAL_SOURCES_Y = INITIAL_INPUT_Y + 220;
 
 type FlowNodeData = Record<string, unknown>;
+
+interface TrailStageSelection extends TrailGuidesNodeData {
+  stage: TrailStage;
+}
 
 interface EditorNodeData {
   nodeType: 'meta' | 'seo' | 'content' | 'cta' | 'links';
@@ -294,6 +303,8 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [inputPatch, setInputPatch] = useState<{ id: number; patch: Partial<GuideFlowInputs> } | null>(null);
   const [flowTargetType, setFlowTargetType] = useState<GuideFlowInputs['targetType']>('guide');
+  const [trailStageSelection, setTrailStageSelection] = useState<TrailStageSelection | null>(null);
+  const [trailGuidesPosition, setTrailGuidesPosition] = useState<{ x: number; y: number } | null>(null);
 
   const structureNames = useMemo(
     () => sources.activeStructureEntries.map(e => e.source_path ?? e.title),
@@ -382,6 +393,60 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
     onTargetTypeChange?.(targetType);
   }, [onTargetTypeChange]);
 
+  const handleTrailStageSelect = useCallback((selection: {
+    subject: string;
+    stage: TrailStage;
+    stageLabel: string;
+    statusLabel: string;
+    guides: Guide[];
+  }) => {
+    setTrailStageSelection((current) => {
+      const isSameStage = current?.subject === selection.subject && current.stage === selection.stage;
+      if (isSameStage) {
+        setTrailGuidesPosition(null);
+        return null;
+      }
+
+      const plannerNode = nodes.find((node) => node.id === 'trail-planner');
+      setTrailGuidesPosition({
+        x: (plannerNode?.position.x ?? INITIAL_TRAIL_X) + 430,
+        y: (plannerNode?.position.y ?? INITIAL_TRAIL_Y) + 34,
+      });
+
+      return {
+        subject: selection.subject,
+        stage: selection.stage,
+        stageLabel: selection.stageLabel,
+        statusLabel: selection.statusLabel,
+        guides: selection.guides.map((guide) => ({
+          id: guide.id,
+          title: guide.title,
+          slug: guide.slug,
+          public_category: guide.public_category,
+          category: guide.category,
+          short_description: guide.short_description,
+          cover_image_url: guide.cover_image_url,
+          is_published: guide.is_published,
+        })),
+      };
+    });
+  }, [nodes]);
+
+  const handleNodesChange = useCallback((changes: NodeChange[]) => {
+    const regularChanges = changes.filter((change) => !('id' in change) || change.id !== 'trail-stage-guides');
+    const detailChanges = changes.filter((change) => 'id' in change && change.id === 'trail-stage-guides');
+
+    detailChanges.forEach((change) => {
+      if (change.type === 'position' && change.position) {
+        setTrailGuidesPosition(change.position);
+      }
+    });
+
+    if (regularChanges.length > 0) {
+      onNodesChange(regularChanges);
+    }
+  }, [onNodesChange]);
+
   // Inject dynamic data into special nodes
   const nodesWithCallbacks = useMemo(() => {
     return nodes.map((node) => {
@@ -407,6 +472,7 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
           ...node,
           data: {
             onApplyInputs: (patch: Partial<GuideFlowInputs>) => setInputPatch({ id: Date.now(), patch }),
+            onStageSelect: handleTrailStageSelect,
           },
         };
       }
@@ -433,17 +499,53 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
       }
       return node;
     });
-  }, [nodes, onGenerate, isGenerating, sources, libraryName, handleInputsChange, handleTargetTypeChange, inputPatch]);
+  }, [nodes, onGenerate, isGenerating, sources, libraryName, handleInputsChange, handleTargetTypeChange, inputPatch, handleTrailStageSelect]);
+
+  const nodesWithStageDetails = useMemo(() => {
+    if (!trailStageSelection) return nodesWithCallbacks;
+
+    return [
+      ...nodesWithCallbacks,
+      {
+        id: 'trail-stage-guides',
+        type: 'trailGuidesNode',
+        position: trailGuidesPosition ?? { x: INITIAL_TRAIL_X + 430, y: INITIAL_TRAIL_Y + 34 },
+        data: trailStageSelection as unknown as Record<string, unknown>,
+      },
+    ] satisfies Node[];
+  }, [nodesWithCallbacks, trailGuidesPosition, trailStageSelection]);
+
+  const edgesWithStageDetails = useMemo(() => {
+    if (!trailStageSelection) return edges;
+
+    return [
+      ...edges,
+      {
+        id: 'e-trail-stage-guides',
+        source: 'trail-planner',
+        target: 'trail-stage-guides',
+        animated: false,
+        style: { stroke: 'hsl(var(--primary) / 0.35)', strokeDasharray: '5 5' },
+      },
+    ];
+  }, [edges, trailStageSelection]);
 
   const visibleNodes = useMemo(() => {
-    if (flowTargetType !== 'tool') return nodesWithCallbacks;
-    return nodesWithCallbacks.filter((node) => node.id !== 'trail-planner');
-  }, [flowTargetType, nodesWithCallbacks]);
+    if (flowTargetType !== 'tool') return nodesWithStageDetails;
+    return nodesWithStageDetails.filter((node) => node.id !== 'trail-planner' && node.id !== 'trail-stage-guides');
+  }, [flowTargetType, nodesWithStageDetails]);
 
   const visibleEdges = useMemo(() => {
-    if (flowTargetType !== 'tool') return edges;
-    return edges.filter((edge) => edge.source !== 'trail-planner' && edge.target !== 'trail-planner');
-  }, [edges, flowTargetType]);
+    if (flowTargetType !== 'tool') return edgesWithStageDetails;
+    return edgesWithStageDetails.filter((edge) => edge.source !== 'trail-planner' && edge.target !== 'trail-planner' && edge.target !== 'trail-stage-guides');
+  }, [edgesWithStageDetails, flowTargetType]);
+
+  useEffect(() => {
+    if (flowTargetType === 'tool') {
+      setTrailStageSelection(null);
+      setTrailGuidesPosition(null);
+    }
+  }, [flowTargetType]);
 
   useEffect(() => {
     if (!isFullscreen) return;
@@ -503,7 +605,7 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
       <ReactFlow
         nodes={visibleNodes}
         edges={visibleEdges}
-        onNodesChange={onNodesChange}
+        onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={handleNodeClick}

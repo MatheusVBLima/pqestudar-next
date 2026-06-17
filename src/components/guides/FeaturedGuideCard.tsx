@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BookOpen, Star, Eye, EyeOff, StarOff, Edit, Trash2 } from "lucide-react";
+import { BookOpen, Star, Eye, EyeOff, StarOff, Edit, Trash2, ExternalLink } from "lucide-react";
 import { Guide } from "@/hooks/useGuides";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -121,6 +121,11 @@ export function FeaturedGuideCard({
 
             {showAdmin ? (
               <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" asChild>
+                  <Link href={`/guias/${guide.slug}?preview=1`} target="_blank" rel="noreferrer">
+                    <ExternalLink className="h-3.5 w-3.5 mr-1" /> Prévia
+                  </Link>
+                </Button>
                 <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); onEdit(guide); }}>
                   <Edit className="h-3.5 w-3.5 mr-1" /> Editar
                 </Button>

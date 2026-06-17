@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Sparkles, Loader2, CheckCircle2, AlertTriangle, ImageIcon, FileText, Cog, Eye, Upload, ChevronDown, Wrench } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Sparkles, Loader2, CheckCircle2, AlertTriangle, ImageIcon, FileText, Cog, Eye, Upload, ChevronDown, Wrench, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TIPOS_GUIA, CATEGORIAS, INTENCOES, CATEGORIAS_PUBLICAS, mapInternaToPublica } from '@/lib/guide-editorial-options';
 import { useTools, type Tool } from '@/hooks/useTools';
@@ -38,6 +39,9 @@ interface FlowSelectOption {
   value: string;
   label: string;
 }
+
+const hasToolPageInfo = (tool: Tool) =>
+  Boolean(tool.content_markdown?.trim() || tool.what_is?.trim() || tool.who_for?.trim() || tool.how_helps?.trim() || tool.extra_markdown?.trim());
 
 function FlowSelect({
   value,
@@ -145,12 +149,12 @@ function ToolPicker({
   const [query, setQuery] = useState('');
   const rootRef = useRef<HTMLDivElement | null>(null);
   const selectedTool = tools.find((tool) => tool.name === value);
+  const selectedToolHasInfo = selectedTool ? hasToolPageInfo(selectedTool) : false;
   const filteredTools = tools
     .filter((tool) => {
       const haystack = [tool.name, tool.description, ...(tool.tags ?? [])].join(' ').toLowerCase();
       return haystack.includes(query.toLowerCase());
-    })
-    .slice(0, 20);
+    });
 
   useEffect(() => {
     if (!open) return;
@@ -183,6 +187,23 @@ function ToolPicker({
             {value || 'Selecione uma ferramenta...'}
           </span>
         </span>
+        {selectedTool && (
+          <span
+            className={cn(
+              "ml-auto hidden shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-medium sm:flex",
+              selectedToolHasInfo
+                ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700"
+                : "border-amber-500/20 bg-amber-500/10 text-amber-700"
+            )}
+          >
+            {selectedToolHasInfo ? (
+              <CheckCircle2 className="h-2.5 w-2.5" />
+            ) : (
+              <AlertTriangle className="h-2.5 w-2.5" />
+            )}
+            {selectedToolHasInfo ? 'Com página' : 'Sem info'}
+          </span>
+        )}
         <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 opacity-50 transition-transform", open && "rotate-180")} />
       </button>
 
@@ -197,30 +218,50 @@ function ToolPicker({
             />
           </div>
           <div className="max-h-56 overflow-y-auto p-1">
-            {filteredTools.length > 0 ? filteredTools.map((tool) => (
-              <button
-                key={tool.id}
-                type="button"
-                onClick={() => {
-                  onSelect(tool);
-                  setQuery('');
-                  setOpen(false);
-                }}
-                className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
-                  {tool.icon_url ? (
-                    <img src={tool.icon_url} alt="" className="h-full w-full object-contain" referrerPolicy="no-referrer" />
-                  ) : (
-                    <Wrench className="h-4 w-4 text-primary" />
-                  )}
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-xs font-semibold">{tool.name}</span>
-                  <span className="block truncate text-[10px] text-muted-foreground">{tool.description}</span>
-                </span>
-              </button>
-            )) : (
+            {filteredTools.length > 0 ? filteredTools.map((tool) => {
+              const hasInfo = hasToolPageInfo(tool);
+              return (
+                <button
+                  key={tool.id}
+                  type="button"
+                  onClick={() => {
+                    onSelect(tool);
+                    setQuery('');
+                    setOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+                    {tool.icon_url ? (
+                      <img src={tool.icon_url} alt="" className="h-full w-full object-contain" referrerPolicy="no-referrer" />
+                    ) : (
+                      <Wrench className="h-4 w-4 text-primary" />
+                    )}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate text-xs font-semibold">{tool.name}</span>
+                      <span
+                        className={cn(
+                          "inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-medium leading-none",
+                          hasInfo
+                            ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700"
+                            : "border-amber-500/20 bg-amber-500/10 text-amber-700"
+                        )}
+                      >
+                        {hasInfo ? (
+                          <CheckCircle2 className="h-2.5 w-2.5" />
+                        ) : (
+                          <AlertTriangle className="h-2.5 w-2.5" />
+                        )}
+                        {hasInfo ? 'Com página' : 'Sem info'}
+                      </span>
+                    </span>
+                    <span className="block truncate text-[10px] text-muted-foreground">{tool.description}</span>
+                  </span>
+                </button>
+              );
+            }) : (
               <p className="px-2 py-3 text-center text-[10px] text-muted-foreground">Nenhuma ferramenta encontrada.</p>
             )}
           </div>
@@ -232,10 +273,11 @@ function ToolPicker({
 
 function InputNodeComponent({ data }: { data: InputNodeData }) {
   const { onGenerate, isGenerating, hasValidSources, hasLibrary, selectedLibrary, onAutoSuggest, onInputsChange, onTargetTypeChange, inputPatch } = data;
-  const { tools } = useTools({ includeInvisible: true, pageSize: 100 });
+  const { tools } = useTools({ includeInvisible: true, pageSize: 1000 });
   const [inputs, setInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
   const [isParsingPdf, setIsParsingPdf] = useState(false);
   const [pdfName, setPdfName] = useState<string | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -268,7 +310,48 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
   }, [inputs.tema, inputs.palavraChave, onAutoSuggest]);
 
   const isTool = inputs.targetType === 'tool';
-  const canSubmit = inputs.tema.trim() && (isTool || inputs.categoria) && (isTool || inputs.categoriaPublica) && !isGenerating;
+  const canSubmit = inputs.tema.trim() && (!isTool || inputs.ferramentaId) && (isTool || inputs.categoria) && (isTool || inputs.categoriaPublica) && !isGenerating;
+  const advancedFieldsCount = [
+    inputs.palavraChave.trim(),
+    inputs.intencao,
+    inputs.contextoAdicional.trim(),
+  ].filter(Boolean).length;
+
+  const advancedFields = (
+    <>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs">Palavra-chave</Label>
+          <Input
+            placeholder="Ex: rotina de estudos"
+            value={inputs.palavraChave}
+            onChange={(e) => setInputs((p) => ({ ...p, palavraChave: e.target.value }))}
+            className="rounded-lg text-xs h-8"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Intenção</Label>
+          <FlowSelect
+            value={inputs.intencao}
+            onValueChange={(v) => setInputs((p) => ({ ...p, intencao: v }))}
+            options={INTENCOES}
+            placeholder="Selecione..."
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs">Contexto adicional</Label>
+        <Textarea
+          placeholder="Referências, regras editoriais..."
+          value={inputs.contextoAdicional}
+          onChange={(e) => setInputs((p) => ({ ...p, contextoAdicional: e.target.value }))}
+          rows={2}
+          className="rounded-lg text-xs resize-none"
+        />
+      </div>
+    </>
+  );
 
   const handleCategoriaInternaChange = (v: string) => {
     setInputs((p) => ({
@@ -344,6 +427,11 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
               setInputs((p) => ({
                 ...p,
                 targetType,
+                ferramentaId: targetType === 'tool' ? p.ferramentaId : '',
+                ferramentaSlug: targetType === 'tool' ? p.ferramentaSlug : '',
+                ferramentaDescricao: targetType === 'tool' ? p.ferramentaDescricao : '',
+                ferramentaCoverImageUrl: targetType === 'tool' ? p.ferramentaCoverImageUrl : '',
+                ferramentaTags: targetType === 'tool' ? p.ferramentaTags : [],
                 visualMode: targetType === 'tool' ? 'prompt_only' : p.visualMode,
                 tipo: targetType === 'tool' ? '' : p.tipo,
                 categoriaPublica: targetType === 'tool' ? (p.categoriaPublica || 'Ferramentas') : p.categoriaPublica,
@@ -384,6 +472,11 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
               tools={tools}
               onSelect={(tool) => setInputs((p) => ({
                 ...p,
+                ferramentaId: tool.id,
+                ferramentaSlug: tool.slug ?? '',
+                ferramentaDescricao: tool.description ?? '',
+                ferramentaCoverImageUrl: tool.cover_image_url ?? '',
+                ferramentaTags: tool.tags ?? [],
                 tema: tool.name,
                 palavraChave: p.palavraChave || tool.name,
                 categoria: tool.tags?.[0] || p.categoria,
@@ -478,37 +571,35 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
         </div>
         )}
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <Label className="text-xs">Palavra-chave</Label>
-            <Input
-              placeholder="Ex: rotina de estudos"
-              value={inputs.palavraChave}
-              onChange={(e) => setInputs((p) => ({ ...p, palavraChave: e.target.value }))}
-              className="rounded-lg text-xs h-8"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Intenção</Label>
-            <FlowSelect
-              value={inputs.intencao}
-              onValueChange={(v) => setInputs((p) => ({ ...p, intencao: v }))}
-              options={INTENCOES}
-              placeholder="Selecione..."
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <Label className="text-xs">Contexto adicional</Label>
-          <Textarea
-            placeholder="Referências, regras editoriais..."
-            value={inputs.contextoAdicional}
-            onChange={(e) => setInputs((p) => ({ ...p, contextoAdicional: e.target.value }))}
-            rows={2}
-            className="rounded-lg text-xs resize-none"
-          />
-        </div>
+        {isTool ? (
+          <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2 text-left text-xs transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <span className="flex min-w-0 items-center gap-2 font-medium">
+                  <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span>Ajustes avançados</span>
+                  {advancedFieldsCount > 0 && (
+                    <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold text-primary">
+                      {advancedFieldsCount} preenchido{advancedFieldsCount > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </span>
+                <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 opacity-60 transition-transform", advancedOpen && "rotate-180")} />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-2 pt-2">
+              <p className="text-[9px] text-muted-foreground leading-tight">
+                Use quando quiser orientar SEO, intenção de busca ou regras específicas da geração.
+              </p>
+              {advancedFields}
+            </CollapsibleContent>
+          </Collapsible>
+        ) : (
+          advancedFields
+        )}
 
         {isTool && (
           <div className="space-y-1.5 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-2">
@@ -565,6 +656,12 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
             <><Sparkles className="h-3.5 w-3.5" /> {isTool ? 'Gerar ferramenta' : 'Gerar guia assistido'}</>
           )}
         </Button>
+
+        {isTool && !inputs.ferramentaId && (
+          <p className="text-[10px] text-amber-600 text-center">
+            Selecione uma ferramenta existente para atualizar a pÃ¡gina dela.
+          </p>
+        )}
 
         {!hasLibrary && !hasValidSources && !isGenerating && (
           <p className="text-[10px] text-amber-600 text-center">

@@ -82,6 +82,7 @@ export function useGuideBySlug(slug: string | undefined) {
     if (!slug) return undefined;
     const cachedGuides = queryClient.getQueriesData<Guide[]>({ queryKey: GUIDES_KEY });
     for (const [, guides] of cachedGuides) {
+      if (!Array.isArray(guides)) continue;
       const found = guides?.find((guide) => guide.slug === slug);
       if (found) return found;
     }

@@ -12,7 +12,7 @@ import { hasValidationErrors } from '@/components/admin/guide-flow/GuideFlowVali
 import { findOption, TIPOS_GUIA, CATEGORIAS, INTENCOES, mapInternaToPublica } from '@/lib/guide-editorial-options';
 import { useGuidesMutations } from '@/hooks/useGuidesMutations';
 import { useGuideFlowSources } from '@/hooks/useGuideFlowSources';
-import { createToolAction, updateToolAction } from '@/app/actions/tools';
+import { updateToolAction } from '@/app/actions/tools';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json, Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { toast } from '@/hooks/use-toast';
@@ -28,6 +28,11 @@ const EMPTY_GUIDE: GeneratedGuideData = {
 };
 
 const TOOL_PLACEHOLDER_IMAGE = '/images/pqestudar-em-construcao.png';
+
+const capitalizeGuideTitle = (title: string) =>
+  title.replace(/^(\s*)(\S)/u, (_, leadingSpace: string, firstChar: string) =>
+    `${leadingSpace}${firstChar.toLocaleUpperCase('pt-BR')}`
+  );
 
 type GuideFlowStoredData = Partial<GeneratedGuideData> & { inputs?: GuideFlowInputs };
 type GuideRow = Tables<'guides'> & { flow_data?: GuideFlowStoredData | null };
@@ -142,6 +147,11 @@ export default function GuideFlow() {
       const restoredInputs: GuideFlowInputs = {
         ...DEFAULT_GUIDE_FLOW_INPUTS,
         targetType: 'tool',
+        ferramentaId: tool.id,
+        ferramentaSlug: tool.slug ?? '',
+        ferramentaDescricao: tool.description ?? '',
+        ferramentaCoverImageUrl: tool.cover_image_url ?? '',
+        ferramentaTags: tool.tags ?? [],
         tema: tool.name,
         categoria: tool.tags?.[0] ?? '',
         categoriaPublica: tool.tags?.[0] ?? 'Ferramentas',
@@ -172,6 +182,10 @@ export default function GuideFlow() {
 
   const handleInputsChange = useCallback((inputs: GuideFlowInputs) => {
     setCurrentInputs(inputs);
+    if (inputs.targetType === 'tool' && inputs.ferramentaId) {
+      setLinkedToolId(inputs.ferramentaId);
+      setLinkedGuideId(null);
+    }
   }, []);
 
   const handleTargetTypeChange = useCallback((targetType: GuideFlowInputs['targetType']) => {
@@ -246,23 +260,29 @@ export default function GuideFlow() {
       }
 
       const generated = await resp.json();
+      const isToolFlow = inputs.targetType === 'tool';
+      const selectedToolName = inputs.tema || generated.title || '';
+      const selectedToolSlug = inputs.ferramentaSlug || generated.slug || '';
+      const preservedToolDescription = inputs.ferramentaDescricao || guideData?.short_description || '';
+      const preservedToolCover = inputs.ferramentaCoverImageUrl || guideData?.cover_image_url || '';
+      const preservedToolTags = inputs.ferramentaTags?.length ? inputs.ferramentaTags : [];
 
       setGuideData({
-        title: generated.title ?? '',
-        slug: generated.slug ?? '',
-        short_description: generated.short_description ?? '',
+        title: isToolFlow ? selectedToolName : capitalizeGuideTitle(generated.title ?? ''),
+        slug: isToolFlow ? selectedToolSlug : (generated.slug ?? ''),
+        short_description: isToolFlow ? preservedToolDescription : (generated.short_description ?? ''),
         seo_title: generated.seo_title ?? '',
         seo_description: generated.seo_description ?? '',
-        category: generated.category ?? (categoriaOption?.label || inputs.categoria),
-        public_category: inputs.categoriaPublica || mapInternaToPublica(inputs.categoria),
+        category: isToolFlow ? (preservedToolTags[0] ?? inputs.categoria) : (generated.category ?? (categoriaOption?.label || inputs.categoria)),
+        public_category: isToolFlow ? (preservedToolTags[0] ?? (inputs.categoriaPublica || 'Ferramentas')) : (inputs.categoriaPublica || mapInternaToPublica(inputs.categoria)),
         author_name: generated.author_name ?? 'Matheus Dias',
         content_markdown: generated.content_markdown ?? '',
         cta_top: generated.cta_top ?? null,
         cta_middle: generated.cta_middle ?? null,
         cta_final: generated.cta_final ?? null,
         internal_links: generated.internal_links ?? [],
-        cover_image_suggestion: generated.cover_image_suggestion ?? '',
-        cover_image_url: generated.cover_image_url ?? '',
+        cover_image_suggestion: isToolFlow ? '' : (generated.cover_image_suggestion ?? ''),
+        cover_image_url: isToolFlow ? preservedToolCover : (generated.cover_image_url ?? ''),
         image_prompts: generated.image_prompts ?? [],
         generated_images: generated.generated_images ?? [],
       });
@@ -282,7 +302,7 @@ export default function GuideFlow() {
     } finally {
       setIsGenerating(false);
     }
-  }, [sources]);
+  }, [sources, guideData]);
 
   const handleRegenerateImage = useCallback(async (prompt: string, position: string) => {
     if (!guideData) return;
@@ -410,34 +430,43 @@ export default function GuideFlow() {
 
     setIsSaving(true);
     try {
+      const selectedToolId = currentInputs.ferramentaId || linkedToolId;
+      const selectedToolSlug = currentInputs.ferramentaSlug || guideData.slug;
+
+      if (isToolFlow && !selectedToolId) {
+        toast({ title: 'Ferramenta obrigatÃ³ria', description: 'Selecione uma ferramenta existente para atualizar.', variant: 'destructive' });
+        return;
+      }
+
       const finalMarkdown = buildFinalMarkdown(guideData);
+      const normalizedGuideData = isToolFlow
+        ? guideData
+        : { ...guideData, title: capitalizeGuideTitle(guideData.title) };
 
       // Persist the full flow state for future re-opening
       const flowDataPayload = {
-        ...guideData,
+        ...normalizedGuideData,
         inputs: currentInputs,
       };
 
       if (isToolFlow) {
-        const tags = Array.from(new Set([
+        const generatedTags = Array.from(new Set([
           guideData.public_category,
           guideData.category,
           currentInputs.palavraChave,
         ].map((value) => value?.trim()).filter(Boolean))) as string[];
+        const preservedTags = currentInputs.ferramentaTags?.length ? currentInputs.ferramentaTags : generatedTags;
 
         const toolPayload: Record<string, unknown> = {
-          name: guideData.title,
-          slug: guideData.slug,
-          description: guideData.short_description,
+          name: currentInputs.tema || guideData.title,
+          slug: selectedToolSlug,
+          description: currentInputs.ferramentaDescricao || guideData.short_description,
           seo_title: guideData.seo_title || null,
           seo_description: guideData.seo_description || null,
           content_markdown: finalMarkdown,
-          cover_image_url: guideData.cover_image_url || null,
+          cover_image_url: currentInputs.ferramentaCoverImageUrl || guideData.cover_image_url || null,
           is_visible: publish,
-          is_featured: false,
-          featured_indefinite: false,
-          sort_order: 0,
-          tags,
+          tags: preservedTags,
           internal_links: [],
           cta_top_label: guideData.cta_top?.label || null,
           cta_top_url: guideData.cta_top?.url || null,
@@ -450,9 +479,7 @@ export default function GuideFlow() {
           cta_final_text: guideData.cta_final?.text || null,
         };
 
-        const result = linkedToolId
-          ? await updateToolAction({ id: linkedToolId, ...toolPayload })
-          : await createToolAction(toolPayload);
+        const result = await updateToolAction({ id: selectedToolId, ...toolPayload });
 
         if (result.error) throw new Error(result.error);
 
@@ -460,12 +487,12 @@ export default function GuideFlow() {
           title: publish ? 'Ferramenta publicada!' : 'Ferramenta salva!',
           description: `"${guideData.title}" foi ${publish ? 'publicada' : 'salva como rascunho'}.`,
         });
-        router.push(`/ferramentas/${guideData.slug}`);
+        router.push(`/ferramentas/${selectedToolSlug}?preview=1`);
         return;
       }
 
       const guidePayload: TablesUpdate<'guides'> = {
-        title: guideData.title,
+        title: normalizedGuideData.title,
         slug: guideData.slug,
         short_description: guideData.short_description,
         seo_title: guideData.seo_title,

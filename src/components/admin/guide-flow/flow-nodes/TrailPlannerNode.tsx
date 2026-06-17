@@ -13,12 +13,22 @@ import {
   buildTrailRecommendation,
   getTrailSubjects,
   TRAIL_STAGES,
+  type TrailStage,
   type TrailStageStatus,
 } from '@/lib/guide-trail-planner';
 import type { GuideFlowInputs } from '../GuideFlowForm';
+import type { Guide } from '@/hooks/useGuides';
 
 interface TrailPlannerNodeData {
   onApplyInputs?: (patch: Partial<GuideFlowInputs>) => void;
+  onStageSelect?: (selection: {
+    subject: string;
+    stage: TrailStage;
+    stageLabel: string;
+    status: TrailStageStatus;
+    statusLabel: string;
+    guides: Guide[];
+  }) => void;
 }
 
 const STATUS_LABEL: Record<TrailStageStatus, string> = {
@@ -43,6 +53,14 @@ const FALLBACK_SUBJECTS = [
   'Inteligência artificial',
   'Benefícios sociais',
 ];
+
+function normalizeSubjectOption(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
 
 function recommendationPatch(recommendation: NonNullable<ReturnType<typeof buildTrailCoverage>['recommendation']>): Partial<GuideFlowInputs> {
   return {
@@ -88,10 +106,18 @@ function SubjectSelect({
   }, [open]);
 
   const options = useMemo(() => {
-    const normalized = draft.trim().toLowerCase();
-    const uniqueSubjects = Array.from(new Set([...subjects, ...FALLBACK_SUBJECTS]));
+    const normalized = normalizeSubjectOption(draft);
+    const uniqueSubjects = Array.from(
+      [...subjects, ...FALLBACK_SUBJECTS]
+        .reduce((acc, item) => {
+          const key = normalizeSubjectOption(item);
+          if (!acc.has(key)) acc.set(key, item);
+          return acc;
+        }, new Map<string, string>())
+        .values()
+    );
     return uniqueSubjects
-      .filter((item) => item.toLowerCase().includes(normalized))
+      .filter((item) => normalizeSubjectOption(item).includes(normalized))
       .slice(0, 12);
   }, [draft, subjects]);
 
@@ -159,7 +185,7 @@ function SubjectSelect({
               );
             })}
 
-            {draft.trim() && !options.some((item) => item.toLowerCase() === draft.trim().toLowerCase()) && (
+            {draft.trim() && !options.some((item) => normalizeSubjectOption(item) === normalizeSubjectOption(draft)) && (
               <button
                 type="button"
                 onClick={commitDraft}
@@ -181,7 +207,7 @@ function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
   const [showOverview, setShowOverview] = useState(false);
 
   const subjects = useMemo(() => getTrailSubjects(guides), [guides]);
-  const activeSubject = subject.trim() || subjects[0] || 'Cursos gratuitos';
+  const activeSubject = subject.trim();
   const coverage = useMemo(() => buildTrailCoverage(guides, activeSubject), [guides, activeSubject]);
   const allCoverages = useMemo(() => buildAllTrailCoverages(guides), [guides]);
 
@@ -216,17 +242,36 @@ function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
       <div className="space-y-3 p-4">
         <div className="space-y-1">
           <Label className="text-xs">Assunto principal</Label>
-          <SubjectSelect value={activeSubject} subjects={subjects} onChange={setSubject} />
+          <SubjectSelect value={subject} subjects={subjects} onChange={setSubject} />
         </div>
 
+        {activeSubject ? (
+          <>
         <div className="grid grid-cols-3 gap-1">
           {TRAIL_STAGES.map((stage) => {
-            const status = coverage.stages[stage.value].status;
+            const stageCoverage = coverage.stages[stage.value];
+            const status = stageCoverage.status;
             return (
-              <div key={stage.value} title={stage.description} className={cn("rounded-md border px-2 py-1", STATUS_CLASS[status])}>
+              <button
+                key={stage.value}
+                type="button"
+                title={stage.description}
+                onClick={() => data.onStageSelect?.({
+                  subject: coverage.subject,
+                  stage: stage.value,
+                  stageLabel: stage.label,
+                  status,
+                  statusLabel: STATUS_LABEL[status],
+                  guides: stageCoverage.guides,
+                })}
+                className={cn(
+                  "nodrag nopan rounded-md border px-2 py-1 text-left transition-colors hover:ring-1 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/60",
+                  STATUS_CLASS[status]
+                )}
+              >
                 <div className="truncate text-[10px] font-semibold">{stage.label}</div>
                 <div className="truncate text-[9px] opacity-80">{STATUS_LABEL[status]}</div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -281,6 +326,13 @@ function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
                 Relacionados
               </Button>
             </div>
+          </div>
+        )}
+
+          </>
+        ) : (
+          <div className="rounded-md border border-dashed border-border bg-background/60 px-3 py-4 text-center text-[10px] text-muted-foreground">
+            Escolha um assunto principal para ver a cobertura da trilha.
           </div>
         )}
 

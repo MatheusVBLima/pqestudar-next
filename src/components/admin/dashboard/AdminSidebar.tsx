@@ -229,6 +229,27 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Guias */}
+        <SidebarGroup className={groupClass}>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/admin/guias'}
+                  tooltip="Guias"
+                  className={itemClass(pathname === '/admin/guias')}
+                >
+                  <Link href="/admin/guias">
+                    <FileText className="h-4 w-4" />
+                    <span>Guias</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         {/* Biblioteca */}
         <SidebarGroup className={groupClass}>
           <SidebarGroupContent>

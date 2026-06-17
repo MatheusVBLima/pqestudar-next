@@ -10,16 +10,19 @@ interface ManagementToolbarProps {
   createHref?: string;
   onCreate?: () => void;
   hint?: string;
+  forceVisible?: boolean;
 }
 
-export function ManagementToolbar({ createLabel, createHref, onCreate, hint }: ManagementToolbarProps) {
+export function ManagementToolbar({ createLabel, createHref, onCreate, hint, forceVisible = false }: ManagementToolbarProps) {
   const { isManagementMode } = useManagementMode();
-  if (!isManagementMode) return null;
+  if (!isManagementMode && !forceVisible) return null;
 
   return (
     <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-[1.2rem] border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
       <div className="text-sm">
-        <span className="font-semibold text-primary">Modo de gerenciamento ativo</span>
+        <span className="font-semibold text-primary">
+          {isManagementMode ? 'Modo de gerenciamento ativo' : 'Gerenciamento de conteúdo'}
+        </span>
         {hint && <span className="ml-2 text-muted-foreground">{hint}</span>}
       </div>
       {onCreate ? (

@@ -15,6 +15,7 @@ import { DEFAULT_SOCIAL_IMAGE_ALT, DEFAULT_SOCIAL_IMAGE_URL } from "@/lib/site";
 
 interface GuiaDetailPageProps {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ preview?: string }>;
 }
 
 export async function generateMetadata({ params }: GuiaDetailPageProps): Promise<Metadata> {
@@ -88,38 +89,45 @@ function buildArticleJsonLd(guide: {
   };
 }
 
-export default async function GuiaDetalhePage({ params }: GuiaDetailPageProps) {
+export default async function GuiaDetalhePage({ params, searchParams }: GuiaDetailPageProps) {
   const { slug } = await params;
+  const preview = (await searchParams)?.preview === "1";
   const queryClient = createQueryClient();
 
   const guide = await getGuideBySlug(slug);
 
-  if (!guide) {
+  if (!guide && !preview) {
     notFound();
   }
 
-  queryClient.setQueryData(["guides", "slug", slug], guide);
+  if (guide) {
+    queryClient.setQueryData(["guides", "slug", slug], guide);
+  }
 
-  const [tools, contests, guides] = await Promise.all([
-    getGuideRelatedTools(guide.id),
-    getGuideRelatedContests(guide.id),
-    getGuideRelatedGuides(guide.id),
-  ]);
+  const [tools, contests, guides] = guide
+    ? await Promise.all([
+        getGuideRelatedTools(guide.id),
+        getGuideRelatedContests(guide.id),
+        getGuideRelatedGuides(guide.id),
+      ])
+    : [[], [], []];
 
-  queryClient.setQueryData(["guide_related_tools", guide.id], tools);
-  queryClient.setQueryData(["guide_related_contests", guide.id], contests);
-  queryClient.setQueryData(["guide_related_guides", guide.id], guides);
+  if (guide) {
+    queryClient.setQueryData(["guide_related_tools", guide.id], tools);
+    queryClient.setQueryData(["guide_related_contests", guide.id], contests);
+    queryClient.setQueryData(["guide_related_guides", guide.id], guides);
+  }
 
-  const breadcrumbLd = buildBreadcrumbList([
+  const breadcrumbLd = guide ? buildBreadcrumbList([
     { name: "Inicio", path: "/" },
     { name: "Guias", path: "/guias" },
     { name: guide.title, path: `/guias/${slug}` },
-  ]);
+  ]) : null;
 
   return (
     <>
-      <JsonLd data={buildArticleJsonLd(guide)} />
-      <JsonLd data={breadcrumbLd} />
+      {guide && <JsonLd data={buildArticleJsonLd(guide)} />}
+      {breadcrumbLd && <JsonLd data={breadcrumbLd} />}
       <QueryHydration state={dehydrate(queryClient)}>
         <GuiaDetalheNext />
       </QueryHydration>

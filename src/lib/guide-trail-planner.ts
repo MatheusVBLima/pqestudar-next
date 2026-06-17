@@ -92,11 +92,17 @@ function normalize(value: string) {
     .trim();
 }
 
-function titleCase(value: string) {
-  return value
-    .trim()
-    .replace(/\s+/g, ' ')
-    .replace(/\b\p{L}/gu, (match) => match.toUpperCase());
+function capitalizeFirstWord(value: string) {
+  const cleaned = value.trim().replace(/\s+/g, ' ');
+  return cleaned.replace(/^(\S)/u, (match) => match.toLocaleUpperCase('pt-BR'));
+}
+
+function canonicalSubject(value: string) {
+  const cleaned = value.trim().replace(/\s+/g, ' ');
+  const normalized = normalize(cleaned);
+  const defaultSubject = DEFAULT_TRAIL_SUBJECTS.find((subject) => normalize(subject) === normalized);
+  if (defaultSubject) return defaultSubject;
+  return capitalizeFirstWord(cleaned);
 }
 
 function flowInputsOf(guide: Guide): Record<string, unknown> {
@@ -115,7 +121,7 @@ export function getGuideTrailSubject(guide: Guide): string | null {
     inputs.editorialSubject ??
     inputs.subject;
 
-  if (typeof stored === 'string' && stored.trim()) return titleCase(stored);
+  if (typeof stored === 'string' && stored.trim()) return canonicalSubject(stored);
 
   const haystack = normalize(`${guide.title} ${guide.short_description} ${guide.category} ${guide.public_category}`);
   return SUBJECT_KEYWORDS.find(({ terms }) => terms.some((term) => haystack.includes(normalize(term))))?.subject ?? null;
@@ -131,12 +137,18 @@ export function getGuideTrailStage(guide: Guide): TrailStage | null {
 }
 
 export function getTrailSubjects(guides: Guide[]) {
-  const subjects = new Set(DEFAULT_TRAIL_SUBJECTS);
+  const subjects = new Map<string, string>();
+  DEFAULT_TRAIL_SUBJECTS.forEach((subject) => subjects.set(normalize(subject), subject));
+
   guides.forEach((guide) => {
     const subject = getGuideTrailSubject(guide);
-    if (subject) subjects.add(subject);
+    if (subject) {
+      const key = normalize(subject);
+      if (!subjects.has(key)) subjects.set(key, subject);
+    }
   });
-  return Array.from(subjects).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  return Array.from(subjects.values()).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 
 function emptyStages(): Record<TrailStage, { status: TrailStageStatus; guides: Guide[] }> {

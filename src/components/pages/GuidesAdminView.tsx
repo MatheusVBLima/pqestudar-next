@@ -25,12 +25,14 @@ interface GuidesAdminViewProps {
   guides: Guide[] | undefined;
   isLoading: boolean;
   filteredGuides: Guide[];
+  forceToolbar?: boolean;
 }
 
 export default function GuidesAdminView({
   guides,
   isLoading,
   filteredGuides,
+  forceToolbar = false,
 }: GuidesAdminViewProps) {
   const [adminTab, setAdminTab] = useState<"published" | "drafts">("published");
   const [modalOpen, setModalOpen] = useState(false);
@@ -106,6 +108,7 @@ export default function GuidesAdminView({
           setModalOpen(true);
         }}
         hint="Edite, publique ou exclua guias. Use as abas para revisar publicados e rascunhos."
+        forceVisible={forceToolbar}
       />
 
       <Tabs value={adminTab} onValueChange={(v) => setAdminTab(v as "published" | "drafts")}>

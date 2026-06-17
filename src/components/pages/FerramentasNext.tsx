@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue } from
 "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -469,6 +470,7 @@ export default function Ferramentas() {
   const [deleteTool, setDeleteTool] = useState<Tool | null>(null);
   const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
   const [draftTools, setDraftTools] = useState<Tool[] | null>(null);
+  const [adminTab, setAdminTab] = useState<"published" | "drafts">("published");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -530,6 +532,10 @@ export default function Ferramentas() {
 
     // 1. Filtro por categoria dropdown (modo admin)
     let base = sourceTools;
+    if (isManagementMode) {
+      base = base.filter((tool) => adminTab === "published" ? tool.is_visible : !tool.is_visible);
+    }
+
     if (isManagementMode && categoryFilter !== "all") {
       base = base.filter((tool) => tool.tags.includes(categoryFilter));
     }
@@ -574,7 +580,11 @@ export default function Ferramentas() {
 
       return [...featuredFirst, ...normalRest, ...rest];
     }
-  }, [tools, draftTools, isManagementMode, categoryFilter, selectedTags, currentPage]);
+  }, [tools, draftTools, isManagementMode, adminTab, categoryFilter, selectedTags, currentPage]);
+
+  const managementSourceTools = isManagementMode ? draftTools ?? tools : tools;
+  const publishedCount = managementSourceTools.filter((tool) => tool.is_visible).length;
+  const draftsCount = managementSourceTools.filter((tool) => !tool.is_visible).length;
 
   const availableTags = CATEGORIES.filter((tag) => !selectedTags.includes(tag));
 
@@ -680,6 +690,22 @@ export default function Ferramentas() {
     setHasUnsavedOrder(false);
   };
 
+  const handleReorderDisplayedTools = (nextTools: Tool[]) => {
+    const visibleIds = new Set(sortedDisplayedTools.map((tool) => tool.id));
+
+    setDraftTools((current) => {
+      const source = current ?? tools;
+      let visibleIndex = 0;
+      return source.map((tool) => {
+        if (!visibleIds.has(tool.id)) return tool;
+        const nextTool = nextTools[visibleIndex] ?? tool;
+        visibleIndex += 1;
+        return nextTool;
+      });
+    });
+    setHasUnsavedOrder(true);
+  };
+
   // Pagination range display
   const pageStart = (currentPage - 1) * 12 + 1;
   const pageEnd = Math.min(currentPage * 12, total);
@@ -710,6 +736,12 @@ export default function Ferramentas() {
           {isManagementMode && effectiveAdmin &&
           <section className="pb-6 px-4 sm:px-6 lg:px-8">
               <div className="w-full max-w-[1440px] mx-auto">
+                <Tabs value={adminTab} onValueChange={(value) => setAdminTab(value as "published" | "drafts")} className="mb-4">
+                  <TabsList>
+                    <TabsTrigger value="published">Publicados ({publishedCount})</TabsTrigger>
+                    <TabsTrigger value="drafts">Rascunhos ({draftsCount})</TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1042,10 +1074,7 @@ export default function Ferramentas() {
                 >
                   <FerramentasManagementGrid
                     tools={sortedDisplayedTools}
-                    onReorder={(nextTools) => {
-                      setDraftTools(nextTools);
-                      setHasUnsavedOrder(true);
-                    }}
+                    onReorder={handleReorderDisplayedTools}
                     onEdit={handleEdit}
                     onToggleVisible={toggleVisible}
                     onDelete={setDeleteTool}

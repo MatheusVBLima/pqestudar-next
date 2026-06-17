@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,7 +33,18 @@ import { Tool, ToolsResult } from "@/hooks/useTools";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
-async function fetchToolBySlug(slug: string): Promise<Tool | null> {
+async function fetchToolBySlug(slug: string, preview = false): Promise<Tool | null> {
+  if (preview) {
+    const { data, error } = await supabase
+      .from("tools")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (error) throw error;
+    return (data as Tool | null) ?? null;
+  }
+
   const { data, error } = await supabase
     .from("tools_public")
     .select("*")
@@ -518,24 +529,26 @@ function AudienceToolsCard({ tools, isLoading }: { tools: Tool[]; isLoading: boo
 // ---------- Page ----------
 export default function ToolDetalhe() {
   const params = useParams<{ slug?: string | string[] }>();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const slugParam = params?.slug;
   const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
+  const preview = searchParams?.get("preview") === "1";
   const queryClient = useQueryClient();
 
   const placeholderTool = useMemo(() => {
-    if (!slug) return null;
+    if (!slug || preview) return null;
     const listQueries = queryClient.getQueriesData<ToolsResult>({ queryKey: ["tools_public_v2"] });
     for (const [, cached] of listQueries) {
       const found = cached?.tools?.find((candidate) => candidate.slug === slug);
       if (found) return found as Tool;
     }
     return null;
-  }, [queryClient, slug]);
+  }, [preview, queryClient, slug]);
 
   const toolQuery = useQuery({
-    queryKey: ["tool_detail", slug],
-    queryFn: async () => fetchToolBySlug(slug as string),
+    queryKey: ["tool_detail", slug, preview ? "preview" : "public"],
+    queryFn: async () => fetchToolBySlug(slug as string, preview),
     enabled: !!slug,
     // Paint cached list data immediately, then fetch the full detail payload in the background.
     placeholderData: placeholderTool,
