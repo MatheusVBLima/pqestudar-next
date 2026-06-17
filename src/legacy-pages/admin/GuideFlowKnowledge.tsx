@@ -308,37 +308,32 @@ export default function GuideFlowKnowledge() {
 
             <div className="space-y-1.5">
               <Label>IA da análise</Label>
-              <Select
+              <InlineFilterSelect
                 value={analysisProvider}
-                onValueChange={(value) => {
+                widthClass="w-full"
+                onChange={(value) => {
                   const provider = value as GuideFlowAiProvider;
                   setAnalysisProvider(provider);
                   setAnalysisModel(AI_MODEL_OPTIONS[provider][0]);
                 }}
-              >
-                <SelectTrigger className="h-9 rounded-[var(--admin-radius)] bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {AI_PROVIDER_OPTIONS.map((provider) => (
-                    <SelectItem key={provider.value} value={provider.value}>{provider.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={AI_PROVIDER_OPTIONS.map((provider) => ({
+                  value: provider.value,
+                  label: provider.label,
+                }))}
+              />
             </div>
 
             <div className="space-y-1.5">
               <Label>Modelo</Label>
-              <Select value={analysisModel} onValueChange={setAnalysisModel}>
-                <SelectTrigger className="h-9 rounded-[var(--admin-radius)] bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {AI_MODEL_OPTIONS[analysisProvider].map((model) => (
-                    <SelectItem key={model} value={model}>{model}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <InlineFilterSelect
+                value={analysisModel}
+                widthClass="w-full"
+                onChange={setAnalysisModel}
+                options={AI_MODEL_OPTIONS[analysisProvider].map((model) => ({
+                  value: model,
+                  label: model,
+                }))}
+              />
             </div>
           </div>
 
