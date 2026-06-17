@@ -350,7 +350,7 @@ All colors MUST be HSL.
 
 /* Admin sidebar card appearance */
 .admin-radius [data-slot="admin-sidebar"] {
-  border-radius: 0 10px 10px 0;
+  border-radius: 0;
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
   border-left: 0;
@@ -363,7 +363,7 @@ All colors MUST be HSL.
 }
 
 .admin-radius [data-collapsible="icon"] [data-slot="admin-sidebar"] {
-  border-radius: 0 10px 10px 0;
+  border-radius: 0;
   box-shadow: 0 12px 28px hsl(var(--foreground) / 0.08);
   overflow: visible;
 }
