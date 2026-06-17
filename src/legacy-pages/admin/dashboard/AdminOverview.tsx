@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Users, Wrench, BookOpen, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/admin/dashboard/PageHeader";
 import { StatCard } from "@/components/admin/dashboard/StatCard";
@@ -16,6 +16,9 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { TopPagesCard } from "@/components/admin/dashboard/TopPagesCard";
 import { HorizontalBarsCard } from "@/components/admin/dashboard/HorizontalBarsCard";
 import { OnlineVisitorsBadge } from "@/components/admin/dashboard/OnlineVisitorsBadge";
+import { Button } from "@/components/ui/button";
+
+const ACTIVITY_PAGE_SIZE = 10;
 
 const PERIOD_LABELS: Record<Period, string> = {
   day: "Hoje",
@@ -27,6 +30,7 @@ const PERIOD_LABELS: Record<Period, string> = {
 
 export default function AdminOverview() {
   const [period, setPeriod] = useState<Period>("month");
+  const [activityPage, setActivityPage] = useState(1);
   const range = useMemo(() => periodToRange(period), [period]);
   const periodLabel = PERIOD_LABELS[period];
 
@@ -67,7 +71,7 @@ export default function AdminOverview() {
     queryKey: ["admin-overview-activity", period],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_overview_activity", {
-        p_limit: 20,
+        p_limit: 100,
         ...range,
       });
       if (error) throw error;
@@ -127,11 +131,30 @@ export default function AdminOverview() {
 
   const formatValue = (v: number | null | undefined) => (v != null ? String(v) : "—");
   const ctrDisplay = stats?.ctr_30d != null ? `${stats.ctr_30d}%` : "—";
+  const activityRows = activity ?? [];
+  const totalActivityPages = Math.max(1, Math.ceil(activityRows.length / ACTIVITY_PAGE_SIZE));
+  const safeActivityPage = Math.min(activityPage, totalActivityPages);
+  const paginatedActivityRows = useMemo(
+    () => activityRows.slice((safeActivityPage - 1) * ACTIVITY_PAGE_SIZE, safeActivityPage * ACTIVITY_PAGE_SIZE),
+    [activityRows, safeActivityPage],
+  );
+  const activityStart = activityRows.length === 0 ? 0 : (safeActivityPage - 1) * ACTIVITY_PAGE_SIZE + 1;
+  const activityEnd = Math.min(safeActivityPage * ACTIVITY_PAGE_SIZE, activityRows.length);
+
+  useEffect(() => {
+    setActivityPage(1);
+  }, [period]);
+
+  useEffect(() => {
+    if (activityPage > totalActivityPages) {
+      setActivityPage(totalActivityPages);
+    }
+  }, [activityPage, totalActivityPages]);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Overview"
+        title="Visão geral"
         description="Visão geral do painel administrativo"
         actions={
           <div className="flex flex-wrap items-center gap-3">
@@ -209,7 +232,39 @@ export default function AdminOverview() {
             { key: "entity", label: "Entidade" },
             { key: "date", label: "Data" },
           ]}
-          rows={activity}
+          rows={paginatedActivityRows}
+          footer={
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-muted-foreground">
+                Mostrando {activityStart}-{activityEnd} de {activityRows.length} atividades
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-md text-xs"
+                  disabled={safeActivityPage <= 1}
+                  onClick={() => setActivityPage((page) => Math.max(1, page - 1))}
+                >
+                  Anterior
+                </Button>
+                <span className="min-w-20 text-center text-xs font-medium text-muted-foreground">
+                  Página {safeActivityPage} de {totalActivityPages}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-md text-xs"
+                  disabled={safeActivityPage >= totalActivityPages}
+                  onClick={() => setActivityPage((page) => Math.min(totalActivityPages, page + 1))}
+                >
+                  Próxima
+                </Button>
+              </div>
+            </div>
+          }
         />
         <TopPagesCard data={topPages} loading={topPagesLoading} periodLabel={periodLabel} />
       </div>

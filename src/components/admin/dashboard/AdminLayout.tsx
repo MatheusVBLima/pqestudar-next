@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminSidebar } from "./AdminSidebar";
-import { AdminHeader } from "./AdminHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 interface AdminLayoutProps {
@@ -44,18 +43,27 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen w-full bg-muted admin-radius">
-        <div className="flex w-full gap-4 p-4">
-          <AdminSidebar />
-          <div className="flex-1 min-w-0">
-            <div className="rounded-[var(--admin-radius)] border bg-card shadow-[var(--admin-shadow)] flex flex-col min-h-[calc(100vh-2rem)]">
-              <AdminHeader />
-              <main className="flex-1 p-6 overflow-auto">{children}</main>
-            </div>
+    <SidebarProvider
+      style={{
+        "--sidebar-width-icon": "3.75rem",
+      } as CSSProperties}
+    >
+      <AdminLayoutShell>{children}</AdminLayoutShell>
+    </SidebarProvider>
+  );
+}
+
+function AdminLayoutShell({ children }: AdminLayoutProps) {
+  return (
+    <div className="min-h-screen w-full bg-muted admin-radius">
+      <div className="flex w-full gap-4 py-4 pl-0 pr-4">
+        <AdminSidebar />
+        <div className="flex-1 min-w-0">
+          <div className="rounded-[var(--admin-radius)] border bg-card shadow-[var(--admin-shadow)] flex flex-col min-h-[calc(100vh-2rem)]">
+            <main className="flex-1 p-6 overflow-auto">{children}</main>
           </div>
         </div>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }
