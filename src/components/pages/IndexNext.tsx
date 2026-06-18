@@ -27,6 +27,9 @@ const FinalCtaSectionNext = lazy(() =>
   })),
 );
 
+// Standby: keep the products section wired for a future home update.
+const SHOW_HOME_PRODUCTS_SECTION = false;
+
 function DeferredHomeSections() {
   const [shouldLoad, setShouldLoad] = useState(false);
 
@@ -51,7 +54,7 @@ function DeferredHomeSections() {
   return (
     <Suspense fallback={<div className="min-h-[200px]" aria-hidden="true" />}>
       <DualTrackSectionNext />
-      <HomeProductsSectionNext />
+      {SHOW_HOME_PRODUCTS_SECTION && <HomeProductsSectionNext />}
       <HomeFaqSectionNext />
       <SocialProofSection />
       <FinalCtaSectionNext />

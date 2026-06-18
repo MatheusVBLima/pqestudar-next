@@ -145,7 +145,7 @@ export function HomeFaqSectionNext() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      <div className="container mx-auto px-6">
+      <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8">
         <Separator className="mb-14 md:mb-20 bg-border/50" />
 
         <div className="rounded-[1.2rem] border border-border/40 bg-muted/30 p-6 md:p-10 lg:p-12">
