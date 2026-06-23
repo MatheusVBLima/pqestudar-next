@@ -133,7 +133,12 @@ const BONUS_DATA: Array<{
 import testimonialMaria from "@/assets/testimonial-maria.png";
 import testimonialJoao from "@/assets/testimonial-joao.png";
 import testimonialCarlos from "@/assets/testimonial-carlos.png";
-const TESTIMONIALS = [{
+const TESTIMONIALS: Array<{
+  name: string;
+  role: string;
+  quote: string;
+  avatar: LandingImage;
+}> = [{
   name: "Maria S.",
   role: "Dona de Casa",
   quote: '"Eu nem imaginava que tinha direito à tarifa social de energia. Só com essa dica do Matheus, já economizei o valor do guia em um único mês. Incrível!"',
@@ -1137,7 +1142,7 @@ const TestimonialsSection = () => <section className="py-10 md:py-24 px-4 sm:px-
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full mx-auto mb-3 sm:mb-4 overflow-hidden" style={{
               background: `linear-gradient(135deg, hsl(${BRAND_TOKENS.primary}), hsl(${BRAND_TOKENS.primaryLight}))`
             }}>
-                  <img src={testimonial.avatar} alt={`Avatar de ${testimonial.name}`} className="w-full h-full object-cover object-top" loading="lazy" />
+                  <img src={getImageSrc(testimonial.avatar)} alt={`Avatar de ${testimonial.name}`} className="w-full h-full object-cover object-top" loading="lazy" />
                 </div>
                 <h3 className="font-bold text-sm sm:text-base" style={{
               color: `hsl(${BRAND_TOKENS.foreground})`
