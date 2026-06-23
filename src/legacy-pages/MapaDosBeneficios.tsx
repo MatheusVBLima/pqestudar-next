@@ -97,9 +97,9 @@ const CONFIG = {
 };
 const PRICES = {
   basicoAntigo: "R$ 47",
-  basicoAtual: "R$ 19,00",
+  basicoAtual: "R$ 10,00",
   premiumAntigo: "R$ 256",
-  premiumAtual: "R$ 59,00",
+  premiumAtual: "R$ 27,00",
   totalBonus: "R$ 111"
 };
 const BONUS_DATA: Array<{
