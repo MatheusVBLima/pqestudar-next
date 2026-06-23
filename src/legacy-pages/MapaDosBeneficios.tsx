@@ -15,6 +15,9 @@ import bonusPassaporteFuturo from "@/assets/bonus-passaporte-futuro.png";
 import bonusPainelControle from "@/assets/bonus-painel-controle.png";
 import bonusGeradorArgumentos from "@/assets/bonus-gerador-argumentos.png";
 
+type LandingImage = string | { src: string };
+const getImageSrc = (image: LandingImage) => typeof image === "string" ? image : image.src;
+
 // ============================================
 // BRAND_TOKENS - AJUSTE FÁCIL DE CORES E FONTES
 // ============================================
@@ -107,7 +110,7 @@ const BONUS_DATA: Array<{
   description: string;
   value: string;
   icon: string;
-  image?: string;
+  image?: LandingImage;
 }> = [{
   title: "Painel de Controle dos Benefícios",
   description: "Um template de Notion exclusivo para você organizar, priorizar e criar um plano de ação para solicitar cada benefício do guia. Chega de se sentir perdido, assuma o controle.",
@@ -813,7 +816,7 @@ const BonusSection = () => <section className="py-6 md:py-12 px-4 sm:px-6" style
               <div className="h-32 sm:h-40 md:h-48 flex items-center justify-center flex-shrink-0 overflow-hidden" style={{
             background: `linear-gradient(135deg, hsl(${BRAND_TOKENS.primary} / 0.2), hsl(${BRAND_TOKENS.primaryLight} / 0.3))`
           }}>
-                {bonus.image ? <img src={bonus.image} alt={bonus.title} className="w-full h-full object-cover" /> : <span className="text-5xl sm:text-6xl">{bonus.icon}</span>}
+                {bonus.image ? <img src={getImageSrc(bonus.image)} alt={bonus.title} className="w-full h-full object-cover" /> : <span className="text-5xl sm:text-6xl">{bonus.icon}</span>}
               </div>
               <CardContent className="p-4 sm:p-5 text-center flex flex-col flex-1">
                 <span className="text-xl sm:text-2xl mb-2 block">{bonus.icon}</span>
@@ -1359,7 +1362,7 @@ const GuaranteeFinalSection = () => <section className="py-12 md:py-20 px-4 sm:p
         ease
       }} className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 text-center sm:text-left">
           <div className="flex-shrink-0">
-            <img src={garantiaImage} alt="Selo de garantia incondicional de 7 dias - devolução total do dinheiro" className="w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40 object-contain" />
+            <img src={getImageSrc(garantiaImage)} alt="Selo de garantia incondicional de 7 dias - devolução total do dinheiro" className="w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40 object-contain" />
           </div>
           <div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-3 sm:mb-4" style={{
