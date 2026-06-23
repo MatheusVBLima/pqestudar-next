@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,7 +24,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { GripVertical, Plus, Pencil, Trash2, Save, Image, Monitor, Tablet, Smartphone } from "lucide-react";
+import { GripVertical, Plus, Pencil, Trash2, Save, Image, Monitor, Tablet, Smartphone, Link2, ExternalLink, Eye, EyeOff, ListChecks } from "lucide-react";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -46,6 +48,7 @@ interface NavItem {
   show_icon_desktop: boolean;
   show_icon_tablet: boolean;
   show_icon_mobile: boolean;
+  is_new: boolean;
 }
 
 interface NavSettings {
@@ -59,14 +62,24 @@ type NavSettingsUpdate = TablesUpdate<"nav_settings">;
 type NavItemUpdate = TablesUpdate<"nav_items">;
 type NavItemInsert = TablesInsert<"nav_items">;
 
+const VALID_TABS = ["logo", "items"] as const;
+type MenuTab = (typeof VALID_TABS)[number];
+const FALLBACK_LOGO_LIGHT = "/images/logo-light.png";
+const FALLBACK_LOGO_DARK = "/images/logo-dark.png";
+
+function getTab(value: string | null): MenuTab {
+  return VALID_TABS.includes(value as MenuTab) ? (value as MenuTab) : "items";
+}
+
 // ─── Sortable Row ───
 function SortableNavItem({
-  item, onEdit, onDelete, onToggle, onIconToggle,
+  item, onEdit, onDelete, onToggle, onIconToggle, onToggleNew,
 }: {
   item: NavItem;
   onEdit: (item: NavItem) => void;
   onDelete: (item: NavItem) => void;
   onToggle: (item: NavItem) => void;
+  onToggleNew: (item: NavItem) => void;
   onIconToggle: (item: NavItem, field: 'show_icon_desktop' | 'show_icon_tablet' | 'show_icon_mobile') => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
@@ -83,18 +96,61 @@ function SortableNavItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex flex-col gap-2 rounded-lg border bg-card p-3 transition-shadow",
-        isDragging && "shadow-lg ring-2 ring-primary/30 z-10"
+        "flex flex-col gap-3 rounded-lg border bg-card/70 p-4 transition-all hover:border-primary/30 hover:bg-card",
+        item.is_active ? "border-border" : "border-dashed opacity-75",
+        isDragging && "z-10 shadow-lg ring-2 ring-primary/30"
       )}
     >
-      <div className="flex items-center gap-3">
-        <button {...attributes} {...listeners} className="cursor-grab touch-none text-muted-foreground hover:text-foreground" aria-label="Reordenar">
+      <div className="flex flex-wrap items-center gap-3">
+        <button {...attributes} {...listeners} className="flex h-8 w-8 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:cursor-grabbing" aria-label="Reordenar">
           <GripVertical className="h-4 w-4" />
         </button>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm truncate">{item.label}</p>
-          <p className="text-xs text-muted-foreground truncate">{item.href}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-semibold text-sm truncate">{item.label}</p>
+            <Badge
+              variant={item.is_active ? "default" : "outline"}
+              className={cn(
+                "gap-1 px-2 py-0 text-[11px]",
+                item.is_active ? "bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/15" : "text-muted-foreground"
+              )}
+            >
+              {item.is_active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+              {item.is_active ? "Ativo" : "Oculto"}
+            </Badge>
+            {item.is_external && (
+              <Badge variant="outline" className="gap-1 px-2 py-0 text-[11px] text-muted-foreground">
+                <ExternalLink className="h-3 w-3" />
+                Externo
+              </Badge>
+            )}
+          </div>
+          <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+            <Link2 className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{item.href}</span>
+          </div>
         </div>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onToggleNew(item)}
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide transition-colors",
+                  item.is_new
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                )}
+                aria-label={`Badge Novo: ${item.is_new ? 'ativo' : 'inativo'}`}
+              >
+                Novo
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              Badge "Novo" {item.is_new ? 'ativo' : 'inativo'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <Switch checked={item.is_active} onCheckedChange={() => onToggle(item)} aria-label="Ativo" />
         <Button variant="ghost" size="icon" onClick={() => onEdit(item)} aria-label="Editar">
           <Pencil className="h-4 w-4" />
@@ -136,8 +192,149 @@ function SortableNavItem({
 }
 
 // ─── Page ───
+function CompactNavItem({
+  item, onEdit, onDelete, onToggle, onIconToggle, onToggleNew,
+}: {
+  item: NavItem;
+  onEdit: (item: NavItem) => void;
+  onDelete: (item: NavItem) => void;
+  onToggle: (item: NavItem) => void;
+  onToggleNew: (item: NavItem) => void;
+  onIconToggle: (item: NavItem, field: 'show_icon_desktop' | 'show_icon_tablet' | 'show_icon_mobile') => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  const iconBreakpoints: { field: 'show_icon_desktop' | 'show_icon_tablet' | 'show_icon_mobile'; icon: typeof Monitor; label: string }[] = [
+    { field: 'show_icon_desktop', icon: Monitor, label: 'Desktop' },
+    { field: 'show_icon_tablet', icon: Tablet, label: 'Tablet' },
+    { field: 'show_icon_mobile', icon: Smartphone, label: 'Mobile' },
+  ];
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "grid min-h-14 grid-cols-[2rem_minmax(13rem,1.4fr)_minmax(11rem,1fr)_7rem_5rem_8rem_5.5rem] items-center gap-3 border-t px-3 py-2.5 text-sm transition-colors first:border-t-0 hover:bg-muted/30",
+        !item.is_active && "bg-muted/20 text-muted-foreground",
+        isDragging && "relative z-10 rounded-md bg-card shadow-lg ring-2 ring-primary/30"
+      )}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="flex h-8 w-8 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:cursor-grabbing"
+        aria-label="Reordenar"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate font-medium text-foreground">{item.label}</span>
+          {item.is_external && (
+            <Badge variant="outline" className="h-5 gap-1 px-1.5 text-[10px] font-medium text-muted-foreground">
+              <ExternalLink className="h-3 w-3" />
+              Externo
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+        <Link2 className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">{item.href}</span>
+      </div>
+
+      <Badge
+        variant="outline"
+        className={cn(
+          "h-6 w-fit gap-1.5 rounded-md px-2 text-[11px] font-medium",
+          item.is_active
+            ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600"
+            : "border-muted bg-muted/60 text-muted-foreground"
+        )}
+      >
+        {item.is_active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+        {item.is_active ? "Ativo" : "Oculto"}
+      </Badge>
+
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => onToggleNew(item)}
+              className={cn(
+                "h-7 w-fit rounded-md px-2 text-[10px] font-semibold uppercase tracking-wide transition-colors",
+                item.is_new
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              )}
+              aria-label={`Badge Novo: ${item.is_new ? 'ativo' : 'inativo'}`}
+            >
+              Novo
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">
+            Badge "Novo" {item.is_new ? 'ativo' : 'inativo'}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider delayDuration={200}>
+        <div className="flex items-center gap-1">
+          {iconBreakpoints.map(({ field, icon: BpIcon, label }) => (
+            <Tooltip key={field}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => onIconToggle(item, field)}
+                  className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-md border text-xs transition-colors",
+                    item.icon && item[field]
+                      ? "border-primary/25 bg-primary/10 text-primary"
+                      : "border-transparent bg-muted/60 text-muted-foreground hover:text-foreground",
+                    !item.icon && "opacity-45"
+                  )}
+                  aria-label={`${label}: ícone ${item[field] ? 'visível' : 'oculto'}`}
+                  disabled={!item.icon}
+                >
+                  <BpIcon className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {item.icon ? `${label}: ícone ${item[field] ? 'visível' : 'oculto'}` : "Item sem ícone"}
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
+
+      <div className="flex items-center justify-end gap-1">
+        <Switch checked={item.is_active} onCheckedChange={() => onToggle(item)} aria-label="Ativo" />
+        <Button variant="ghost" size="icon" onClick={() => onEdit(item)} aria-label="Editar" className="h-8 w-8">
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => onDelete(item)} className="h-8 w-8 text-destructive hover:text-destructive" aria-label="Excluir">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminMenu() {
   const qc = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeTab = getTab(searchParams.get("tab"));
+
+  const handleTabChange = useCallback(
+    (value: string) => {
+      router.replace(`/admin/menu?tab=${value}`, { scroll: false });
+    },
+    [router]
+  );
 
   // ── Fetch nav_settings ──
   const settingsQuery = useQuery({
@@ -169,6 +366,12 @@ export default function AdminMenu() {
   const [logoDraft, setLogoDraft] = useState<{ light?: string; dark?: string }>({});
   const logoLight = logoDraft.light ?? settingsQuery.data?.logo_light_url ?? "";
   const logoDark = logoDraft.dark ?? settingsQuery.data?.logo_dark_url ?? "";
+  const previewLogoLight = logoDraft.light?.trim()
+    ? logoDraft.light
+    : settingsQuery.data?.logo_light_url || FALLBACK_LOGO_LIGHT;
+  const previewLogoDark = logoDraft.dark?.trim()
+    ? logoDraft.dark
+    : settingsQuery.data?.logo_dark_url || FALLBACK_LOGO_DARK;
 
   const saveLogo = useMutation({
     mutationFn: async () => {
@@ -193,6 +396,11 @@ export default function AdminMenu() {
 
   // ── Items state ──
   const items = useMemo(() => itemsQuery.data ?? [], [itemsQuery.data]);
+  const activeItems = useMemo(() => items.filter((item) => item.is_active).length, [items]);
+  const hiddenItems = items.length - activeItems;
+  const iconItems = useMemo(() => items.filter((item) => item.icon).length, [items]);
+  const externalItems = useMemo(() => items.filter((item) => item.is_external).length, [items]);
+  const newBadgeItems = useMemo(() => items.filter((item) => item.is_new).length, [items]);
 
   // ── DnD ──
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
@@ -235,6 +443,26 @@ export default function AdminMenu() {
       if (error) {
         qc.setQueryData(["admin-nav-items"], previousItems);
         toast.error("Erro ao alternar item");
+      } else {
+        qc.invalidateQueries({ queryKey: ["admin-nav-items"] });
+        qc.invalidateQueries({ queryKey: ["nav-items-public"] });
+      }
+    },
+    [items, qc]
+  );
+
+  const toggleNew = useCallback(
+    async (item: NavItem) => {
+      const newValue = !item.is_new;
+      const previousItems = items;
+      qc.setQueryData<NavItem[]>(["admin-nav-items"], (prev = []) =>
+        prev.map((entry) => (entry.id === item.id ? { ...entry, is_new: newValue } : entry))
+      );
+      const payload: NavItemUpdate = { is_new: newValue };
+      const { error } = await supabase.from("nav_items").update(payload).eq("id", item.id);
+      if (error) {
+        qc.setQueryData(["admin-nav-items"], previousItems);
+        toast.error("Erro ao alterar badge Novo");
       } else {
         qc.invalidateQueries({ queryKey: ["admin-nav-items"] });
         qc.invalidateQueries({ queryKey: ["nav-items-public"] });
@@ -338,7 +566,10 @@ export default function AdminMenu() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Gerenciar Menu" description="Configure a logo e os itens da navbar do site." />
+      <PageHeader
+        title="Navegação"
+        description="Organize os links, a ordem e a visibilidade da navbar do site."
+      />
 
       {loading ? (
         <div className="space-y-4">
@@ -346,69 +577,135 @@ export default function AdminMenu() {
           <Skeleton className="h-64 w-full rounded-xl" />
         </div>
       ) : (
-        <Tabs defaultValue="logo" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="logo"><Image className="h-4 w-4 mr-1.5" />Logo</TabsTrigger>
-            <TabsTrigger value="items"><GripVertical className="h-4 w-4 mr-1.5" />Itens</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+          <TabsList className="h-auto rounded-lg border border-border/70 bg-card/70 p-1">
+            <TabsTrigger value="logo" className="gap-2 rounded-md px-3 py-1.5 text-xs">
+              <Image className="h-3.5 w-3.5" />
+              Logo
+            </TabsTrigger>
+            <TabsTrigger value="items" className="gap-2 rounded-md px-3 py-1.5 text-xs">
+              <GripVertical className="h-3.5 w-3.5" />
+              Itens
+            </TabsTrigger>
           </TabsList>
 
           {/* ── Logo Tab ── */}
-          <TabsContent value="logo">
+          <TabsContent value="logo" className="mt-0">
             <Card>
-              <CardHeader><CardTitle className="text-lg">Configuração de Logo</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label>Logo Light (URL)</Label>
-                    <Input value={logoLight} onChange={(e) => setLogoDraft((prev) => ({ ...prev, light: e.target.value }))} placeholder="https://..." />
-                    {logoLight && (
-                      <div className="border rounded-lg p-3 bg-white flex items-center justify-center h-20">
-                        <img src={logoLight} alt="Preview light" className="max-h-14 w-auto object-contain" />
-                      </div>
-                    )}
+              <CardHeader className="gap-4 pb-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Image className="h-5 w-5 text-primary" />
+                      Configuração de logo
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Defina as versões usadas em fundos claros e escuros da navegação pública.
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Logo Dark (URL)</Label>
-                    <Input value={logoDark} onChange={(e) => setLogoDraft((prev) => ({ ...prev, dark: e.target.value }))} placeholder="https://..." />
-                    {logoDark && (
-                      <div className="border rounded-lg p-3 bg-neutral-900 flex items-center justify-center h-20">
-                        <img src={logoDark} alt="Preview dark" className="max-h-14 w-auto object-contain" />
+                  <Button size="sm" onClick={() => saveLogo.mutate()} disabled={saveLogo.isPending}>
+                    <Save className="h-4 w-4 mr-1.5" />
+                    {saveLogo.isPending ? "Salvando..." : "Salvar logos"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-lg border bg-card/70 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <Label>Logo light</Label>
+                        <p className="text-xs text-muted-foreground">Usada em superfícies claras.</p>
                       </div>
-                    )}
+                      <span className="rounded-md border bg-muted/30 px-2 py-1 text-xs text-muted-foreground">Claro</span>
+                    </div>
+                    <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_14rem] xl:items-end">
+                      <Input value={logoLight} onChange={(e) => setLogoDraft((prev) => ({ ...prev, light: e.target.value }))} placeholder="https://..." />
+                      <div className="flex h-24 items-center justify-center rounded-md border bg-white p-3">
+                        <img src={previewLogoLight} alt="Preview light" className="max-h-16 w-auto max-w-full object-contain" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border bg-card/70 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <Label>Logo dark</Label>
+                        <p className="text-xs text-muted-foreground">Usada em superfícies escuras.</p>
+                      </div>
+                      <span className="rounded-md border bg-muted/30 px-2 py-1 text-xs text-muted-foreground">Escuro</span>
+                    </div>
+                    <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_14rem] xl:items-end">
+                      <Input value={logoDark} onChange={(e) => setLogoDraft((prev) => ({ ...prev, dark: e.target.value }))} placeholder="https://..." />
+                      <div className="flex h-24 items-center justify-center rounded-md border bg-neutral-950 p-3">
+                        <img src={previewLogoDark} alt="Preview dark" className="max-h-16 w-auto max-w-full object-contain" />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <Button onClick={() => saveLogo.mutate()} disabled={saveLogo.isPending}>
-                  <Save className="h-4 w-4 mr-1.5" />
-                  {saveLogo.isPending ? "Salvando..." : "Salvar Logos"}
-                </Button>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* ── Items Tab ── */}
-          <TabsContent value="items">
+          <TabsContent value="items" className="mt-0 space-y-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">Itens do Menu</CardTitle>
-                <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1" />Adicionar</Button>
+              <CardHeader className="gap-4 pb-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <ListChecks className="h-5 w-5 text-primary" />
+                      Itens do menu
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Arraste para reordenar, publique ou oculte itens e ajuste a exibição dos ícones por dispositivo.
+                    </p>
+                  </div>
+                  <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1" />Adicionar</Button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span className="rounded-md border bg-muted/30 px-2 py-1"><strong className="text-foreground">{items.length}</strong> itens</span>
+                  <span className="rounded-md border bg-muted/30 px-2 py-1"><strong className="text-foreground">{activeItems}</strong> ativos</span>
+                  <span className="rounded-md border bg-muted/30 px-2 py-1"><strong className="text-foreground">{hiddenItems}</strong> ocultos</span>
+                  <span className="rounded-md border bg-muted/30 px-2 py-1"><strong className="text-foreground">{newBadgeItems}</strong> novo</span>
+                  <span className="rounded-md border bg-muted/30 px-2 py-1"><strong className="text-foreground">{iconItems}</strong> com ícone</span>
+                  <span className="rounded-md border bg-muted/30 px-2 py-1"><strong className="text-foreground">{externalItems}</strong> externos</span>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum item cadastrado.</p>
+                  <div className="flex min-h-56 flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 p-8 text-center">
+                    <ListChecks className="h-10 w-10 text-muted-foreground" />
+                    <p className="mt-4 text-sm font-medium">Nenhum item cadastrado</p>
+                    <p className="mt-1 max-w-sm text-sm text-muted-foreground">Crie o primeiro link para montar a navbar pública do site.</p>
+                    <Button className="mt-4" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />Adicionar item</Button>
+                  </div>
                 ) : (
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-                      <div className="space-y-2">
+                      <div className="overflow-x-auto rounded-lg border">
+                        <div className="min-w-[920px]">
+                          <div className="grid grid-cols-[2rem_minmax(13rem,1.4fr)_minmax(11rem,1fr)_7rem_5rem_8rem_5.5rem] items-center gap-3 border-b bg-muted/40 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                            <span />
+                            <span>Item</span>
+                            <span>Rota</span>
+                            <span>Status</span>
+                            <span>Novo</span>
+                            <span>Ícones</span>
+                            <span className="text-right">Ações</span>
+                          </div>
                         {items.map((item) => (
-                          <SortableNavItem
+                          <CompactNavItem
                             key={item.id}
                             item={item}
                             onEdit={openEdit}
                             onDelete={setDeleteTarget}
                             onToggle={toggleItem}
+                            onToggleNew={toggleNew}
                             onIconToggle={toggleIconBreakpoint}
                           />
                         ))}
+                        </div>
                       </div>
                     </SortableContext>
                   </DndContext>
