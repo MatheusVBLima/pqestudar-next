@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, BarChart3, Wrench, BookOpen, Search, FileText,
   Crown, Users, Ticket, ChevronDown, Settings2, UserCog,
-  Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Moon, Sun, Sparkles, Share2, Bookmark, LogOut, Home,
+  Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Moon, Sun, Sparkles, Share2, Bookmark, LogOut, Home, MessageSquareText,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -272,20 +272,20 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Guias */}
+        {/* Comentários dos Guias */}
         <SidebarGroup className={groupClass}>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === '/admin/guias'}
-                  data-hover-label="Guias"
-                  className={itemClass(pathname === '/admin/guias')}
+                  isActive={pathname === '/admin/guias/comentarios'}
+                  data-hover-label="Comentários"
+                  className={itemClass(pathname === '/admin/guias/comentarios')}
                 >
-                  <Link href="/admin/guias">
-                    <FileText className="h-4 w-4" />
-                    <span>Guias</span>
+                  <Link href="/admin/guias/comentarios">
+                    <MessageSquareText className="h-4 w-4" />
+                    <span>Comentários</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
