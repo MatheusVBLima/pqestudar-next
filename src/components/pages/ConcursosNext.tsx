@@ -297,6 +297,11 @@ export default function ConcursosNext() {
     if (filters.abrangencia?.length) {
       filtered = filtered.filter(o => filters.abrangencia!.includes(o.abrangencia));
     }
+    if (filters.source_tipo?.length) {
+      filtered = filtered.filter((o) =>
+        o.fontes_oportunidade?.some((fonte) => filters.source_tipo!.includes(fonte.source_tipo))
+      );
+    }
     
     return filtered;
   }, [oportunidades, filters, isManagementMode, isAdmin]);

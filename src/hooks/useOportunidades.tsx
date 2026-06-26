@@ -106,6 +106,18 @@ export function useOportunidades(filters?: OportunidadeFilters) {
       if (filters?.abrangencia?.length) {
         result = result.filter(o => filters.abrangencia!.includes(o.abrangencia));
       }
+      if (filters?.source_tipo?.length && result.length) {
+        const { data: fontes, error: fontesError } = await supabase
+          .from("fontes_oportunidade")
+          .select("oportunidade_id, source_tipo")
+          .in("oportunidade_id", result.map((o) => o.id))
+          .in("source_tipo", filters.source_tipo);
+
+        if (fontesError) throw fontesError;
+
+        const matchingIds = new Set((fontes || []).map((fonte) => fonte.oportunidade_id));
+        result = result.filter((o) => matchingIds.has(o.id));
+      }
 
       return result;
     },
