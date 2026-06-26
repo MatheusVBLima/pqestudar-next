@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import MarkdownEditor from "@/components/admin/MarkdownEditor";
 import { Tool } from "@/hooks/useTools";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { X, Upload, Link as LinkIcon, Star, Sparkles, ImageIcon, Plus, Trash2 } from "lucide-react";
+import { Check, Loader2, RefreshCw, Search, X, Upload, Link as LinkIcon, Star, Sparkles, ImageIcon, Plus, Trash2 } from "lucide-react";
 import { getErrorMessage } from "@/lib/error-message";
 
 interface ToolModalProps {
@@ -31,7 +31,13 @@ interface InternalLink {
   imagePath?: string | null;
 }
 
-type AssetSource = "upload" | "url";
+type AssetSource = "upload" | "library" | "url";
+
+interface ToolIconAsset {
+  name: string;
+  publicUrl: string;
+  createdAt: string;
+}
 
 function normalizeInternalLink(link: Partial<InternalLink>): InternalLink {
   return {
@@ -44,7 +50,7 @@ function normalizeInternalLink(link: Partial<InternalLink>): InternalLink {
 }
 
 function isAssetSource(value: string): value is AssetSource {
-  return value === "upload" || value === "url";
+  return value === "upload" || value === "library" || value === "url";
 }
 
 function slugify(text: string): string {
@@ -69,6 +75,9 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadPreview, setUploadPreview] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [toolIconAssets, setToolIconAssets] = useState<ToolIconAsset[]>([]);
+  const [toolIconAssetsLoading, setToolIconAssetsLoading] = useState(false);
+  const [toolIconAssetSearch, setToolIconAssetSearch] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [attachmentUrl, setAttachmentUrl] = useState("");
@@ -190,6 +199,55 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
   useEffect(() => {
     if (!slugManual && name) setSlug(slugify(name));
   }, [name, slugManual]);
+
+  const loadToolIconAssets = useCallback(async () => {
+    setToolIconAssetsLoading(true);
+    try {
+      const { data: files, error } = await supabase.storage.from("tools-icons").list("", {
+        limit: 200,
+        sortBy: { column: "name", order: "asc" },
+      });
+
+      if (error) throw error;
+
+      const assets = (files ?? [])
+        .filter((file) => file.name && /\.(png|jpe?g|webp|gif|svg)$/i.test(file.name))
+        .map((file) => {
+          const { data } = supabase.storage.from("tools-icons").getPublicUrl(file.name);
+          return {
+            name: file.name,
+            publicUrl: data.publicUrl,
+            createdAt: file.created_at ?? "",
+          };
+        });
+
+      setToolIconAssets(assets);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Erro ao carregar imagens de tools-icons"));
+    } finally {
+      setToolIconAssetsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open && logoSource === "library" && toolIconAssets.length === 0) {
+      loadToolIconAssets();
+    }
+  }, [loadToolIconAssets, logoSource, open, toolIconAssets.length]);
+
+  const filteredToolIconAssets = useMemo(() => {
+    const query = toolIconAssetSearch.trim().toLowerCase();
+    if (!query) return toolIconAssets;
+    return toolIconAssets.filter((asset) => asset.name.toLowerCase().includes(query));
+  }, [toolIconAssetSearch, toolIconAssets]);
+
+  const selectToolIconAsset = (asset: ToolIconAsset) => {
+    setIconUrl(asset.publicUrl);
+    setImageError(false);
+    setUploadedFile(null);
+    setUploadPreview("");
+    setErrors((p) => ({ ...p, iconUrl: "" }));
+  };
 
   // ---- Logo upload helpers ----
   const handleFileSelect = (file: File) => {
@@ -605,9 +663,12 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
             <div className="space-y-2">
               <Label>Logo / Ícone</Label>
               <Tabs value={logoSource} onValueChange={(v) => isAssetSource(v) && setLogoSource(v)}>
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="upload">
                     <Upload className="w-4 h-4 mr-2" /> Upload
+                  </TabsTrigger>
+                  <TabsTrigger value="library">
+                    <ImageIcon className="w-4 h-4 mr-2" /> Biblioteca
                   </TabsTrigger>
                   <TabsTrigger value="url">
                     <LinkIcon className="w-4 h-4 mr-2" /> URL
@@ -660,6 +721,103 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
                       </>
                     )}
                   </div>
+                </TabsContent>
+                <TabsContent value="library" className="space-y-3">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={toolIconAssetSearch}
+                        onChange={(e) => setToolIconAssetSearch(e.target.value)}
+                        placeholder="Buscar em tools-icons..."
+                        className="pl-8"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={loadToolIconAssets}
+                      disabled={toolIconAssetsLoading}
+                      aria-label="Atualizar biblioteca de ícones"
+                    >
+                      {toolIconAssetsLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  <div className="rounded-lg border border-border bg-muted/20 p-2">
+                    {toolIconAssetsLoading ? (
+                      <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Carregando imagens...
+                      </div>
+                    ) : filteredToolIconAssets.length > 0 ? (
+                      <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
+                        {filteredToolIconAssets.map((asset) => {
+                          const selected = iconUrl === asset.publicUrl;
+                          return (
+                            <button
+                              key={asset.name}
+                              type="button"
+                              onClick={() => selectToolIconAsset(asset)}
+                              className={`group relative flex min-w-0 items-center gap-2 rounded-md border p-2 text-left transition-colors hover:border-primary/50 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                                selected ? "border-primary bg-primary/10" : "border-border bg-background"
+                              }`}
+                            >
+                              <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+                                <img
+                                  src={asset.publicUrl}
+                                  alt=""
+                                  className="h-full w-full object-contain"
+                                  referrerPolicy="no-referrer"
+                                  loading="lazy"
+                                />
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-xs font-medium">{asset.name}</span>
+                                <span className="block text-[10px] text-muted-foreground">tools-icons</span>
+                              </span>
+                              {selected && (
+                                <span className="absolute right-1.5 top-1.5 rounded-full bg-primary p-0.5 text-primary-foreground">
+                                  <Check className="h-3 w-3" />
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="py-8 text-center">
+                        <ImageIcon className="mx-auto mb-2 h-7 w-7 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">
+                          Nenhuma imagem encontrada em tools-icons.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {iconUrl && (
+                    <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-2">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
+                        {!imageError ? (
+                          <img
+                            src={iconUrl}
+                            alt="Preview"
+                            className="h-full w-full object-contain"
+                            referrerPolicy="no-referrer"
+                            onError={() => setImageError(true)}
+                          />
+                        ) : (
+                          <Sparkles className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{iconUrl}</p>
+                    </div>
+                  )}
                 </TabsContent>
                 <TabsContent value="url" className="space-y-2">
                   <div className="flex gap-3">
