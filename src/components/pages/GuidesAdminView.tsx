@@ -82,8 +82,12 @@ export default function GuidesAdminView({
       );
     }
 
-    const featuredGuide = tabGuides.find((g) => g.is_featured) ?? tabGuides[0] ?? null;
-    const listGuides = tabGuides.filter((g) => g.id !== featuredGuide?.id);
+    const featuredGuide =
+      adminTab === "published" ? tabGuides.find((g) => g.is_featured) ?? tabGuides[0] ?? null : null;
+    const listGuides =
+      adminTab === "published" && featuredGuide
+        ? tabGuides.filter((g) => g.id !== featuredGuide.id)
+        : tabGuides;
 
     return (
       <>
@@ -92,7 +96,13 @@ export default function GuidesAdminView({
         )}
         <div className="space-y-4">
           {listGuides.map((guide) => (
-            <GuideListItem key={guide.id} guide={guide} showAdmin {...adminActions} />
+            <GuideListItem
+              key={guide.id}
+              guide={guide}
+              showAdmin
+              showFeaturedBadge={adminTab === "published"}
+              {...adminActions}
+            />
           ))}
         </div>
       </>

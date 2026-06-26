@@ -97,15 +97,15 @@ const faqs = [
   },
   {
     id: "faq-6",
-    eyebrow: "Produtos",
+    eyebrow: "Exclusivos",
     icon: ShoppingBag,
-    question: "O que são os Produtos do PqEstudar?",
+    question: "O que são os Exclusivos do PqEstudar?",
     answerText:
       "Guias e materiais prontos para acelerar seus estudos, criados pela equipe do PqEstudar.",
     answer: (
       <>
         Guias e materiais prontos para acelerar seus estudos, criados pela equipe do PqEstudar.{" "}
-        <Link href="/produtos" className="text-primary underline underline-offset-2 hover:text-primary/80">
+        <Link href="/exclusivos" className="text-primary underline underline-offset-2 hover:text-primary/80">
           Ver produtos →
         </Link>
       </>
@@ -211,7 +211,6 @@ export function HomeFaqSectionNext() {
             <Accordion
               type="single"
               collapsible
-              defaultValue="faq-1"
               className="w-full space-y-3"
             >
               {faqs.map((faq) => {

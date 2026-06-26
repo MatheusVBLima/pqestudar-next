@@ -97,7 +97,7 @@ function ProductCard({
   onDelete: () => void;
   onToggleActive: () => void;
 }) {
-  const detailHref = `/produtos/${slugifyProductTitle(product.title)}`;
+  const detailHref = `/exclusivos/${slugifyProductTitle(product.title)}`;
 
   return (
     <Card className="flex flex-col h-full overflow-hidden relative transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
@@ -342,8 +342,8 @@ function ProductModal({
 }
 
 export default function ProdutosNext() {
-  const ps = usePageSettings("/produtos");
-  const { isAdmin } = useUserRoles();
+  const ps = usePageSettings("/exclusivos");
+  const { isAdmin, loading: rolesLoading } = useUserRoles();
   const queryClient = useQueryClient();
 
   const { isManagementMode: adminMode } = useManagementMode();
@@ -391,7 +391,9 @@ export default function ProdutosNext() {
   });
 
   const handleSaibaMais = (product: Product) => {
-    clickMutation.mutate(product.id);
+    if (!rolesLoading && !isAdmin) {
+      clickMutation.mutate(product.id);
+    }
     if (product.cta_url && product.cta_url !== "#") {
       window.open(product.cta_url, "_blank", "noopener,noreferrer");
     }

@@ -15,7 +15,7 @@ const STATIC_INDEXABLE: Array<{ path: string; changeFrequency: MetadataRoute.Sit
   { path: "/", changeFrequency: "daily", priority: 1.0 },
   { path: "/concursos", changeFrequency: "daily", priority: 0.9 },
   { path: "/ferramentas", changeFrequency: "weekly", priority: 0.9 },
-  { path: "/produtos", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/exclusivos", changeFrequency: "weekly", priority: 0.8 },
   { path: "/guias", changeFrequency: "weekly", priority: 0.9 },
   { path: "/explorar-cursos", changeFrequency: "weekly", priority: 0.7 },
   { path: "/votacoes", changeFrequency: "weekly", priority: 0.6 },
@@ -71,7 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const productEntries: MetadataRoute.Sitemap = (products as Array<{ title: string; updated_at?: string }>).
     map((p) => ({
-      url: url(`/produtos/${slugifyProductTitle(p.title)}`),
+      url: url(`/exclusivos/${slugifyProductTitle(p.title)}`),
       lastModified: p.updated_at ? new Date(p.updated_at) : now,
       changeFrequency: "monthly" as const,
       priority: 0.6,

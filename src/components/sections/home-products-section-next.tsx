@@ -161,18 +161,18 @@ export function HomeProductsSectionNext() {
           >
             <div>
               <Badge variant="secondary" className="mb-4 text-xs">
-                Nossos produtos
+                Nossos exclusivos
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Produtos do PqEstudar
+                Exclusivos do PqEstudar
               </h2>
               <p className="text-muted-foreground mt-3 max-w-lg">
-                Guias e recursos prontos para acelerar seu progresso. Em breve, novos produtos.
+                Guias e recursos prontos para acelerar seu progresso. Em breve, novos exclusivos.
               </p>
             </div>
-            <Link href="/produtos" className="w-full sm:w-auto">
+            <Link href="/exclusivos" className="w-full sm:w-auto">
               <Button variant="outline" className="gap-2 rounded-[1.2rem] w-full sm:w-auto shrink-0">
-                Explorar produtos
+                Explorar exclusivos
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>

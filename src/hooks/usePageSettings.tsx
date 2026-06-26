@@ -138,6 +138,14 @@ const ROUTE_FALLBACKS: Record<string, FallbackContent> = {
     header_description:
       "Recursos digitais desenvolvidos para organizar oportunidades, economizar dinheiro e acelerar sua evolução pessoal e profissional.",
   },
+  "/exclusivos": {
+    title_tag: "Exclusivos Oficiais do PqEstudar | PqEstudar",
+    meta_description:
+      "Materiais digitais exclusivos criados pelo PqEstudar para ajudar voce a estudar melhor, aproveitar beneficios e crescer com estrategia.",
+    header_title: "Guias e **Solucoes** Exclusivas do PqEstudar",
+    header_description:
+      "Recursos digitais desenvolvidos para organizar oportunidades, economizar dinheiro e acelerar sua evolucao pessoal e profissional.",
+  },
   "/sobre-pqestudar": {
     title_tag: "Sobre o PqEstudar: O que é e Como funciona | PqEstudar",
     meta_description:
@@ -175,6 +183,7 @@ const MANAGED_ROUTES = [
   "/privacidade",
   "/termos",
   "/produtos",
+  "/exclusivos",
   "/sobre-pqestudar",
   "/guias",
 ] as const;

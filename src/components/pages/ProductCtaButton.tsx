@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 interface ProductCtaButtonProps {
   productId: string;
@@ -10,8 +11,12 @@ interface ProductCtaButtonProps {
 }
 
 export function ProductCtaButton({ productId, ctaUrl, label = "Saiba Mais" }: ProductCtaButtonProps) {
+  const { isAdmin, loading: rolesLoading } = useUserRoles();
+
   const handleClick = async () => {
-    void supabase.rpc("increment_product_click", { product_id: productId });
+    if (!rolesLoading && !isAdmin) {
+      void supabase.rpc("increment_product_click", { product_id: productId });
+    }
 
     if (ctaUrl && ctaUrl !== "#") {
       window.open(ctaUrl, "_blank", "noopener,noreferrer");

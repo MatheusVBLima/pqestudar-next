@@ -23,6 +23,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 interface GuideListItemProps {
   guide: Guide;
   showAdmin: boolean;
+  showFeaturedBadge?: boolean;
   onEdit: (guide: Guide) => void;
   onDelete: (guide: Guide) => void;
   onTogglePublished: (guide: Guide) => void;
@@ -32,6 +33,7 @@ interface GuideListItemProps {
 export function GuideListItem({
   guide,
   showAdmin,
+  showFeaturedBadge = true,
   onEdit,
   onDelete,
   onTogglePublished,
@@ -77,7 +79,7 @@ export function GuideListItem({
           >
             {displayCategory}
           </Badge>
-          {guide.is_featured && (
+          {showFeaturedBadge && guide.is_featured && (
             <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[11px]" variant="outline">
               <Star className="h-3 w-3 mr-0.5" /> Destaque
             </Badge>

@@ -18,7 +18,7 @@ const socialLinks = [
 ];
 
 const allNavLinks = [
-  { label: "Produtos", to: "/produtos" },
+  { label: "Exclusivos", to: "/exclusivos" },
   { label: "Sobre", to: "/sobre-pqestudar" },
   { label: "Privacidade", to: "/privacidade" },
   { label: "Termos", to: "/termos" },
@@ -26,7 +26,7 @@ const allNavLinks = [
 ];
 
 const navLinksTop = [
-  { label: "Produtos", to: "/produtos" },
+  { label: "Exclusivos", to: "/exclusivos" },
   { label: "Sobre", to: "/sobre-pqestudar" },
 ];
 

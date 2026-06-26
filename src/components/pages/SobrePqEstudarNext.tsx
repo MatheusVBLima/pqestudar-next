@@ -107,7 +107,7 @@ export default function SobrePqEstudarNext() {
                 { icon: Wrench, title: "Ferramentas", desc: "Recursos para estudar, produzir e se organizar", href: "/ferramentas", cta: "Explorar ferramentas" },
                 { icon: BookOpen, title: "Concursos", desc: "Informações reunidas e mais fáceis de acompanhar", href: "/concursos", cta: "Ver oportunidades" },
                 { icon: FileText, title: "Conteúdos", desc: "Guias e atalhos práticos, sem teoria solta", href: "/breve", cta: "Acessar conteúdos" },
-                { icon: Package, title: "Produtos", desc: "Materiais criados para acelerar seu progresso", href: "/produtos", cta: "Conhecer produtos" },
+                { icon: Package, title: "Exclusivos", desc: "Materiais criados para acelerar seu progresso", href: "/exclusivos", cta: "Conhecer exclusivos" },
               ] as const).map((c) => (
                 <Link key={c.title} href={c.href} className="group">
                   <Card className="border-border/40 h-full transition-colors group-hover:border-primary/40">
