@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -27,6 +26,7 @@ import {
   MapPin,
   Trash2,
   RotateCcw,
+  Check,
 } from "lucide-react";
 import { useOportunidades, useOportunidadesAdmin, OportunidadeFilters, Oportunidade } from "@/hooks/useOportunidades";
 import { useUserRoles } from "@/hooks/useUserRoles";
@@ -65,6 +65,46 @@ const SITUACAO_COLORS: Record<string, string> = {
   "Aberto": "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   "Encerrado": "bg-muted text-muted-foreground border-muted",
 };
+
+function FilterGroup({
+  label,
+  options,
+  selectedValues,
+  onToggle,
+}: {
+  label: string;
+  options: Array<{ value: string; label: string }>;
+  selectedValues?: string[];
+  onToggle: (value: string) => void;
+}) {
+  return (
+    <fieldset className="min-w-0">
+      <legend className="mb-2.5 text-sm font-semibold text-foreground">{label}</legend>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const isSelected = selectedValues?.includes(option.value) ?? false;
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => onToggle(option.value)}
+              className={`inline-flex min-h-8 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                isSelected
+                  ? "border-primary/60 bg-primary/10 text-primary"
+                  : "border-border bg-background text-muted-foreground hover:border-foreground/25 hover:bg-accent hover:text-foreground"
+              }`}
+            >
+              {isSelected && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
 
 function OportunidadeSearchItem({ item, onSelect }: { item: Oportunidade; onSelect: () => void }) {
   return (
@@ -276,6 +316,10 @@ export default function ConcursosNext() {
   };
 
   const hasActiveFilters = Object.values(filters).some(arr => arr?.length);
+  const activeFilterCount = Object.values(filters).reduce(
+    (total, values) => total + (values?.length || 0),
+    0
+  );
 
   const handleShare = async (oportunidade: Oportunidade) => {
     const url = `${window.location.origin}/concursos/${oportunidade.slug}`;
@@ -432,17 +476,10 @@ export default function ConcursosNext() {
               Filtros
               {hasActiveFilters && (
                 <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                  {Object.values(filters).reduce((acc, arr) => acc + (arr?.length || 0), 0)}
+                  {activeFilterCount}
                 </Badge>
               )}
             </Button>
-            
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                <X className="h-4 w-4 mr-1" />
-                Limpar
-              </Button>
-            )}
           </div>
 
           {/* Filters panel */}
@@ -451,113 +488,60 @@ export default function ConcursosNext() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-4 p-4 rounded-lg border bg-card"
+              className="mt-4 overflow-hidden rounded-lg border bg-card"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                {/* Situação */}
+              <div className="flex flex-col gap-3 border-b bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                 <div>
-                  <Label className="text-xs font-medium mb-2 block">Situação</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {SITUACAO_OPTIONS.map(option => (
-                      <Badge
-                        key={option}
-                        variant="outline"
-                        className={`cursor-pointer transition-colors ${
-                          filters.situacao?.includes(option)
-                            ? "bg-primary text-primary-foreground"
-                            : ""
-                        }`}
-                        onClick={() => handleFilterChange("situacao", option)}
-                      >
-                        {option}
-                      </Badge>
-                    ))}
-                  </div>
+                  <h2 className="text-sm font-semibold text-foreground">Refine os resultados</h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Combine uma ou mais opções em cada grupo.
+                  </p>
                 </div>
+                <div className="flex items-center justify-between gap-4 sm:justify-end">
+                  <p className="text-xs font-medium text-muted-foreground" aria-live="polite">
+                    {displayedOportunidades.length}{" "}
+                    {displayedOportunidades.length === 1 ? "resultado" : "resultados"}
+                  </p>
+                  {hasActiveFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 gap-1.5 px-2.5">
+                      <X className="h-3.5 w-3.5" aria-hidden="true" />
+                      Limpar filtros
+                    </Button>
+                  )}
+                </div>
+              </div>
 
-                {/* Tipo */}
-                <div>
-                  <Label className="text-xs font-medium mb-2 block">Tipo</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {TIPO_OPTIONS.map(option => (
-                      <Badge
-                        key={option}
-                        variant="outline"
-                        className={`cursor-pointer transition-colors ${
-                          filters.tipo?.includes(option)
-                            ? "bg-primary text-primary-foreground"
-                            : ""
-                        }`}
-                        onClick={() => handleFilterChange("tipo", option)}
-                      >
-                        {option}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Escolaridade */}
-                <div>
-                  <Label className="text-xs font-medium mb-2 block">Escolaridade</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {ESCOLARIDADE_OPTIONS.map(option => (
-                      <Badge
-                        key={option}
-                        variant="outline"
-                        className={`cursor-pointer transition-colors ${
-                          filters.escolaridade?.includes(option)
-                            ? "bg-primary text-primary-foreground"
-                            : ""
-                        }`}
-                        onClick={() => handleFilterChange("escolaridade", option)}
-                      >
-                        {option}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Abrangência */}
-                <div>
-                  <Label className="text-xs font-medium mb-2 block">Abrangência</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {ABRANGENCIA_OPTIONS.map(option => (
-                      <Badge
-                        key={option}
-                        variant="outline"
-                        className={`cursor-pointer transition-colors ${
-                          filters.abrangencia?.includes(option)
-                            ? "bg-primary text-primary-foreground"
-                            : ""
-                        }`}
-                        onClick={() => handleFilterChange("abrangencia", option)}
-                      >
-                        {option}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Origem */}
-                <div>
-                  <Label className="text-xs font-medium mb-2 block">Origem</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {SOURCE_TIPO_OPTIONS.map(option => (
-                      <Badge
-                        key={option.value}
-                        variant="outline"
-                        className={`cursor-pointer transition-colors ${
-                          filters.source_tipo?.includes(option.value)
-                            ? "bg-primary text-primary-foreground"
-                            : ""
-                        }`}
-                        onClick={() => handleFilterChange("source_tipo", option.value)}
-                      >
-                        {option.label}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 gap-x-8 gap-y-6 px-4 py-5 sm:grid-cols-2 sm:px-5 lg:grid-cols-3 xl:grid-cols-[1.05fr_1.45fr_0.95fr_0.95fr_1.1fr]">
+                <FilterGroup
+                  label="Situação"
+                  options={SITUACAO_OPTIONS.map((option) => ({ value: option, label: option }))}
+                  selectedValues={filters.situacao}
+                  onToggle={(value) => handleFilterChange("situacao", value)}
+                />
+                <FilterGroup
+                  label="Tipo"
+                  options={TIPO_OPTIONS.map((option) => ({ value: option, label: option }))}
+                  selectedValues={filters.tipo}
+                  onToggle={(value) => handleFilterChange("tipo", value)}
+                />
+                <FilterGroup
+                  label="Escolaridade"
+                  options={ESCOLARIDADE_OPTIONS.map((option) => ({ value: option, label: option }))}
+                  selectedValues={filters.escolaridade}
+                  onToggle={(value) => handleFilterChange("escolaridade", value)}
+                />
+                <FilterGroup
+                  label="Abrangência"
+                  options={ABRANGENCIA_OPTIONS.map((option) => ({ value: option, label: option }))}
+                  selectedValues={filters.abrangencia}
+                  onToggle={(value) => handleFilterChange("abrangencia", value)}
+                />
+                <FilterGroup
+                  label="Origem"
+                  options={SOURCE_TIPO_OPTIONS}
+                  selectedValues={filters.source_tipo}
+                  onToggle={(value) => handleFilterChange("source_tipo", value)}
+                />
               </div>
             </motion.div>
           )}
