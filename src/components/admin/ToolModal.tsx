@@ -39,6 +39,10 @@ interface ToolIconAsset {
   createdAt: string;
 }
 
+interface SuggestedToolIconAsset extends ToolIconAsset {
+  suggestionScore: number;
+}
+
 function normalizeInternalLink(link: Partial<InternalLink>): InternalLink {
   return {
     label: link.label || "",
@@ -60,6 +64,128 @@ function slugify(text: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+function normalizeAssetSearch(text: string): string {
+  let decoded = text;
+  try {
+    decoded = decodeURIComponent(text);
+  } catch {
+    decoded = text;
+  }
+
+  return decoded
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\.[a-z0-9]+$/i, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function getEditDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+
+  const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  const current = Array.from({ length: b.length + 1 }, () => 0);
+
+  for (let i = 1; i <= a.length; i += 1) {
+    current[0] = i;
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      current[j] = Math.min(
+        previous[j] + 1,
+        current[j - 1] + 1,
+        previous[j - 1] + cost,
+      );
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+
+  return previous[b.length];
+}
+
+function getFuzzyScore(a: string, b: string): number {
+  if (a.length < 4 || b.length < 4) return 0;
+  const distance = getEditDistance(a, b);
+  const maxLength = Math.max(a.length, b.length);
+  const similarity = 1 - distance / maxLength;
+
+  if (similarity >= 0.9) return 88;
+  if (similarity >= 0.82) return 78;
+  if (similarity >= 0.74) return 68;
+  return 0;
+}
+
+const ASSET_MATCH_STOPWORDS = new Set([
+  "a",
+  "as",
+  "com",
+  "da",
+  "das",
+  "de",
+  "do",
+  "dos",
+  "e",
+  "em",
+  "na",
+  "nas",
+  "no",
+  "nos",
+  "o",
+  "os",
+  "para",
+]);
+
+function getMeaningfulAssetTokens(text: string): string[] {
+  return normalizeAssetSearch(text)
+    .split(" ")
+    .filter((part) => part.length >= 3 && !ASSET_MATCH_STOPWORDS.has(part));
+}
+
+function getAssetSuggestionScore(assetName: string, toolName: string, query: string): number {
+  const assetText = normalizeAssetSearch(assetName);
+  const nameText = normalizeAssetSearch(toolName);
+  const queryText = normalizeAssetSearch(query);
+  const signals = [queryText, nameText].filter((signal) => signal.length >= 2);
+  const assetCompact = assetText.replace(/\s+/g, "");
+  const nameTokens = getMeaningfulAssetTokens(toolName);
+
+  let score = 0;
+  for (const signal of signals) {
+    const signalCompact = signal.replace(/\s+/g, "");
+
+    if (assetText === signal) score = Math.max(score, 100);
+    else if (assetCompact === signalCompact) score = Math.max(score, 98);
+    else if (assetText.startsWith(signal)) score = Math.max(score, 85);
+    else if (assetCompact.startsWith(signalCompact)) score = Math.max(score, 84);
+    else if (assetText.includes(signal)) score = Math.max(score, 70);
+    else if (assetCompact.includes(signalCompact)) score = Math.max(score, 70);
+    score = Math.max(score, getFuzzyScore(assetCompact, signalCompact));
+
+    const signalParts = signal
+      .split(" ")
+      .filter((part) => part.length >= 3 && !ASSET_MATCH_STOPWORDS.has(part));
+    const matchedParts = signalParts.filter((part) => assetText.includes(part));
+    if (matchedParts.length > 0) {
+      score = Math.max(score, 45 + matchedParts.length * 8);
+    }
+    for (const part of signalParts) {
+      if (assetText === part) score = Math.max(score, 82);
+      else if (assetText.startsWith(part)) score = Math.max(score, 72);
+      else if (assetText.includes(part)) score = Math.max(score, 62);
+    }
+  }
+
+  for (const token of nameTokens) {
+    if (token.startsWith(assetCompact) && assetCompact.length >= 2) {
+      score = Math.max(score, assetCompact.length === 2 ? 80 : 74);
+    }
+  }
+
+  return score;
 }
 
 export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolModalProps) {
@@ -191,6 +317,7 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
     setUploadPreview("");
     setImageError(false);
     setLogoSource("url");
+    setToolIconAssetSearch("");
     setUploadedAttachment(null);
     setAttachmentSource("url");
   }, [tool, open]);
@@ -203,14 +330,22 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
   const loadToolIconAssets = useCallback(async () => {
     setToolIconAssetsLoading(true);
     try {
-      const { data: files, error } = await supabase.storage.from("tools-icons").list("", {
-        limit: 200,
-        sortBy: { column: "name", order: "asc" },
-      });
+      const pageSize = 100;
+      const files: Array<{ name: string; created_at?: string | null }> = [];
 
-      if (error) throw error;
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await supabase.storage.from("tools-icons").list("", {
+          limit: pageSize,
+          offset,
+          sortBy: { column: "name", order: "asc" },
+        });
 
-      const assets = (files ?? [])
+        if (error) throw error;
+        files.push(...(data ?? []));
+        if (!data || data.length < pageSize) break;
+      }
+
+      const assets = files
         .filter((file) => file.name && /\.(png|jpe?g|webp|gif|svg)$/i.test(file.name))
         .map((file) => {
           const { data } = supabase.storage.from("tools-icons").getPublicUrl(file.name);
@@ -235,11 +370,22 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
     }
   }, [loadToolIconAssets, logoSource, open, toolIconAssets.length]);
 
-  const filteredToolIconAssets = useMemo(() => {
-    const query = toolIconAssetSearch.trim().toLowerCase();
-    if (!query) return toolIconAssets;
-    return toolIconAssets.filter((asset) => asset.name.toLowerCase().includes(query));
-  }, [toolIconAssetSearch, toolIconAssets]);
+  const filteredToolIconAssets = useMemo<SuggestedToolIconAsset[]>(() => {
+    const query = normalizeAssetSearch(toolIconAssetSearch);
+    return toolIconAssets
+      .filter((asset) => {
+        if (!query) return true;
+        return normalizeAssetSearch(asset.name).includes(query);
+      })
+      .map((asset) => ({
+        ...asset,
+        suggestionScore: getAssetSuggestionScore(asset.name, name, toolIconAssetSearch),
+      }))
+      .sort((a, b) => {
+        if (b.suggestionScore !== a.suggestionScore) return b.suggestionScore - a.suggestionScore;
+        return a.name.localeCompare(b.name);
+      });
+  }, [name, toolIconAssetSearch, toolIconAssets]);
 
   const selectToolIconAsset = (asset: ToolIconAsset) => {
     setIconUrl(asset.publicUrl);
@@ -496,7 +642,7 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>{tool ? "Editar Ferramenta" : "Adicionar Ferramenta"}</DialogTitle>
         </DialogHeader>
@@ -722,7 +868,7 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
                     )}
                   </div>
                 </TabsContent>
-                <TabsContent value="library" className="space-y-3">
+                <TabsContent value="library" className="min-w-0 space-y-3 overflow-x-hidden">
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -749,23 +895,28 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
                     </Button>
                   </div>
 
-                  <div className="rounded-lg border border-border bg-muted/20 p-2">
+                  <div className="min-w-0 rounded-lg border border-border bg-muted/20 p-2 overflow-x-hidden">
                     {toolIconAssetsLoading ? (
                       <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         Carregando imagens...
                       </div>
                     ) : filteredToolIconAssets.length > 0 ? (
-                      <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
+                      <div className="grid max-h-64 min-w-0 grid-cols-1 gap-2 overflow-y-auto overflow-x-hidden pr-1 sm:grid-cols-2">
                         {filteredToolIconAssets.map((asset) => {
                           const selected = iconUrl === asset.publicUrl;
+                          const suggested = asset.suggestionScore >= 68;
                           return (
                             <button
                               key={asset.name}
                               type="button"
                               onClick={() => selectToolIconAsset(asset)}
-                              className={`group relative flex min-w-0 items-center gap-2 rounded-md border p-2 text-left transition-colors hover:border-primary/50 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                                selected ? "border-primary bg-primary/10" : "border-border bg-background"
+                              className={`group relative flex min-w-0 max-w-full items-center gap-2 overflow-hidden rounded-md border p-2 text-left transition-colors hover:border-primary/50 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                                selected
+                                  ? "border-primary bg-primary/10"
+                                  : suggested
+                                  ? "border-primary/60 bg-primary/5"
+                                  : "border-border bg-background"
                               }`}
                             >
                               <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
@@ -779,8 +930,15 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
                               </span>
                               <span className="min-w-0 flex-1">
                                 <span className="block truncate text-xs font-medium">{asset.name}</span>
-                                <span className="block text-[10px] text-muted-foreground">tools-icons</span>
+                                <span className="block text-[10px] text-muted-foreground">
+                                  {suggested ? "Sugerida pelo nome" : "tools-icons"}
+                                </span>
                               </span>
+                              {suggested && !selected && (
+                                <span className="absolute right-1.5 top-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-medium leading-none text-primary-foreground">
+                                  Sugerida
+                                </span>
+                              )}
                               {selected && (
                                 <span className="absolute right-1.5 top-1.5 rounded-full bg-primary p-0.5 text-primary-foreground">
                                   <Check className="h-3 w-3" />
@@ -801,7 +959,7 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
                   </div>
 
                   {iconUrl && (
-                    <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-2">
+                    <div className="flex min-w-0 items-center gap-3 overflow-hidden rounded-lg border border-border bg-background p-2">
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
                         {!imageError ? (
                           <img
@@ -815,7 +973,7 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
                           <Sparkles className="h-5 w-5 text-muted-foreground" />
                         )}
                       </div>
-                      <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{iconUrl}</p>
+                      <p className="min-w-0 flex-1 break-all text-xs leading-relaxed text-muted-foreground">{iconUrl}</p>
                     </div>
                   )}
                 </TabsContent>
