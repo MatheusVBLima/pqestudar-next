@@ -1,8 +1,19 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+import { X, ZoomIn, ZoomOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 const SANITIZE_SCHEMA = {
@@ -138,24 +149,180 @@ const COMPONENT_MAP_PROSE: Components = {
 interface MarkdownContentProps {
   children: string | null | undefined;
   className?: string;
-  /** "default" — main content; "prose" — small/inline (e.g. CTA blocks). */
+  /** "default" - main content; "prose" - small/inline (e.g. CTA blocks). */
   variant?: "default" | "prose";
+  enableImageLightbox?: boolean;
 }
 
-export function MarkdownContent({ children, className, variant = "default" }: MarkdownContentProps) {
-  if (!children) return null;
+type LightboxImage = {
+  src: string;
+  alt: string;
+};
 
-  const components = variant === "prose" ? COMPONENT_MAP_PROSE : COMPONENT_MAP_DEFAULT;
+function ImageLightbox({
+  image,
+  onOpenChange,
+}: {
+  image: LightboxImage | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [zoom, setZoom] = useState(1);
+  const open = !!image;
+
+  useEffect(() => {
+    if (open) {
+      setZoom(1);
+    }
+  }, [open, image?.src]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === "x") {
+        onOpenChange(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onOpenChange, open]);
+
+  const zoomOut = () => setZoom((value) => Math.max(0.5, Number((value - 0.25).toFixed(2))));
+  const zoomIn = () => setZoom((value) => Math.min(3, Number((value + 0.25).toFixed(2))));
 
   return (
-    <div className={cn(className)}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkBreaks]}
-        rehypePlugins={[rehypeRaw, [rehypeSanitize, SANITIZE_SCHEMA]]}
-        components={components}
-      >
-        {children}
-      </ReactMarkdown>
-    </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="h-[100dvh] w-screen max-w-none translate-x-[-50%] translate-y-[-50%] border-0 bg-black/95 p-0 shadow-none sm:rounded-none [&>button]:hidden">
+        <DialogTitle className="sr-only">Imagem expandida</DialogTitle>
+        <DialogDescription className="sr-only">
+          Use os controles para aproximar ou afastar a imagem. Pressione X ou Escape para sair.
+        </DialogDescription>
+
+        <div className="absolute left-1/2 top-4 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-background/90 p-1 shadow-lg backdrop-blur">
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={zoomOut}
+            disabled={zoom <= 0.5}
+            aria-label="Diminuir zoom"
+            className="h-9 w-9 rounded-full"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <span className="min-w-12 text-center text-xs font-semibold text-foreground">
+            {Math.round(zoom * 100)}%
+          </span>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={zoomIn}
+            disabled={zoom >= 3}
+            aria-label="Aumentar zoom"
+            className="h-9 w-9 rounded-full"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          onClick={() => onOpenChange(false)}
+          aria-label="Fechar imagem"
+          className="absolute right-4 top-4 z-10 h-10 w-10 rounded-full border border-white/10 bg-background/90 shadow-lg backdrop-blur hover:bg-background"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+
+        <div className="flex h-full w-full items-center overflow-auto p-4 pt-20 sm:p-8 sm:pt-20">
+          {image && (
+            <img
+              src={image.src}
+              alt={image.alt}
+              className="m-auto max-h-none max-w-none rounded-md object-contain shadow-2xl"
+              style={{
+                width: `${zoom * 100}%`,
+                maxWidth: zoom === 1 ? "min(100%, 1400px)" : "none",
+              }}
+              draggable={false}
+            />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function MarkdownContent({
+  children,
+  className,
+  variant = "default",
+  enableImageLightbox = false,
+}: MarkdownContentProps) {
+  const [lightboxImage, setLightboxImage] = useState<LightboxImage | null>(null);
+
+  const baseComponents = variant === "prose" ? COMPONENT_MAP_PROSE : COMPONENT_MAP_DEFAULT;
+  const openImage = useCallback((src: string, alt: string) => {
+    setLightboxImage({ src, alt });
+  }, []);
+
+  const components = useMemo<Components>(() => {
+    if (!enableImageLightbox) return baseComponents;
+
+    return {
+      ...baseComponents,
+      img: ({ src, alt, className: imgClassName, ...props }) => {
+        const imageSrc = typeof src === "string" ? src : "";
+        const imageAlt = typeof alt === "string" ? alt : "";
+
+        return (
+          <img
+            src={imageSrc}
+            alt={imageAlt}
+            loading="lazy"
+            decoding="async"
+            tabIndex={0}
+            role="button"
+            aria-label={imageAlt ? `Expandir imagem: ${imageAlt}` : "Expandir imagem"}
+            className={cn(
+              "rounded-md my-4 max-w-full h-auto transition duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+              imgClassName,
+            )}
+            onClick={() => imageSrc && openImage(imageSrc, imageAlt)}
+            onKeyDown={(event) => {
+              if (!imageSrc) return;
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openImage(imageSrc, imageAlt);
+              }
+            }}
+            {...props}
+          />
+        );
+      },
+    };
+  }, [baseComponents, enableImageLightbox, openImage]);
+
+  if (!children) return null;
+
+  return (
+    <>
+      <div className={cn(className)}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm, remarkBreaks]}
+          rehypePlugins={[rehypeRaw, [rehypeSanitize, SANITIZE_SCHEMA]]}
+          components={components}
+        >
+          {children}
+        </ReactMarkdown>
+      </div>
+      {enableImageLightbox && (
+        <ImageLightbox image={lightboxImage} onOpenChange={(open) => !open && setLightboxImage(null)} />
+      )}
+    </>
   );
 }

@@ -751,7 +751,10 @@ export default function ToolDetalhe() {
 
             {hasContent ? (
               <>
-                <MarkdownContent className="guide-content guide-content-primary text-foreground/80 leading-relaxed">
+                <MarkdownContent
+                  className="guide-content guide-content-primary text-foreground/80 leading-relaxed"
+                  enableImageLightbox
+                >
                   {contentFirstHalf}
                 </MarkdownContent>
                 {hasMiddleCta && (
@@ -762,7 +765,10 @@ export default function ToolDetalhe() {
                   />
                 )}
                 {contentSecondHalf && (
-                  <MarkdownContent className="guide-content text-foreground/80 leading-relaxed">
+                  <MarkdownContent
+                    className="guide-content text-foreground/80 leading-relaxed"
+                    enableImageLightbox
+                  >
                     {contentSecondHalf}
                   </MarkdownContent>
                 )}

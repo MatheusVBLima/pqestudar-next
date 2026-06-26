@@ -324,7 +324,10 @@ export default function GuiaDetalheNext() {
               onClick={() => trackCta("top", guide.cta_top_label, guide.cta_top_url)}
             />
 
-            <MarkdownContent className="guide-content guide-content-primary text-foreground/80 leading-relaxed">
+            <MarkdownContent
+              className="guide-content guide-content-primary text-foreground/80 leading-relaxed"
+              enableImageLightbox
+            >
               {contentFirstHalf}
             </MarkdownContent>
 
@@ -338,7 +341,10 @@ export default function GuiaDetalheNext() {
             )}
 
             {contentSecondHalf && (
-              <MarkdownContent className="guide-content text-foreground/80 leading-relaxed">
+              <MarkdownContent
+                className="guide-content text-foreground/80 leading-relaxed"
+                enableImageLightbox
+              >
                 {contentSecondHalf}
               </MarkdownContent>
             )}
