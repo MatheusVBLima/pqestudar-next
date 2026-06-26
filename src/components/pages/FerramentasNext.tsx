@@ -81,6 +81,20 @@ const CATEGORY_ICONS: Record<string, any> = {
 };
 
 // Componente de controles de paginação
+const CATEGORY_LABELS: Record<string, string> = {
+  "Cursos Gratuitos": "Estudar",
+  "Produtividade": "Organização",
+  "Utilidades": "Ferramentas",
+  "Segurança e Privacidade": "Segurança",
+  "SeguranÃ§a e Privacidade": "Segurança",
+  "Inteligência Artificial": "IA",
+  "InteligÃªncia Artificial": "IA",
+};
+
+function getCategoryLabel(category: string) {
+  return CATEGORY_LABELS[category] ?? category;
+}
+
 function PaginationControls({
   currentPage,
   totalPages,
@@ -243,7 +257,7 @@ function PublicToolCard({ tool }: {tool: Tool;}) {
             <div className="flex flex-wrap gap-2">
               {tool.tags.map((tag) => (
                 <Badge key={tag} variant="outline" className="text-xs">
-                  {tag}
+                  {getCategoryLabel(tag)}
                 </Badge>
               ))}
             </div>
@@ -314,7 +328,7 @@ function ToolSearchItem({ tool, onSelect }: { tool: Tool; onSelect: () => void }
         <div className="mb-1 flex flex-wrap items-center gap-1.5">
           {tool.tags.slice(0, 2).map((tag) => (
             <Badge key={tag} variant="outline" className="px-1.5 py-0 text-[10px]">
-              {tag}
+              {getCategoryLabel(tag)}
             </Badge>
           ))}
         </div>
@@ -756,7 +770,7 @@ export default function Ferramentas() {
                       <SelectItem value="all">Todas as categorias</SelectItem>
                       {CATEGORIES.map((cat) =>
                     <SelectItem key={cat} value={cat}>
-                          {cat}
+                          {getCategoryLabel(cat)}
                         </SelectItem>
                     )}
                     </SelectContent>
@@ -798,7 +812,7 @@ export default function Ferramentas() {
                       className="min-w-0 flex-1 -mx-1 overflow-x-auto scrollbar-none overscroll-x-contain"
                     >
                       <ul className="flex items-center gap-1.5 px-1 whitespace-nowrap">
-                        {[{ value: "all", label: "Todas" }, ...CATEGORIES.map((category) => ({ value: category, label: category }))].map((category) => {
+                        {[{ value: "all", label: "Todas" }, ...CATEGORIES.map((category) => ({ value: category, label: getCategoryLabel(category) }))].map((category) => {
                           const active =
                             category.value === "all"
                               ? selectedTags.length === 0
@@ -879,10 +893,10 @@ export default function Ferramentas() {
                         onKeyDown={(e) =>
                         handleKeyDown(e, () => handleRemoveTag(tag))
                         }
-                        aria-label={`Remover filtro ${tag}`}
+                        aria-label={`Remover filtro ${getCategoryLabel(tag)}`}
                         data-evt="tag_remove">
 
-                              {tag}
+                              {getCategoryLabel(tag)}
                               <X className="w-3 h-3" aria-hidden="true" />
                             </Badge>
                           </motion.div>
@@ -916,10 +930,10 @@ export default function Ferramentas() {
                         onKeyDown={(e) =>
                         handleKeyDown(e, () => handleSelectTag(tag))
                         }
-                        aria-label={`Adicionar filtro ${tag}`}
+                        aria-label={`Adicionar filtro ${getCategoryLabel(tag)}`}
                         data-evt="tag_select">
 
-                              {tag}
+                              {getCategoryLabel(tag)}
                             </Badge>
                           </motion.div>
                     )}

@@ -185,6 +185,20 @@ const sharedTagCount = (a: string[] = [], b: string[] = []) => {
   return a.reduce((count, tag) => count + (normalizedB.has(normalizeTag(tag)) ? 1 : 0), 0);
 };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  "Cursos Gratuitos": "Estudar",
+  "Produtividade": "Organização",
+  "Utilidades": "Ferramentas",
+  "Segurança e Privacidade": "Segurança",
+  "SeguranÃ§a e Privacidade": "Segurança",
+  "Inteligência Artificial": "IA",
+  "InteligÃªncia Artificial": "IA",
+};
+
+function getCategoryLabel(category: string) {
+  return CATEGORY_LABELS[category] ?? category;
+}
+
 function rankToolsForContext(current: Tool, candidates: Tool[]) {
   const currentTags = current.tags ?? [];
   const primaryTag = currentTags[0] ? normalizeTag(currentTags[0]) : null;
@@ -512,7 +526,7 @@ function AudienceToolsCard({ tools, isLoading }: { tools: Tool[]; isLoading: boo
                   variant="outline"
                   className="text-[10px] px-1.5 py-0 mb-1 uppercase tracking-wide font-medium"
                 >
-                  {tool.tags[0]}
+                  {getCategoryLabel(tool.tags[0])}
                 </Badge>
               )}
               <p className="text-sm font-medium leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-2">
@@ -633,7 +647,7 @@ export default function ToolDetalhe() {
       )}
       {(tool.tags || []).map((tag) => (
         <Badge key={tag} variant="outline" className="text-sm">
-          {tag}
+          {getCategoryLabel(tag)}
         </Badge>
       ))}
       {tool.is_featured && (
@@ -685,7 +699,7 @@ export default function ToolDetalhe() {
                   variant="outline"
                   className="text-sm border-white/30 text-white bg-white/10 backdrop-blur-sm"
                 >
-                  {tag}
+                  {getCategoryLabel(tag)}
                 </Badge>
               ))}
               {tool.is_featured && (
@@ -851,7 +865,7 @@ export default function ToolDetalhe() {
                       </div>
                       <div className="flex-1 min-w-0 pt-0.5">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
-                          {rt.tags?.[0] || "Ferramenta"}
+                          {rt.tags?.[0] ? getCategoryLabel(rt.tags[0]) : "Ferramenta"}
                         </span>
                         <h3 className="text-base font-semibold leading-snug mt-0.5 group-hover:text-primary transition-colors line-clamp-2">
                           {rt.name}

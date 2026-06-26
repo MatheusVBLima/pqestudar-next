@@ -66,6 +66,20 @@ function slugify(text: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  "Cursos Gratuitos": "Estudar",
+  "Produtividade": "Organização",
+  "Utilidades": "Ferramentas",
+  "Segurança e Privacidade": "Segurança",
+  "SeguranÃ§a e Privacidade": "Segurança",
+  "Inteligência Artificial": "IA",
+  "InteligÃªncia Artificial": "IA",
+};
+
+function getCategoryLabel(category: string) {
+  return CATEGORY_LABELS[category] ?? category;
+}
+
 function normalizeAssetSearch(text: string): string {
   let decoded = text;
   try {
@@ -1095,7 +1109,7 @@ export function ToolModal({ open, onClose, onSave, tool, availableTags }: ToolMo
                     className="cursor-pointer px-3 py-2 text-sm"
                     onClick={() => toggleTag(tag)}
                   >
-                    {tag}
+                    {getCategoryLabel(tag)}
                     {selectedTags.includes(tag) && <X className="w-3 h-3 ml-1" />}
                   </Badge>
                 ))}
