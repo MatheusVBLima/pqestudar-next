@@ -57,6 +57,8 @@ const ICON_MAP: Record<string, LucideIcon> = {
   "book-open": BookOpen,
 };
 
+const DISCOVERY_MOBILE_MENU_EVENT = "pqe:discovery-mobile-menu";
+
 function getIcon(name: string | null): LucideIcon | null {
   if (!name) return null;
   return ICON_MAP[name.toLowerCase()] ?? null;
@@ -71,6 +73,8 @@ export function Navbar() {
   const { isDark, toggleTheme } = useTheme();
   const { items: navItems, logos, loading: navLoading } = useNavConfig();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isDiscoveryMenuLocked, setIsDiscoveryMenuLocked] = useState(false);
   const isScrolledRef = useRef(false);
   const rafRef = useRef<number | null>(null);
 
@@ -95,6 +99,17 @@ export function Navbar() {
         window.cancelAnimationFrame(rafRef.current);
       }
     };
+  }, []);
+
+  useEffect(() => {
+    const handleDiscoveryMenu = (event: Event) => {
+      const detail = (event as CustomEvent<{ open: boolean; locked?: boolean }>).detail;
+      setIsDiscoveryMenuLocked(detail.locked === true);
+      setMobileMenuOpen(detail.open);
+    };
+
+    window.addEventListener(DISCOVERY_MOBILE_MENU_EVENT, handleDiscoveryMenu);
+    return () => window.removeEventListener(DISCOVERY_MOBILE_MENU_EVENT, handleDiscoveryMenu);
   }, []);
 
   const showPremiumArea = isAdmin || isActive();
@@ -205,6 +220,8 @@ export function Navbar() {
                   return (
                     <Button
                       key={item.id}
+                      data-discovery-href={item.href}
+                      data-discovery-label={item.label.trim().toLocaleLowerCase("pt-BR")}
                       variant="ghost"
                       size="sm"
                       onClick={() => handleItemClick(item)}
@@ -353,7 +370,14 @@ export function Navbar() {
               </Suspense>
             )}
 
-            <DropdownMenu modal={false}>
+            <DropdownMenu
+              modal={false}
+              open={mobileMenuOpen}
+              onOpenChange={(open) => {
+                if (isDiscoveryMenuLocked && !open) return;
+                setMobileMenuOpen(open);
+              }}
+            >
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" aria-label="Menu de navegacao">
                   <Menu className="h-4 w-4" />
@@ -376,6 +400,8 @@ export function Navbar() {
                     return (
                       <DropdownMenuItem
                         key={item.id}
+                        data-discovery-href={item.href}
+                        data-discovery-label={item.label.trim().toLocaleLowerCase("pt-BR")}
                         onMouseEnter={() => handleItemPrefetch(item)}
                         onFocus={() => handleItemPrefetch(item)}
                         onClick={() => handleItemClick(item)}

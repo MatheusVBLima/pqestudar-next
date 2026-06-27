@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar-next";
 import { Footer } from "@/components/layout/footer-next";
+import { DiscoveryTour } from "@/components/onboarding/discovery-tour";
 
 function shouldShowFooter(pathname: string) {
   if (pathname === "/pqestudar-premium") return false;
@@ -39,6 +40,7 @@ export function PublicShellNext({ children }: { children: React.ReactNode }) {
       {showNavbar && <Navbar />}
       <div className={`flex-1 flex flex-col ${showNavbar ? "pt-16" : ""}`}>{children}</div>
       {showFooter && <Footer />}
+      {showNavbar && <DiscoveryTour />}
     </div>
   );
 }
