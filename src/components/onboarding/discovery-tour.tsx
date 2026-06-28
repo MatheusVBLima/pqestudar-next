@@ -152,7 +152,7 @@ export function DiscoveryTour() {
 
   const finish = useCallback(
     (result: StoredState, source: string) => {
-      writeStoredState(result);
+      if (forcedMode !== "1") writeStoredState(result);
       setState("idle");
       track({
         event_name: result === "completed" ? "discovery_tour_completed" : "discovery_tour_dismissed",
@@ -161,7 +161,7 @@ export function DiscoveryTour() {
         allowAnonymous: true,
       });
     },
-    [pathname, stepIndex, track],
+    [forcedMode, pathname, stepIndex, track],
   );
 
   useEffect(() => {
@@ -454,7 +454,7 @@ export function DiscoveryTour() {
                 size="sm"
                 className="rounded-full"
                 onClick={() => {
-                  writeStoredState("completed");
+                  if (forcedMode !== "1") writeStoredState("completed");
                   track({
                     event_name: "discovery_tour_destination_click",
                     path: pathname,
