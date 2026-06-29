@@ -69,14 +69,14 @@ export function AdminSidebar() {
   const groupClass = "px-0 py-0.5";
   const sectionLabelClass = "px-3 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-sidebar-foreground/40 group-data-[collapsible=icon]:sr-only";
   const itemClass = (active: boolean) => cn(
-    "relative h-9 rounded-lg px-3 text-[13px] font-semibold tracking-normal text-sidebar-foreground/75 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:!h-10 group-data-[collapsible=icon]:!w-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-md",
+    "relative h-9 rounded-lg px-3 text-[13px] font-semibold tracking-normal text-sidebar-foreground/75 transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:!h-10 group-data-[collapsible=icon]:!w-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-md",
     "hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
     "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-sidebar-foreground/65",
     "group-data-[collapsible=icon]:[&>span]:sr-only",
     active && "border border-primary/25 bg-primary/10 pl-4 text-sidebar-foreground shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.07),0_10px_28px_hsl(var(--primary)/0.08)] before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-primary group-data-[collapsible=icon]:border-primary/15 group-data-[collapsible=icon]:bg-primary/12 group-data-[collapsible=icon]:pl-2 group-data-[collapsible=icon]:shadow-none group-data-[collapsible=icon]:before:hidden [&>svg]:text-primary"
   );
   const triggerClass = (active: boolean) => cn(
-    "relative flex h-9 w-full items-center justify-between rounded-lg px-3 text-[13px] font-semibold tracking-normal transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-md group-data-[collapsible=icon]:px-2",
+    "relative flex h-9 w-full items-center justify-between rounded-lg px-3 text-[13px] font-semibold tracking-normal transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-md group-data-[collapsible=icon]:px-2",
     "hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground",
     active
       ? "border border-primary/20 bg-primary/10 pl-4 text-sidebar-foreground shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.06)] before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-primary group-data-[collapsible=icon]:border-primary/15 group-data-[collapsible=icon]:bg-primary/12 group-data-[collapsible=icon]:pl-2 group-data-[collapsible=icon]:shadow-none group-data-[collapsible=icon]:before:hidden"
@@ -147,7 +147,7 @@ export function AdminSidebar() {
 
   return (
     <Sidebar className="border-none bg-transparent" collapsible="icon" data-slot="admin-sidebar">
-      <SidebarHeader className="border-b border-sidebar-border/70 px-5 py-4 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2.5 group-data-[collapsible=icon]:py-3">
+      <SidebarHeader className="border-b border-sidebar-border/70 px-5 py-4 transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2.5 group-data-[collapsible=icon]:py-3">
         <div className="flex items-center justify-between gap-2.5 group-data-[collapsible=icon]:justify-center">
           <Link href="/admin" className="flex min-w-0 items-center gap-2.5 group-data-[collapsible=icon]:hidden">
             <img src={isDark ? logos.dark : logos.light} alt="PqEstudar" className="h-[30px] max-h-8 shrink-0" />
@@ -163,7 +163,7 @@ export function AdminSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="gap-0 px-3 py-3 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-1 group-data-[collapsible=icon]:px-2.5 group-data-[collapsible=icon]:py-3">
+      <SidebarContent className="gap-0 px-3 py-3 transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-1 group-data-[collapsible=icon]:px-2.5 group-data-[collapsible=icon]:py-3">
         <SectionLabel>Painel</SectionLabel>
         {/* Overview */}
         <SidebarGroup className={groupClass}>
@@ -529,7 +529,7 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border/70 p-3 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2.5 group-data-[collapsible=icon]:py-3">
+      <SidebarFooter className="border-t border-sidebar-border/70 p-3 transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2.5 group-data-[collapsible=icon]:py-3">
         <div className="flex items-center justify-start gap-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2.5">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>

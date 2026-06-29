@@ -7,6 +7,7 @@ import { DiscoveryTour } from "@/components/onboarding/discovery-tour";
 
 function shouldShowFooter(pathname: string) {
   if (pathname === "/pqestudar-premium") return false;
+  if (pathname === "/carteirinha") return false;
   if (pathname === "/mapa-dos-beneficios" || pathname.startsWith("/mapa-dos-beneficios/")) return false;
   if (pathname === "/premium") return true;
 
@@ -25,6 +26,7 @@ function shouldShowFooter(pathname: string) {
 
 function shouldShowNavbar(pathname: string) {
   if (pathname === "/pqestudar-premium") return false;
+  if (pathname === "/carteirinha") return false;
   if (pathname === "/mapa-dos-beneficios" || pathname.startsWith("/mapa-dos-beneficios/")) return false;
 
   return true;

@@ -24,7 +24,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { GripVertical, Plus, Pencil, Trash2, Save, Image, Monitor, Tablet, Smartphone, Link2, ExternalLink, Eye, EyeOff, ListChecks } from "lucide-react";
+import { GripVertical, Plus, Pencil, Trash2, Save, Image, Monitor, Tablet, Smartphone, Link2, ExternalLink, Eye, EyeOff, ListChecks, IdCard } from "lucide-react";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -66,6 +66,7 @@ const VALID_TABS = ["logo", "items"] as const;
 type MenuTab = (typeof VALID_TABS)[number];
 const FALLBACK_LOGO_LIGHT = "/images/logo-light.png";
 const FALLBACK_LOGO_DARK = "/images/logo-dark.png";
+const NAVBAR_CTA_ICON = "id-card-cta";
 
 function getTab(value: string | null): MenuTab {
   return VALID_TABS.includes(value as MenuTab) ? (value as MenuTab) : "items";
@@ -395,12 +396,67 @@ export default function AdminMenu() {
   });
 
   // ── Items state ──
-  const items = useMemo(() => itemsQuery.data ?? [], [itemsQuery.data]);
+  const allItems = useMemo(() => itemsQuery.data ?? [], [itemsQuery.data]);
+  const ctaItem = useMemo(() => allItems.find((item) => item.icon === NAVBAR_CTA_ICON) ?? null, [allItems]);
+  const items = useMemo(() => allItems.filter((item) => item.icon !== NAVBAR_CTA_ICON), [allItems]);
   const activeItems = useMemo(() => items.filter((item) => item.is_active).length, [items]);
   const hiddenItems = items.length - activeItems;
   const iconItems = useMemo(() => items.filter((item) => item.icon).length, [items]);
   const externalItems = useMemo(() => items.filter((item) => item.is_external).length, [items]);
   const newBadgeItems = useMemo(() => items.filter((item) => item.is_new).length, [items]);
+
+  // ── Navbar CTA ──
+  const [ctaDraft, setCtaDraft] = useState<{
+    label?: string;
+    href?: string;
+    desktop?: boolean;
+    tablet?: boolean;
+    mobile?: boolean;
+  }>({});
+  const ctaLabel = ctaDraft.label ?? ctaItem?.label ?? "Carteirinha estudantil";
+  const ctaHref = ctaDraft.href ?? ctaItem?.href ?? "/carteirinha";
+  const ctaDesktop = ctaDraft.desktop ?? ctaItem?.show_icon_desktop ?? true;
+  const ctaTablet = ctaDraft.tablet ?? ctaItem?.show_icon_tablet ?? true;
+  const ctaMobile = ctaDraft.mobile ?? ctaItem?.show_icon_mobile ?? true;
+
+  const saveCta = useMutation({
+    mutationFn: async () => {
+      if (!ctaLabel.trim() || !ctaHref.trim()) throw new Error("Texto e rota são obrigatórios");
+      const isExternal = /^https?:\/\//i.test(ctaHref.trim());
+      const payload: NavItemUpdate = {
+        label: ctaLabel.trim(),
+        href: ctaHref.trim(),
+        icon: NAVBAR_CTA_ICON,
+        is_active: true,
+        is_external: isExternal,
+        open_in_new_tab: isExternal,
+        show_icon_desktop: ctaDesktop,
+        show_icon_tablet: ctaTablet,
+        show_icon_mobile: ctaMobile,
+      };
+
+      if (ctaItem) {
+        const { error } = await supabase.from("nav_items").update(payload).eq("id", ctaItem.id);
+        if (error) throw error;
+      } else {
+        const insertPayload: NavItemInsert = {
+          ...payload,
+          label: ctaLabel.trim(),
+          href: ctaHref.trim(),
+          order_index: 9999,
+        };
+        const { error } = await supabase.from("nav_items").insert(insertPayload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("CTA da navbar atualizado!");
+      setCtaDraft({});
+      qc.invalidateQueries({ queryKey: ["admin-nav-items"] });
+      qc.invalidateQueries({ queryKey: ["nav-items-public"] });
+    },
+    onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao salvar CTA")),
+  });
 
   // ── DnD ──
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
@@ -410,9 +466,9 @@ export default function AdminMenu() {
       if (!over || active.id === over.id) return;
       const oldIdx = items.findIndex((i) => i.id === active.id);
       const newIdx = items.findIndex((i) => i.id === over.id);
-      const previousItems = items;
+      const previousItems = allItems;
       const reordered = arrayMove(items, oldIdx, newIdx).map((it, idx) => ({ ...it, order_index: idx }));
-      qc.setQueryData(["admin-nav-items"], reordered);
+      qc.setQueryData(["admin-nav-items"], ctaItem ? [...reordered, ctaItem] : reordered);
       // Batch update order
       const updates = reordered.map((it) =>
         supabase.from("nav_items").update({ order_index: it.order_index } satisfies NavItemUpdate).eq("id", it.id)
@@ -427,14 +483,14 @@ export default function AdminMenu() {
         qc.invalidateQueries({ queryKey: ["nav-items-public"] });
       }
     },
-    [items, qc]
+    [allItems, ctaItem, items, qc]
   );
 
   // ── Toggle ──
   const toggleItem = useCallback(
     async (item: NavItem) => {
       const newActive = !item.is_active;
-      const previousItems = items;
+      const previousItems = allItems;
       qc.setQueryData<NavItem[]>(["admin-nav-items"], (prev = []) =>
         prev.map((entry) => (entry.id === item.id ? { ...entry, is_active: newActive } : entry))
       );
@@ -448,13 +504,13 @@ export default function AdminMenu() {
         qc.invalidateQueries({ queryKey: ["nav-items-public"] });
       }
     },
-    [items, qc]
+    [allItems, qc]
   );
 
   const toggleNew = useCallback(
     async (item: NavItem) => {
       const newValue = !item.is_new;
-      const previousItems = items;
+      const previousItems = allItems;
       qc.setQueryData<NavItem[]>(["admin-nav-items"], (prev = []) =>
         prev.map((entry) => (entry.id === item.id ? { ...entry, is_new: newValue } : entry))
       );
@@ -468,14 +524,14 @@ export default function AdminMenu() {
         qc.invalidateQueries({ queryKey: ["nav-items-public"] });
       }
     },
-    [items, qc]
+    [allItems, qc]
   );
 
   // ── Icon breakpoint toggle ──
   const toggleIconBreakpoint = useCallback(
     async (item: NavItem, field: 'show_icon_desktop' | 'show_icon_tablet' | 'show_icon_mobile') => {
       const newValue = !item[field];
-      const previousItems = items;
+      const previousItems = allItems;
       qc.setQueryData<NavItem[]>(["admin-nav-items"], (prev = []) =>
         prev.map((entry) => (entry.id === item.id ? { ...entry, [field]: newValue } : entry))
       );
@@ -489,7 +545,7 @@ export default function AdminMenu() {
         qc.invalidateQueries({ queryKey: ["nav-items-public"] });
       }
     },
-    [items, qc]
+    [allItems, qc]
   );
 
   // ── CRUD modal ──
@@ -649,6 +705,85 @@ export default function AdminMenu() {
 
           {/* ── Items Tab ── */}
           <TabsContent value="items" className="mt-0 space-y-4">
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.055] to-card">
+              <CardHeader className="gap-4 pb-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <IdCard className="h-5 w-5 text-primary" />
+                      CTA da navbar
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Edite o botão de destaque exibido antes dos ícones utilitários e dentro do menu mobile.
+                    </p>
+                  </div>
+                  <Button size="sm" onClick={() => saveCta.mutate()} disabled={saveCta.isPending}>
+                    <Save className="mr-1.5 h-4 w-4" />
+                    {saveCta.isPending ? "Salvando..." : "Salvar CTA"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
+                  <div className="space-y-2">
+                    <Label htmlFor="navbar-cta-label">Texto do botão</Label>
+                    <Input
+                      id="navbar-cta-label"
+                      value={ctaLabel}
+                      onChange={(event) => setCtaDraft((prev) => ({ ...prev, label: event.target.value }))}
+                      placeholder="Carteirinha estudantil"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="navbar-cta-href">Rota ou URL</Label>
+                    <Input
+                      id="navbar-cta-href"
+                      value={ctaHref}
+                      onChange={(event) => setCtaDraft((prev) => ({ ...prev, href: event.target.value }))}
+                      placeholder="/carteirinha"
+                    />
+                  </div>
+                  <div className="flex min-h-10 flex-wrap items-center gap-x-5 gap-y-3 rounded-lg border bg-background/60 px-4 py-2.5">
+                    <Label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
+                      <Switch
+                        checked={ctaDesktop}
+                        onCheckedChange={(checked) => setCtaDraft((prev) => ({ ...prev, desktop: checked }))}
+                        aria-label="Exibir CTA no desktop"
+                      />
+                      <Monitor className="h-3.5 w-3.5 text-muted-foreground" /> Desktop
+                    </Label>
+                    <Label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
+                      <Switch
+                        checked={ctaTablet}
+                        onCheckedChange={(checked) => setCtaDraft((prev) => ({ ...prev, tablet: checked }))}
+                        aria-label="Exibir CTA no tablet"
+                      />
+                      <Tablet className="h-3.5 w-3.5 text-muted-foreground" /> Tablet
+                    </Label>
+                    <Label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
+                      <Switch
+                        checked={ctaMobile}
+                        onCheckedChange={(checked) => setCtaDraft((prev) => ({ ...prev, mobile: checked }))}
+                        aria-label="Exibir CTA no mobile"
+                      />
+                      <Smartphone className="h-3.5 w-3.5 text-muted-foreground" /> Mobile
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-col gap-3 rounded-lg border border-dashed bg-background/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Prévia</p>
+                    <p className="mt-1 text-xs text-muted-foreground">A aparência final acompanha o tema ativo do site.</p>
+                  </div>
+                  <div className="inline-flex h-9 max-w-full items-center gap-2 self-start rounded-full border border-primary/25 bg-primary/[0.08] px-4 text-sm font-semibold text-primary shadow-sm sm:self-auto">
+                    <IdCard className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{ctaLabel || "Carteirinha estudantil"}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader className="gap-4 pb-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

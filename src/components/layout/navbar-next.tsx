@@ -9,6 +9,7 @@ import {
   ExternalLink,
   Home,
   Info,
+  IdCard,
   LogOut,
   Menu,
   Moon,
@@ -58,6 +59,21 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 const DISCOVERY_MOBILE_MENU_EVENT = "pqe:discovery-mobile-menu";
+const NAVBAR_CTA_ICON = "id-card-cta";
+const FALLBACK_CTA: NavItem = {
+  id: "navbar-cta-fallback",
+  label: "Carteirinha estudantil",
+  href: "/carteirinha",
+  icon: NAVBAR_CTA_ICON,
+  order_index: 9999,
+  is_active: true,
+  is_external: false,
+  open_in_new_tab: false,
+  show_icon_desktop: true,
+  show_icon_tablet: true,
+  show_icon_mobile: true,
+  is_new: false,
+};
 
 function getIcon(name: string | null): LucideIcon | null {
   if (!name) return null;
@@ -72,6 +88,8 @@ export function Navbar() {
   const { isActive } = useSubscription();
   const { isDark, toggleTheme } = useTheme();
   const { items: navItems, logos, loading: navLoading } = useNavConfig();
+  const navbarCta = navItems.find((item) => item.icon === NAVBAR_CTA_ICON) ?? FALLBACK_CTA;
+  const menuItems = navItems.filter((item) => item.icon !== NAVBAR_CTA_ICON);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDiscoveryMenuLocked, setIsDiscoveryMenuLocked] = useState(false);
@@ -212,7 +230,7 @@ export function Navbar() {
                   ))}
                 </>
               ) : (
-                navItems.map((item) => {
+                menuItems.map((item) => {
                   const IconComp = getIcon(item.icon);
                   const showIconDesktop = item.show_icon_desktop !== false;
                   const showIconTablet = item.show_icon_tablet !== false;
@@ -255,6 +273,38 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
+            {navbarCta.show_icon_tablet && (
+              <Button
+                variant="outline"
+                size="sm"
+                onMouseEnter={() => handleItemPrefetch(navbarCta)}
+                onFocus={() => handleItemPrefetch(navbarCta)}
+                onClick={() => handleItemClick(navbarCta)}
+                className="hidden h-9 w-9 rounded-full border-primary/25 bg-primary/[0.08] p-0 text-primary shadow-sm transition hover:border-primary/40 hover:bg-primary/[0.14] lg:inline-flex xl:hidden"
+                aria-label={`Acessar ${navbarCta.label}`}
+              >
+                <IdCard className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            )}
+            {navbarCta.show_icon_desktop && (
+              <Button
+                variant="outline"
+                size="sm"
+                onMouseEnter={() => handleItemPrefetch(navbarCta)}
+                onFocus={() => handleItemPrefetch(navbarCta)}
+                onClick={() => handleItemClick(navbarCta)}
+                className="hidden h-9 rounded-full border-primary/25 bg-primary/[0.08] px-4 font-semibold text-primary shadow-sm transition hover:border-primary/40 hover:bg-primary/[0.14] xl:inline-flex"
+              >
+                <IdCard className="mr-2 h-4 w-4" aria-hidden="true" />
+                {navbarCta.label}
+              </Button>
+            )}
+            {navbarCta.show_icon_tablet && (
+              <span className="mx-0.5 hidden h-6 w-px bg-border/70 lg:block xl:hidden" aria-hidden="true" />
+            )}
+            {navbarCta.show_icon_desktop && (
+              <span className="mx-0.5 hidden h-6 w-px bg-border/70 xl:block" aria-hidden="true" />
+            )}
             <ManagementModeToggle />
             {user && (
               <Suspense fallback={null}>
@@ -394,7 +444,7 @@ export function Navbar() {
                     ))}
                   </div>
                 ) : (
-                  navItems.map((item) => {
+                  menuItems.map((item) => {
                     const IconComp = getIcon(item.icon);
                     const showIconMobile = item.show_icon_mobile !== false;
                     return (
@@ -420,6 +470,17 @@ export function Navbar() {
                       </DropdownMenuItem>
                     );
                   })
+                )}
+                {navbarCta.show_icon_mobile && (
+                  <DropdownMenuItem
+                    onMouseEnter={() => handleItemPrefetch(navbarCta)}
+                    onFocus={() => handleItemPrefetch(navbarCta)}
+                    onClick={() => handleItemClick(navbarCta)}
+                    className="mx-2 mt-2 cursor-pointer rounded-lg border border-primary/20 bg-primary/[0.08] font-semibold text-primary focus:bg-primary/[0.15] focus:text-primary"
+                  >
+                    <IdCard className="mr-2 h-4 w-4" aria-hidden="true" />
+                    {navbarCta.label}
+                  </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
 

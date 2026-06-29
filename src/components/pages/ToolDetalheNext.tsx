@@ -824,7 +824,7 @@ export default function ToolDetalhe() {
                 <div className="space-y-5">
                   {Array.from({ length: 3 }).map((_, index) => (
                     <div key={index} className="flex items-start gap-4">
-                      <Skeleton className="w-20 h-16 sm:w-28 sm:h-20 rounded-md shrink-0" />
+                      <Skeleton className="h-14 w-14 shrink-0 rounded-xl" />
                       <div className="flex-1 space-y-2 pt-1">
                         <Skeleton className="h-3 w-24" />
                         <Skeleton className="h-4 w-3/4" />
@@ -847,15 +847,15 @@ export default function ToolDetalhe() {
                     <Link
                       key={rt.id}
                       href={`/ferramentas/${rt.slug}`}
-                      className="flex items-start gap-4 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md"
+                      className="group flex items-start gap-3 rounded-xl py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                       aria-label={`Ferramenta relacionada: ${rt.name}`}
                     >
-                      <div className="w-20 h-16 sm:w-28 sm:h-20 shrink-0 rounded-md overflow-hidden flex items-center justify-center bg-primary/10">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
                         {rt.icon_url ? (
                           <img
                             src={rt.icon_url}
                             alt={`Logo de ${rt.name}`}
-                            className="w-full h-full object-contain p-3"
+                            className="h-full w-full object-contain p-2"
                             referrerPolicy="no-referrer"
                             loading="lazy"
                           />
