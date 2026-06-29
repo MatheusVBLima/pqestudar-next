@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar-next";
 import { Footer } from "@/components/layout/footer-next";
@@ -42,7 +43,11 @@ export function PublicShellNext({ children }: { children: React.ReactNode }) {
       {showNavbar && <Navbar />}
       <div className={`flex-1 flex flex-col ${showNavbar ? "pt-16" : ""}`}>{children}</div>
       {showFooter && <Footer />}
-      {showNavbar && <DiscoveryTour />}
+      {showNavbar && (
+        <Suspense fallback={null}>
+          <DiscoveryTour />
+        </Suspense>
+      )}
     </div>
   );
 }
