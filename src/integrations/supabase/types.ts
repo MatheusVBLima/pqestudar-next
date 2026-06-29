@@ -2030,34 +2030,73 @@ export type Database = {
       }
       newsletter_subscribers: {
         Row: {
+          brevo_synced_at: string | null
           confirmed: boolean
           confirmed_at: string | null
+          consent_at: string | null
           created_at: string
           email: string
           id: string
+          last_sync_attempt_at: string | null
+          page_slug: string | null
+          source: string
           subscribed_at: string
+          sync_attempts: number
+          sync_error: string | null
+          sync_status: string
           unsubscribed_at: string | null
           updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
+          brevo_synced_at?: string | null
           confirmed?: boolean
           confirmed_at?: string | null
+          consent_at?: string | null
           created_at?: string
           email: string
           id?: string
+          last_sync_attempt_at?: string | null
+          page_slug?: string | null
+          source?: string
           subscribed_at?: string
+          sync_attempts?: number
+          sync_error?: string | null
+          sync_status?: string
           unsubscribed_at?: string | null
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
+          brevo_synced_at?: string | null
           confirmed?: boolean
           confirmed_at?: string | null
+          consent_at?: string | null
           created_at?: string
           email?: string
           id?: string
+          last_sync_attempt_at?: string | null
+          page_slug?: string | null
+          source?: string
           subscribed_at?: string
+          sync_attempts?: number
+          sync_error?: string | null
+          sync_status?: string
           unsubscribed_at?: string | null
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: []
       }
