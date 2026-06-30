@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { loadAdSenseAfterIdle } from '@/lib/adsense';
 import { devLog } from '@/lib/dev-log';
 
@@ -51,6 +52,7 @@ function applyCookiePreferences(preferences: CookiePreferences) {
 }
 
 export const useCookieConsent = () => {
+  const pathname = usePathname();
   const [consentData, setConsentData] = useState<CookieConsentData>({
     hasConsented: false,
     preferences: defaultPreferences,
@@ -89,7 +91,7 @@ export const useCookieConsent = () => {
       setShowBanner(true);
       applyCookiePreferences(defaultPreferences);
     }
-  }, []);
+  }, [pathname]);
 
   // Load consent data from localStorage on mount and keep same-tab consumers synced.
   useEffect(() => {

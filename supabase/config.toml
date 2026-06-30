@@ -3,3 +3,6 @@ verify_jwt = false
 
 [functions.subscribe-newsletter-brevo]
 verify_jwt = false
+
+[functions.newsletter-count]
+verify_jwt = false

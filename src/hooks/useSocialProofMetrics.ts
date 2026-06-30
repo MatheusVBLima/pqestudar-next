@@ -44,15 +44,24 @@ export function useSocialProofMetrics(): SocialProofMetrics {
     staleTime: 1000 * 60 * 10,
   });
 
-  // Fallback estático — fonte real: Brevo (não acessível via Supabase)
-  // TODO: conectar fonte real de newsletter (Brevo API ou RPC segura)
-  const newsletterCount = 38;
+  const { data: newsletterCount, isLoading: loadingNewsletter } = useQuery({
+    queryKey: ["metrics-newsletter-count"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke<{ count: number }>(
+        "newsletter-count",
+        { method: "GET" },
+      );
+      if (error) throw error;
+      return data.count;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
 
   return {
     usersCount: usersCount ?? null,
     toolsCount: toolsCount ?? null,
     contestsCount: contestsCount ?? null,
-    newsletterCount,
-    isLoading: loadingUsers || loadingTools || loadingContests,
+    newsletterCount: newsletterCount ?? null,
+    isLoading: loadingUsers || loadingTools || loadingContests || loadingNewsletter,
   };
 }

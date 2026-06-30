@@ -76,21 +76,23 @@ const cookiesData = [
   },
   {
     categoria: "Marketing",
-    descricao: "Permitem personalizar anúncios e campanhas em outras plataformas",
+    descricao: "Permitem exibir, limitar, medir e, com consentimento, personalizar anúncios",
     cookies: [
-      { nome: "_fbp", finalidade: "Facebook Pixel - Rastreamento de conversões", duracao: "90 dias", provedor: "Meta" },
-      { nome: "_gcl_au", finalidade: "Conversões de anúncios Google", duracao: "90 dias", provedor: "Google" },
+      { nome: "__gads / __gpi", finalidade: "Exibição, limitação de frequência e medição de anúncios", duracao: "Definida pelo Google", provedor: "Google AdSense" },
+      { nome: "IDE e similares", finalidade: "Entrega e medição de publicidade em domínios do Google ou DoubleClick", duracao: "Definida pelo Google", provedor: "Google / DoubleClick" },
       { nome: "utm_*", finalidade: "Rastreamento de campanhas de marketing", duracao: "30 dias", provedor: "PqEstudar" },
     ],
   },
 ];
+
+const ADSENSE_POLICY_UPDATED_AT = "2026-06-30T00:00:00-03:00";
 
 export default function PrivacidadeNext() {
   const pathname = usePathname();
   const ps = usePageSettings("/privacidade");
   const { document: doc, sections, isLoading, error } = useLegalPage("/privacidade");
   const latestUpdatedAt =
-    [doc?.updated_at, ...sections.map((section) => section.updated_at)]
+    [ADSENSE_POLICY_UPDATED_AT, doc?.updated_at, ...sections.map((section) => section.updated_at)]
       .filter((date): date is string => Boolean(date))
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
   const { data: legalVersionHistory = [] } = useLegalVersionHistory("/privacidade", latestUpdatedAt);
@@ -410,15 +412,96 @@ export default function PrivacidadeNext() {
                 </Accordion>
               )}
 
+              <Card id="publicidade-google-adsense" className="shadow-lg border-2 scroll-mt-24">
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="google-adsense" className="border-0">
+                    <AccordionTrigger className="px-6 py-5 hover:no-underline sm:px-8 sm:py-6">
+                      <div className="flex flex-col items-start gap-1 text-left">
+                        <span className="flex items-center gap-2 text-xl font-semibold sm:text-2xl">
+                          <Shield className="h-6 w-6" />
+                          Publicidade e Google AdSense
+                        </span>
+                        <span className="text-sm font-normal text-muted-foreground">
+                          Como dados e tecnologias de publicidade podem ser utilizados no PqEstudar
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-4 px-6 pb-6 text-sm leading-relaxed text-muted-foreground sm:px-8 sm:text-base">
+                  <p>
+                    O PqEstudar pode exibir anúncios fornecidos pelo Google AdSense. Fornecedores terceiros,
+                    incluindo o Google, podem inserir ou ler cookies no seu navegador e utilizar web beacons,
+                    endereço IP ou outros identificadores em consequência da exibição de anúncios neste site.
+                  </p>
+                  <p>
+                    O Google e seus parceiros usam cookies de publicidade para exibir, limitar a frequência,
+                    medir e combater fraudes em anúncios. Quando você autoriza cookies de marketing, essas
+                    tecnologias também podem ser usadas para personalizar anúncios com base em visitas ao
+                    PqEstudar e a outros sites. Sem essa autorização, os anúncios podem ser contextuais ou não
+                    personalizados, conforme as configurações e exigências aplicáveis.
+                  </p>
+                  <p>
+                    Dados relacionados à navegação e à interação com anúncios podem ser compartilhados com o
+                    Google para essas finalidades. Não enviamos ao Google, para personalização de anúncios,
+                    informações que identifiquem você diretamente, como nome ou endereço de e-mail.
+                  </p>
+                  <p>
+                    Saiba mais sobre{" "}
+                    <a
+                      href="https://business.safety.google/privacy/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-primary underline underline-offset-4"
+                    >
+                      como o Google usa dados em sites e aplicativos de parceiros
+                    </a>
+                    {" "}e consulte a{" "}
+                    <a
+                      href="https://policies.google.com/privacy?hl=pt-BR"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-primary underline underline-offset-4"
+                    >
+                      Política de Privacidade do Google
+                    </a>
+                    .
+                  </p>
+                  <p>
+                    Você pode desativar a personalização de anúncios nas{" "}
+                    <a
+                      href="https://adssettings.google.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-primary underline underline-offset-4"
+                    >
+                      Configurações de anúncios do Google
+                    </a>
+                    {" "}e alterar sua escolha para cookies de marketing a qualquer momento nas{" "}
+                    <a href="/configuracoes-cookies" className="font-medium text-primary underline underline-offset-4">
+                      Configurações de Cookies do PqEstudar
+                    </a>
+                    .
+                  </p>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </Card>
+
               <Card className="shadow-lg border-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
-                    <Cookie className="h-6 w-6" />
-                    Tabela Detalhada de Cookies
-                  </CardTitle>
-                  <CardDescription>Clique em cada categoria para ver os cookies utilizados</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="tabela-cookies" className="border-0">
+                    <AccordionTrigger className="px-6 py-5 hover:no-underline sm:px-8 sm:py-6">
+                      <div className="flex flex-col items-start gap-1 text-left">
+                        <span className="flex items-center gap-2 text-xl font-semibold sm:text-2xl">
+                          <Cookie className="h-6 w-6" />
+                          Tabela Detalhada de Cookies
+                        </span>
+                        <span className="text-sm font-normal text-muted-foreground">
+                          Clique para consultar os cookies utilizados por categoria
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <CardContent className="space-y-6 px-6 pb-6 pt-0 sm:px-8">
                   <Accordion
                     type="multiple"
                     value={expandedCookieCategories}
@@ -544,20 +627,28 @@ export default function PrivacidadeNext() {
                       </DialogContent>
                     </Dialog>
                   </div>
-                </CardContent>
+                      </CardContent>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </Card>
 
               <Card className="shadow-lg border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                    <Shield className="h-6 w-6" />
-                    Seus Direitos (LGPD)
-                  </CardTitle>
-                  <CardDescription className="text-base">
-                    Você tem direitos garantidos pela Lei Geral de Proteção de Dados
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="direitos-lgpd" className="border-0">
+                    <AccordionTrigger className="px-6 py-5 hover:no-underline sm:px-8 sm:py-6">
+                      <div className="flex flex-col items-start gap-1 text-left">
+                        <span className="flex items-center gap-2 text-xl font-semibold sm:text-2xl">
+                          <Shield className="h-6 w-6" />
+                          Seus Direitos (LGPD)
+                        </span>
+                        <span className="text-sm font-normal text-muted-foreground">
+                          Você tem direitos garantidos pela Lei Geral de Proteção de Dados
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <CardContent className="space-y-4 px-6 pb-6 pt-0 sm:px-8">
                   <div className="grid md:grid-cols-2 gap-3">
                     <Button variant="outline" className="justify-start h-auto py-3">
                       <Eye className="h-5 w-5 mr-2 shrink-0" />
@@ -591,7 +682,10 @@ export default function PrivacidadeNext() {
                   <p className="text-sm text-muted-foreground text-center mt-4">
                     Para exercer seus direitos, entre em contato: <strong>privacidade@pqestudar.com</strong>
                   </p>
-                </CardContent>
+                      </CardContent>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </Card>
 
               <Card className="shadow-lg border-2">

@@ -105,11 +105,11 @@ export const CookieSettings = ({ onClose }: CookieSettingsProps) => {
     {
       id: 'marketing' as const,
       title: 'Cookies de Marketing',
-      description: 'Permitem personalizar anúncios e conteúdo',
+      description: 'Permitem compartilhar dados com o Google para medir e personalizar anúncios',
       icon: Target,
       color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
       details: [
-        'Publicidade direcionada',
+        'Google AdSense e publicidade personalizada',
         'Remarketing',
         'Redes sociais',
         'Campanhas personalizadas'

@@ -52,7 +52,7 @@ export const CookieBanner = () => {
     {
       id: 'marketing' as const,
       title: 'Cookies de Marketing',
-      description: 'Usados para personalizar anúncios e conteúdo relevante.',
+      description: 'Permitem compartilhar dados com o Google para medir e personalizar anúncios.',
       required: false
     },
     {
@@ -88,8 +88,9 @@ export const CookieBanner = () => {
                     Este site usa cookies
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Utilizamos cookies para melhorar sua experiência, personalizar conteúdo e analisar o tráfego. 
-                    Você pode escolher quais tipos de cookies aceitar.
+                    Utilizamos cookies para melhorar sua experiência e analisar o tráfego. Com sua autorização,
+                    compartilhamos dados com o Google para personalização e medição de anúncios. Você pode escolher
+                    quais tipos de cookies aceitar.
                   </p>
                 </div>
 
