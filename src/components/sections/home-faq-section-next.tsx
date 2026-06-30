@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -169,8 +170,21 @@ const faqSchema = {
 const ease = [0.16, 1, 0.3, 1] as const;
 
 export function HomeFaqSectionNext() {
+  useEffect(() => {
+    if (window.location.hash !== "#faq") return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      document.getElementById("faq")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, []);
+
   return (
-    <section className="pt-0 pb-16 md:pb-24">
+    <section id="faq" className="scroll-mt-24 pt-0 pb-16 md:pb-24">
       <script
         type="application/ld+json"
         suppressHydrationWarning

@@ -91,7 +91,7 @@ export function SocialProofSection() {
               viewport={{ once: true }}
               transition={{ delay: 0.1, duration: 0.8, ease }}
             >
-              O PqEstudar reúne ferramentas, concursos e conteúdos práticos com a mesma curadoria que já alcançou milhões de pessoas nas redes.
+              O PqEstudar reúne ferramentas, concursos e conteúdos práticos com uma curadoria que já alcançou milhões de pessoas nas redes.
             </motion.p>
           </div>
 

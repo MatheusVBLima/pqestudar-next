@@ -35,14 +35,20 @@ function DeferredHomeSections() {
 
   useEffect(() => {
     const load = () => setShouldLoad(true);
+    const loadFromHash = () => {
+      if (window.location.hash === "#faq") load();
+    };
     const timeoutId = window.setTimeout(load, 4500);
 
+    loadFromHash();
+    window.addEventListener("hashchange", loadFromHash);
     window.addEventListener("scroll", load, { once: true, passive: true });
     window.addEventListener("pointerdown", load, { once: true, passive: true });
     window.addEventListener("keydown", load, { once: true });
 
     return () => {
       window.clearTimeout(timeoutId);
+      window.removeEventListener("hashchange", loadFromHash);
       window.removeEventListener("scroll", load);
       window.removeEventListener("pointerdown", load);
       window.removeEventListener("keydown", load);

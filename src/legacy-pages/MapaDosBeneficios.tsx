@@ -1210,29 +1210,6 @@ const AboutAuthorSection = () => <section className="py-10 md:py-24 px-4 sm:px-6
               }}>
                   <img alt="Matheus Dias" className="w-full h-full object-cover" loading="lazy" src="/lovable-uploads/eef30a09-d048-4db6-994f-c33c8dee49e8.png" />
                 </div>
-                <div className="flex flex-row md:flex-col justify-center gap-4 md:gap-0 md:space-y-2">
-                  {[{
-                  value: "4+",
-                  label: "Anos de Experiência"
-                }, {
-                  value: "50+",
-                  label: "Milhões de Visualizações"
-                }, {
-                  value: "400+",
-                  label: "Mil Seguidores"
-                }].map(stat => <div key={stat.label} className="text-center">
-                      <p className="text-xl sm:text-2xl md:text-3xl font-bold" style={{
-                    color: `hsl(${BRAND_TOKENS.primary})`
-                  }}>
-                        {stat.value}
-                      </p>
-                      <p className="text-[10px] sm:text-xs md:text-sm" style={{
-                    color: `hsl(${BRAND_TOKENS.mutedForeground})`
-                  }}>
-                        {stat.label}
-                      </p>
-                    </div>)}
-                </div>
               </div>
 
               <div className="text-center md:text-left">
@@ -1244,42 +1221,16 @@ const AboutAuthorSection = () => <section className="py-10 md:py-24 px-4 sm:px-6
                 <p className="font-medium mb-3 sm:mb-4 text-sm sm:text-base" style={{
                 color: `hsl(${BRAND_TOKENS.primary})`
               }}>
-                  Especialista em Tecnologia e Oportunidades Digitais
+                  Criador do Mapa dos Benefícios
                 </p>
                 <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm leading-relaxed" style={{
                 color: `hsl(${BRAND_TOKENS.mutedForeground})`
               }}>
                   <p>
-                    Com <strong style={{
-                    color: `hsl(${BRAND_TOKENS.foreground})`
-                  }}>mais de 4 anos de experiência</strong> e{" "}
-                    <strong style={{
-                    color: `hsl(${BRAND_TOKENS.foreground})`
-                  }}>somando mais de 50 milhões de visualizações</strong> em seus vídeos,
-                    Matheus Dias se tornou <strong style={{
-                    color: `hsl(${BRAND_TOKENS.foreground})`
-                  }}>um dos maiores especialistas do Brasil</strong> em{" "}
-                    <strong style={{
-                    color: `hsl(${BRAND_TOKENS.foreground})`
-                  }}>"descomplicar a tecnologia e a vida"</strong> para milhões de pessoas.
+                    Matheus Dias produz conteúdos sobre tecnologia, benefícios e oportunidades digitais de forma simples e acessível.
                   </p>
                   <p>
-                    Depois que seus <strong style={{
-                    color: `hsl(${BRAND_TOKENS.foreground})`
-                  }}>vídeos sobre benefícios do governo viralizaram</strong> e{" "}
-                    <strong style={{
-                    color: `hsl(${BRAND_TOKENS.foreground})`
-                  }}>ajudaram milhões de brasileiros</strong>, ele percebeu que a falta de informação
-                    era o maior obstáculo para as pessoas acessarem seus direitos.
-                  </p>
-                  <p>
-                    Hoje, com uma <strong style={{
-                    color: `hsl(${BRAND_TOKENS.foreground})`
-                  }}>comunidade de mais de 400 mil seguidores</strong>, ele continua sua
-                    missão de usar a tecnologia para <strong style={{
-                    color: `hsl(${BRAND_TOKENS.foreground})`
-                  }}>trazer conhecimento e poder para a palma da mão</strong> de
-                    quem mais precisa.
+                    O Mapa dos Benefícios nasceu para organizar informações úteis e facilitar a busca por programas, serviços e direitos.
                   </p>
                 </div>
               </div>
