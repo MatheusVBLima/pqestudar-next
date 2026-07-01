@@ -18,7 +18,6 @@ export default function robots(): MetadataRoute.Robots {
           "/ferramentas/salvos",
           "/noticias",
           "/noticia/",
-          "/curso/",
           "/bonus/",
           "/breve",
           "/kit",
