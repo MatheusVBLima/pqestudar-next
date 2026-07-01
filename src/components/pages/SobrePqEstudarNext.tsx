@@ -2,13 +2,12 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHero } from "@/components/layout/PageHero";
+import { FinalCtaSectionNext } from "@/components/sections/final-cta-section-next";
 import { renderHighlightedTitle } from "@/lib/highlight-title";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import {
-  Search,
   ArrowRight,
   Wrench,
   BookOpen,
@@ -18,6 +17,9 @@ import {
   Target,
   LayoutGrid,
   Unlock,
+  CheckCircle2,
+  ShieldCheck,
+  RefreshCw,
 } from "lucide-react";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -27,22 +29,10 @@ export default function SobrePqEstudarNext() {
 
   return (
     <>
-      <PageHero title={headerTitle} description={headerDescription}>
-        <div className="flex flex-col sm:flex-row gap-3 mt-8">
-          <Link href="/ferramentas">
-            <Button size="lg" className="gap-2 rounded-[1.2rem] w-full sm:w-auto">
-              <Search className="h-4 w-4" />
-              Conhecer Ferramentas
-            </Button>
-          </Link>
-        </div>
-        <p className="text-sm text-muted-foreground/60 mt-4">
-          Sem enrolação. Sem excesso. Só o que ajuda na prática.
-        </p>
-      </PageHero>
+      <PageHero title={headerTitle} description={headerDescription} />
 
       <section className="py-16 md:py-24">
-        <div className="container mx-auto px-6">
+        <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -85,7 +75,7 @@ export default function SobrePqEstudarNext() {
       </section>
 
       <section className="py-16 md:py-24 bg-muted/30">
-        <div className="container mx-auto px-6">
+        <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -130,8 +120,69 @@ export default function SobrePqEstudarNext() {
         </div>
       </section>
 
+      <section className="py-16 md:py-24 bg-muted/30">
+        <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.6, ease }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 max-w-4xl">
+              {renderHighlightedTitle("Como fazemos nossa **curadoria**")}
+            </h2>
+            <p className="text-lg text-muted-foreground leading-relaxed mb-10 max-w-3xl">
+              O PqEstudar é uma plataforma independente de curadoria educacional.
+              Selecionamos e organizamos recursos que possam ajudar estudantes e
+              profissionais a tomar decisões com mais clareza.
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              {[
+                {
+                  icon: CheckCircle2,
+                  title: "Critérios de seleção",
+                  desc: "Consideramos utilidade, confiabilidade, acessibilidade, relevância e clareza das informações.",
+                },
+                {
+                  icon: ShieldCheck,
+                  title: "Responsabilidade editorial",
+                  desc: "As escolhas e avaliações são feitas pelo PqEstudar. Relações comerciais ou links afiliados são identificados quando aplicável.",
+                },
+                {
+                  icon: RefreshCw,
+                  title: "Revisão e correções",
+                  desc: "As informações são revisadas periodicamente, mas podem mudar. Correções podem ser enviadas pelo nosso canal de contato.",
+                },
+              ].map((item) => (
+                <Card key={item.title} className="border-border/40 h-full">
+                  <CardContent className="p-6 flex flex-col gap-3">
+                    <item.icon className="h-6 w-6 text-primary" />
+                    <h3 className="font-semibold text-lg">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <p className="mt-8 text-sm text-muted-foreground">
+              Encontrou uma informação incorreta ou desatualizada? Escreva para{" "}
+              <a
+                href="mailto:pqestudar.suporte@gmail.com"
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                pqestudar.suporte@gmail.com
+              </a>
+              .
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       <section className="py-16 md:py-24">
-        <div className="container mx-auto px-6">
+        <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -177,7 +228,7 @@ export default function SobrePqEstudarNext() {
       </section>
 
       <section className="py-16 md:py-24 bg-muted/30">
-        <div className="container mx-auto px-6">
+        <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -209,7 +260,7 @@ export default function SobrePqEstudarNext() {
       </section>
 
       <section className="py-16 md:py-24">
-        <div className="container mx-auto px-6">
+        <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -250,42 +301,7 @@ export default function SobrePqEstudarNext() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-6">
-          <div className="rounded-[1.2rem] border border-border/40 bg-muted/30 p-8 md:p-14 lg:p-16 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.6, ease }}
-              className="flex flex-col items-center gap-6 max-w-3xl mx-auto"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                {renderHighlightedTitle("Encontre o próximo **recurso** certo para você")}
-              </h2>
-              <p className="text-muted-foreground sm:text-lg leading-relaxed">
-                Se você quer estudar com mais direção e encontrar recursos úteis
-                sem perder tempo, comece explorando o que o PqEstudar já tem
-                disponível.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 mt-2">
-                <Link href="/ferramentas">
-                  <Button size="lg" className="gap-2 rounded-[1.2rem] w-full sm:w-auto">
-                    <Search className="h-4 w-4" />
-                    Ver ferramentas
-                  </Button>
-                </Link>
-                <Link href="/concursos">
-                  <Button size="lg" variant="outline" className="gap-2 rounded-[1.2rem] w-full sm:w-auto">
-                    Ver concursos
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      <FinalCtaSectionNext />
     </>
   );
 }

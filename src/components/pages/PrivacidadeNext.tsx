@@ -680,7 +680,7 @@ export default function PrivacidadeNext() {
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground text-center mt-4">
-                    Para exercer seus direitos, entre em contato: <strong>privacidade@pqestudar.com</strong>
+                    Para exercer seus direitos, entre em contato: <strong>pqestudar.suporte@gmail.com</strong>
                   </p>
                       </CardContent>
                     </AccordionContent>
@@ -728,8 +728,8 @@ export default function PrivacidadeNext() {
                       <FileText className="h-4 w-4" />
                       E-mail
                     </h4>
-                    <a href="mailto:privacidade@pqestudar.com" className="text-primary hover:underline break-all font-medium">
-                      privacidade@pqestudar.com
+                    <a href="mailto:pqestudar.suporte@gmail.com" className="text-primary hover:underline break-all font-medium">
+                      pqestudar.suporte@gmail.com
                     </a>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">

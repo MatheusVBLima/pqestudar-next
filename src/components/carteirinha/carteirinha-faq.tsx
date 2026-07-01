@@ -93,7 +93,7 @@ export function CarteirinhaFaq({ items }: { items: Faq[] }) {
               role="region"
               aria-labelledby={buttonId}
               aria-hidden={!isOpen}
-              className={`grid transition-[grid-template-rows,opacity] duration-[400ms] ease-out motion-reduce:transition-none ${
+              className={`grid transition-[grid-template-rows,opacity] [transition-duration:400ms] ease-out motion-reduce:transition-none ${
                 isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
               }`}
             >
