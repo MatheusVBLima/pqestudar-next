@@ -3939,6 +3939,13 @@ export type Database = {
           visitors: number
         }[]
       }
+      admin_overview_devices_public: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          device: string
+          visitors: number
+        }[]
+      }
       admin_overview_online_visitors: {
         Args: { p_window_minutes?: number }
         Returns: number
@@ -3952,6 +3959,13 @@ export type Database = {
         }[]
       }
       admin_overview_sources: {
+        Args: { end_at?: string; p_limit?: number; start_at?: string }
+        Returns: {
+          source: string
+          visitors: number
+        }[]
+      }
+      admin_overview_sources_public: {
         Args: { end_at?: string; p_limit?: number; start_at?: string }
         Returns: {
           source: string

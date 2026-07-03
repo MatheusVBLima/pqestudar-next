@@ -118,7 +118,7 @@ export default function AdminOverview() {
   const { data: sources, isLoading: sourcesLoading } = useQuery({
     queryKey: ["admin-overview-sources", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("admin_overview_sources", {
+      const { data, error } = await supabase.rpc("admin_overview_sources_public", {
         p_limit: 10,
         ...range,
       });
@@ -134,7 +134,7 @@ export default function AdminOverview() {
   const { data: devices, isLoading: devicesLoading } = useQuery({
     queryKey: ["admin-overview-devices", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("admin_overview_devices", range);
+      const { data, error } = await supabase.rpc("admin_overview_devices_public", range);
       if (error) throw error;
       return (data as { device: string; visitors: number }[]).map((d) => ({
         label: d.device,
