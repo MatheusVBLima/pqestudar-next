@@ -100,15 +100,17 @@ export default function GuiaDetalheNext() {
   const resolvedLinks = useGuideLinkPreviews(rawInternalLinks);
 
   const viewTracked = useRef<string | null>(null);
-  const { track } = useAnalyticsTracker();
+  const { track, analyticsReady, isAdmin } = useAnalyticsTracker();
   const firedDepths = useRef(new Set<number>());
 
   useEffect(() => {
-    if (slug && guide?.is_published && viewTracked.current !== slug) {
+    if (analyticsReady && slug && guide?.is_published && viewTracked.current !== slug) {
       viewTracked.current = slug;
-      supabase.rpc("increment_guide_view", { p_slug: slug }).then(({ error }) => {
-        if (error) console.warn("Guide view track error:", error.message);
-      });
+      if (!isAdmin) {
+        supabase.rpc("increment_guide_view", { p_slug: slug }).then(({ error }) => {
+          if (error) console.warn("Guide view track error:", error.message);
+        });
+      }
       const traffic = getGuideTrafficContext();
       track({
         event_name: "guide_detail_open",
@@ -122,7 +124,7 @@ export default function GuiaDetalheNext() {
         allowAnonymous: true,
       });
     }
-  }, [slug, guide, track]);
+  }, [analyticsReady, isAdmin, slug, guide, track]);
 
   useEffect(() => {
     if (!guide?.id || !guide.is_published) return;

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import type { ReactNode } from "react";
 
 interface BarItem {
   label: string;
@@ -12,6 +13,9 @@ interface HorizontalBarsCardProps {
   loading?: boolean;
   showPercent?: boolean;
   emptyMessage?: string;
+  footer?: ReactNode;
+  maxValue?: number;
+  totalValue?: number;
 }
 
 export function HorizontalBarsCard({
@@ -20,10 +24,13 @@ export function HorizontalBarsCard({
   data,
   loading,
   showPercent,
+  footer,
+  maxValue,
+  totalValue,
   emptyMessage = "Sem dados no período.",
 }: HorizontalBarsCardProps) {
-  const max = data && data.length > 0 ? Math.max(...data.map((d) => d.value)) : 0;
-  const total = data ? data.reduce((sum, d) => sum + d.value, 0) : 0;
+  const max = maxValue ?? (data && data.length > 0 ? Math.max(...data.map((d) => d.value)) : 0);
+  const total = totalValue ?? (data ? data.reduce((sum, d) => sum + d.value, 0) : 0);
 
   return (
     <Card>
@@ -67,6 +74,7 @@ export function HorizontalBarsCard({
             })}
           </ul>
         )}
+        {footer ? <div className="mt-4 border-t border-border pt-3">{footer}</div> : null}
       </CardContent>
     </Card>
   );

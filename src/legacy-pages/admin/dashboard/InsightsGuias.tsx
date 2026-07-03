@@ -7,6 +7,7 @@ import { StatCard } from "@/components/admin/dashboard/StatCard";
 import { ChartCard } from "@/components/admin/dashboard/ChartCard";
 import { DataTable } from "@/components/admin/dashboard/DataTable";
 import { HorizontalBarsCard } from "@/components/admin/dashboard/HorizontalBarsCard";
+import { Button } from "@/components/ui/button";
 import { periodToRange } from "@/components/admin/dashboard/periodHelper";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,15 +65,86 @@ interface OverviewRow {
   cta_ctr?: number;
 }
 
+const PAGE_SIZE = 5;
+
+type PageKey = "ranking" | "scroll" | "read" | "sources" | "guideClicks" | "ctas" | "links";
+type PageState = Record<PageKey, number>;
+
+const INITIAL_PAGES: PageState = {
+  ranking: 1,
+  scroll: 1,
+  read: 1,
+  sources: 1,
+  guideClicks: 1,
+  ctas: 1,
+  links: 1,
+};
+
+function paginate<T>(items: T[], requestedPage: number) {
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const page = Math.min(Math.max(requestedPage, 1), totalPages);
+  return {
+    items: items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    page,
+    totalPages,
+  };
+}
+
+function PaginationControls({
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-center gap-3">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-8 rounded-md text-xs"
+        disabled={page <= 1}
+        onClick={() => onPageChange(page - 1)}
+      >
+        Anterior
+      </Button>
+      <span className="min-w-20 text-center text-xs font-medium text-muted-foreground">
+        Página {page} de {totalPages}
+      </span>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-8 rounded-md text-xs"
+        disabled={page >= totalPages}
+        onClick={() => onPageChange(page + 1)}
+      >
+        Próxima
+      </Button>
+    </div>
+  );
+}
+
 export default function InsightsGuias() {
   const [period, setPeriod] = useState<Period>("month");
+  const [pages, setPages] = useState<PageState>(INITIAL_PAGES);
+  const setPage = (key: PageKey, page: number) => {
+    setPages((current) => ({ ...current, [key]: page }));
+  };
+  const changePeriod = (nextPeriod: Period) => {
+    setPeriod(nextPeriod);
+    setPages(INITIAL_PAGES);
+  };
   const range = periodToRange(period);
   const args = { start_at: range.start_at, end_at: range.end_at };
 
   const overview = useQuery({
     queryKey: ["insights-guides-overview", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("analytics_guides_overview", args);
+      const { data, error } = await supabase.rpc("analytics_guides_overview_public", args);
       if (error) throw error;
       return data as OverviewRow;
     },
@@ -82,7 +154,7 @@ export default function InsightsGuias() {
   const ranking = useQuery({
     queryKey: ["insights-guides-ranking", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("analytics_guides_ranking", args);
+      const { data, error } = await supabase.rpc("analytics_guides_ranking_public", args);
       if (error) throw error;
       return (data as GuideRankingRow[]) ?? [];
     },
@@ -92,7 +164,7 @@ export default function InsightsGuias() {
   const scroll = useQuery({
     queryKey: ["insights-guides-scroll", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("analytics_guide_scroll_stats", args);
+      const { data, error } = await supabase.rpc("analytics_guide_scroll_stats_public", args);
       if (error) throw error;
       return (data as ScrollStatRow[]) ?? [];
     },
@@ -102,7 +174,7 @@ export default function InsightsGuias() {
   const read = useQuery({
     queryKey: ["insights-guides-read", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("analytics_guide_avg_read", args);
+      const { data, error } = await supabase.rpc("analytics_guide_avg_read_public", args);
       if (error) throw error;
       return (data as AvgReadRow[]) ?? [];
     },
@@ -112,7 +184,7 @@ export default function InsightsGuias() {
   const ctas = useQuery({
     queryKey: ["insights-guides-ctas", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("analytics_guide_top_ctas", args);
+      const { data, error } = await supabase.rpc("analytics_guide_top_ctas_public", args);
       if (error) throw error;
       return (data as CtaRow[]) ?? [];
     },
@@ -122,7 +194,7 @@ export default function InsightsGuias() {
   const links = useQuery({
     queryKey: ["insights-guides-links", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("analytics_guide_top_internal_links", args);
+      const { data, error } = await supabase.rpc("analytics_guide_top_internal_links_public", args);
       if (error) throw error;
       return (data as InternalLinkRow[]) ?? [];
     },
@@ -132,7 +204,7 @@ export default function InsightsGuias() {
   const sources = useQuery({
     queryKey: ["insights-guides-sources", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("analytics_guide_sources", args);
+      const { data, error } = await supabase.rpc("analytics_guide_sources_public", args);
       if (error) throw error;
       return (data as SourceRow[]) ?? [];
     },
@@ -152,43 +224,72 @@ export default function InsightsGuias() {
       views: Number(r.views ?? 0),
       cta: Number(r.cta_clicks ?? 0),
     }))
-    .filter((r) => r.views > 0 || r.cta > 0)
-    .slice(0, 10);
+    .filter((r) => r.views > 0 || r.cta > 0);
 
   const scrollChartFromStats = (scroll.data ?? [])
     .map((r) => ({
       guide_label: r.guide_label,
       avg_max_scroll: Number(r.avg_max_scroll ?? 0),
     }))
-    .filter((r) => r.avg_max_scroll > 0)
-    .slice(0, 10);
+    .filter((r) => r.avg_max_scroll > 0);
 
   const scrollChartFromRanking = (ranking.data ?? [])
     .map((r) => ({
       guide_label: r.guide_label,
       avg_max_scroll: Number(r.avg_max_scroll ?? 0),
     }))
-    .filter((r) => r.avg_max_scroll > 0)
-    .slice(0, 10);
+    .filter((r) => r.avg_max_scroll > 0);
 
   const readChartFromStats = (read.data ?? [])
     .map((r) => ({
       guide_label: r.guide_label,
       avg_read_seconds: Number(r.avg_read_seconds ?? 0),
     }))
-    .filter((r) => r.avg_read_seconds > 0)
-    .slice(0, 10);
+    .filter((r) => r.avg_read_seconds > 0);
 
   const readChartFromRanking = (ranking.data ?? [])
     .map((r) => ({
       guide_label: r.guide_label,
       avg_read_seconds: Number(r.avg_read_seconds ?? 0),
     }))
-    .filter((r) => r.avg_read_seconds > 0)
-    .slice(0, 10);
+    .filter((r) => r.avg_read_seconds > 0);
 
   const scrollChart = scrollChartFromStats.length > 0 ? scrollChartFromStats : scrollChartFromRanking;
   const readChart = readChartFromStats.length > 0 ? readChartFromStats : readChartFromRanking;
+  const sourceRows = (sources.data ?? []).map((source) => ({
+    label: source.source,
+    value: Number(source.visitors),
+  }));
+  const guideClickRows = (ranking.data ?? []).map((row) => ({
+    title: row.guide_label,
+    views: String(row.views),
+    opens: String(row.opens),
+    cta_clicks: String(row.cta_clicks),
+    internal_link_clicks: String(row.internal_link_clicks),
+  }));
+  const ctaRows = (ctas.data ?? []).map((row) => ({
+    cta_label: row.cta_label,
+    cta_position: row.cta_position,
+    guide_label: row.guide_label,
+    cta_url: row.cta_url,
+    clicks: String(row.clicks),
+  }));
+  const linkRows = (links.data ?? []).map((row) => ({
+    link_label: row.link_label,
+    guide_label: row.guide_label,
+    link_url: row.link_url,
+    clicks: String(row.clicks),
+  }));
+
+  const rankingPage = paginate(rankingChart, pages.ranking);
+  const scrollPage = paginate(scrollChart, pages.scroll);
+  const readPage = paginate(readChart, pages.read);
+  const sourcesPage = paginate(sourceRows, pages.sources);
+  const guideClicksPage = paginate(guideClickRows, pages.guideClicks);
+  const ctasPage = paginate(ctaRows, pages.ctas);
+  const linksPage = paginate(linkRows, pages.links);
+  const sourceTotal = sourceRows.reduce((total, row) => total + row.value, 0);
+  const sourceMax = sourceRows.length > 0 ? Math.max(...sourceRows.map((row) => row.value)) : 0;
   const hasOverviewViews = Number(ov.total_views ?? 0) > 0;
   const detailedAnalyticsMessage = hasOverviewViews
     ? "Há visualizações registradas no contador simples, mas ainda não há eventos detalhados de analytics para montar este ranking."
@@ -199,7 +300,7 @@ export default function InsightsGuias() {
       <PageHeader
         title="Guias — Leitura"
         description="Performance editorial: acessos, leitura, retenção e cliques"
-        actions={<PeriodSelector value={period} onChange={setPeriod} />}
+        actions={<PeriodSelector value={period} onChange={changePeriod} />}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -229,10 +330,11 @@ export default function InsightsGuias() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Ranking de guias" description="Top 10 por visualizações">
+        <ChartCard title="Ranking de guias" description="Visualizações — 5 por página">
           {rankingChart.length > 0 ? (
+            <>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={rankingChart} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <BarChart data={rankingPage.items} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} angle={-20} textAnchor="end" height={70} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
@@ -248,6 +350,14 @@ export default function InsightsGuias() {
                 <Bar dataKey="cta" name="Cliques CTA" fill="hsl(var(--primary) / 0.4)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-4 border-t border-border pt-3">
+              <PaginationControls
+                page={rankingPage.page}
+                totalPages={rankingPage.totalPages}
+                onPageChange={(page) => setPage("ranking", page)}
+              />
+            </div>
+            </>
           ) : (
             <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-muted-foreground">
               {detailedAnalyticsMessage}
@@ -255,10 +365,11 @@ export default function InsightsGuias() {
           )}
         </ChartCard>
 
-        <ChartCard title="Profundidade de rolagem" description="Scroll médio (%) por guia — Top 10">
+        <ChartCard title="Profundidade de rolagem" description="Scroll médio (%) por guia — 5 por página">
           {scrollChart.length > 0 ? (
+            <>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={scrollChart} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <BarChart data={scrollPage.items} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis
                   dataKey="guide_label"
@@ -284,6 +395,14 @@ export default function InsightsGuias() {
                 />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-4 border-t border-border pt-3">
+              <PaginationControls
+                page={scrollPage.page}
+                totalPages={scrollPage.totalPages}
+                onPageChange={(page) => setPage("scroll", page)}
+              />
+            </div>
+            </>
           ) : (
             <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-muted-foreground">
               {detailedAnalyticsMessage}
@@ -291,10 +410,11 @@ export default function InsightsGuias() {
           )}
         </ChartCard>
 
-        <ChartCard title="Tempo médio de leitura" description="Top 10 por segundos">
+        <ChartCard title="Tempo médio de leitura" description="5 por página, em segundos">
           {readChart.length > 0 ? (
+            <>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={readChart} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <BarChart data={readPage.items} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis
                   dataKey="guide_label"
@@ -320,6 +440,14 @@ export default function InsightsGuias() {
                 />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-4 border-t border-border pt-3">
+              <PaginationControls
+                page={readPage.page}
+                totalPages={readPage.totalPages}
+                onPageChange={(page) => setPage("read", page)}
+              />
+            </div>
+            </>
           ) : (
             <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-muted-foreground">
               {detailedAnalyticsMessage}
@@ -329,13 +457,19 @@ export default function InsightsGuias() {
 
         <HorizontalBarsCard
           title="Origem do tráfego"
-          description="Visitantes por fonte nas páginas de guias"
+          description="Visitantes por fonte — 5 por página"
           loading={sources.isLoading}
           showPercent
-          data={(sources.data ?? []).map((s) => ({
-            label: s.source,
-            value: Number(s.visitors),
-          }))}
+          data={sourcesPage.items}
+          totalValue={sourceTotal}
+          maxValue={sourceMax}
+          footer={sourceRows.length > 0 ? (
+            <PaginationControls
+              page={sourcesPage.page}
+              totalPages={sourcesPage.totalPages}
+              onPageChange={(page) => setPage("sources", page)}
+            />
+          ) : null}
         />
       </div>
 
@@ -348,14 +482,15 @@ export default function InsightsGuias() {
           { key: "cta_clicks", label: "Cliques CTA" },
           { key: "internal_link_clicks", label: "Links internos" },
         ]}
-        rows={(ranking.data ?? []).map((r) => ({
-          title: r.guide_label,
-          views: String(r.views),
-          opens: String(r.opens),
-          cta_clicks: String(r.cta_clicks),
-          internal_link_clicks: String(r.internal_link_clicks),
-        }))}
+        rows={guideClicksPage.items}
         emptyMessage={detailedAnalyticsMessage}
+        footer={guideClickRows.length > 0 ? (
+          <PaginationControls
+            page={guideClicksPage.page}
+            totalPages={guideClicksPage.totalPages}
+            onPageChange={(page) => setPage("guideClicks", page)}
+          />
+        ) : null}
       />
 
       <DataTable
@@ -367,13 +502,14 @@ export default function InsightsGuias() {
           { key: "cta_url", label: "Link" },
           { key: "clicks", label: "Cliques" },
         ]}
-        rows={(ctas.data ?? []).map((r) => ({
-          cta_label: r.cta_label,
-          cta_position: r.cta_position,
-          guide_label: r.guide_label,
-          cta_url: r.cta_url,
-          clicks: String(r.clicks),
-        }))}
+        rows={ctasPage.items}
+        footer={ctaRows.length > 0 ? (
+          <PaginationControls
+            page={ctasPage.page}
+            totalPages={ctasPage.totalPages}
+            onPageChange={(page) => setPage("ctas", page)}
+          />
+        ) : null}
       />
 
       <DataTable
@@ -384,12 +520,14 @@ export default function InsightsGuias() {
           { key: "link_url", label: "Destino" },
           { key: "clicks", label: "Cliques" },
         ]}
-        rows={(links.data ?? []).map((r) => ({
-          link_label: r.link_label,
-          guide_label: r.guide_label,
-          link_url: r.link_url,
-          clicks: String(r.clicks),
-        }))}
+        rows={linksPage.items}
+        footer={linkRows.length > 0 ? (
+          <PaginationControls
+            page={linksPage.page}
+            totalPages={linksPage.totalPages}
+            onPageChange={(page) => setPage("links", page)}
+          />
+        ) : null}
       />
     </div>
   );

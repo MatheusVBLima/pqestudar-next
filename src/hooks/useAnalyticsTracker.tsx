@@ -34,6 +34,10 @@ export function useAnalyticsTracker() {
   const track = useCallback(
     async (params: TrackEventParams) => {
       try {
+        // Wait until the authenticated user's role is known. Otherwise an admin
+        // could be briefly classified as an anonymous visitor on a hard load.
+        if (rolesLoading) return;
+
         const canUseConsentedAnalytics = isAdmin || (consentData.hasConsented && consentData.preferences.analytics);
         const canUseAnonymousAggregate = params.allowAnonymous && !isAdmin;
 
@@ -47,11 +51,9 @@ export function useAnalyticsTracker() {
 
         const actor_type = canUseAnonymousAggregate && !canUseConsentedAnalytics
           ? 'anonymous'
-          : rolesLoading
-            ? 'unknown'
-            : isAdmin
-              ? 'admin'
-              : 'public';
+          : isAdmin
+            ? 'admin'
+            : 'public';
 
         const payload: TablesInsert<'analytics_events'> = {
           event_name: params.event_name,
@@ -71,7 +73,7 @@ export function useAnalyticsTracker() {
     [user?.id, isAdmin, rolesLoading, consentData.hasConsented, consentData.preferences.analytics],
   );
 
-  return { track };
+  return { track, analyticsReady: !rolesLoading, isAdmin };
 }
 
 /**

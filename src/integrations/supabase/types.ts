@@ -4043,7 +4043,26 @@ export type Database = {
           total_sessions: number
         }[]
       }
+      analytics_guide_avg_read_public: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          avg_read_seconds: number
+          entity_id: string
+          guide_label: string
+          total_sessions: number
+        }[]
+      }
       analytics_guide_scroll_stats: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          avg_max_scroll: number
+          completion_rate: number
+          entity_id: string
+          guide_label: string
+          total_sessions: number
+        }[]
+      }
+      analytics_guide_scroll_stats_public: {
         Args: { end_at?: string; start_at?: string }
         Returns: {
           avg_max_scroll: number
@@ -4060,7 +4079,24 @@ export type Database = {
           visitors: number
         }[]
       }
+      analytics_guide_sources_public: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          source: string
+          visitors: number
+        }[]
+      }
       analytics_guide_top_ctas: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          clicks: number
+          cta_label: string
+          cta_position: string
+          cta_url: string
+          guide_label: string
+        }[]
+      }
+      analytics_guide_top_ctas_public: {
         Args: { end_at?: string; start_at?: string }
         Returns: {
           clicks: number
@@ -4079,13 +4115,40 @@ export type Database = {
           link_url: string
         }[]
       }
+      analytics_guide_top_internal_links_public: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          clicks: number
+          guide_label: string
+          link_label: string
+          link_url: string
+        }[]
+      }
       analytics_guides_overview: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: Json
+      }
+      analytics_guides_overview_public: {
         Args: { end_at?: string; start_at?: string }
         Returns: Json
       }
       analytics_guides_ranking: {
         Args: { end_at?: string; start_at?: string }
         Returns: {
+          cta_clicks: number
+          entity_id: string
+          guide_label: string
+          internal_link_clicks: number
+          opens: number
+          slug: string
+          views: number
+        }[]
+      }
+      analytics_guides_ranking_public: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          avg_max_scroll: number
+          avg_read_seconds: number
           cta_clicks: number
           entity_id: string
           guide_label: string
