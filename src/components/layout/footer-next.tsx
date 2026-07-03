@@ -38,6 +38,7 @@ const navLinksBottom = [
 
 export function Footer() {
   const { logos } = useNavConfig();
+  const currentYear = new Date().getFullYear();
 
   return (
     <footer className="border-t border-border bg-background shrink-0 w-full">
@@ -98,7 +99,7 @@ export function Footer() {
 
           {/* Copyright */}
           <div className="text-center text-xs text-muted-foreground leading-relaxed">
-            <p>© 2025 PqEstudar</p>
+            <p>© {currentYear} PqEstudar</p>
             <p>Todos os direitos reservados</p>
           </div>
         </div>
@@ -145,7 +146,7 @@ export function Footer() {
           {/* Bottom row: copyright + nav links */}
           <div className="flex items-end justify-between gap-4 pt-6">
             <div className="text-sm text-muted-foreground leading-relaxed">
-              <p>© 2025 PqEstudar</p>
+              <p>© {currentYear} PqEstudar</p>
               <p>Todos os direitos reservados</p>
             </div>
 
