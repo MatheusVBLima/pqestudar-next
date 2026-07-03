@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Users, Wrench, BookOpen, TrendingUp } from "lucide-react";
+import { Users, Wrench, BookOpen, TrendingUp, Bookmark } from "lucide-react";
 import { PageHeader } from "@/components/admin/dashboard/PageHeader";
 import { StatCard } from "@/components/admin/dashboard/StatCard";
 import { ChartCard } from "@/components/admin/dashboard/ChartCard";
@@ -87,8 +87,8 @@ export default function AdminOverview() {
   const { data: topPages, isLoading: topPagesLoading } = useQuery({
     queryKey: ["admin-overview-top-pages", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("admin_overview_top_pages", {
-        p_limit: 10,
+      const { data, error } = await supabase.rpc("admin_overview_top_pages_public", {
+        p_limit: 500,
         ...range,
       });
       if (error) throw error;
@@ -96,6 +96,21 @@ export default function AdminOverview() {
         path: d.path,
         visitors: Number(d.visitors),
       }));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: savedVisitors } = useQuery({
+    queryKey: ["admin-overview-saved-visitors", period],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_overview_saved_visitors", range);
+      if (error) throw error;
+      const row = data?.[0];
+      return {
+        uniqueUsers: Number(row?.unique_users ?? 0),
+        visitors: Number(row?.visitors ?? 0),
+        views: Number(row?.views ?? 0),
+      };
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -131,7 +146,7 @@ export default function AdminOverview() {
 
   const formatValue = (v: number | null | undefined) => (v != null ? String(v) : "—");
   const ctrDisplay = stats?.ctr_30d != null ? `${stats.ctr_30d}%` : "—";
-  const activityRows = activity ?? [];
+  const activityRows = useMemo(() => activity ?? [], [activity]);
   const totalActivityPages = Math.max(1, Math.ceil(activityRows.length / ACTIVITY_PAGE_SIZE));
   const safeActivityPage = Math.min(activityPage, totalActivityPages);
   const paginatedActivityRows = useMemo(
@@ -164,7 +179,7 @@ export default function AdminOverview() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard
           title="Visitantes"
           value={formatValue(stats?.visitors_30d)}
@@ -188,6 +203,13 @@ export default function AdminOverview() {
           value={ctrDisplay}
           icon={TrendingUp}
           description={`Cliques ferramentas / visitas · ${periodLabel}`}
+        />
+        <StatCard
+          title="Usuários em Salvos"
+          value={formatValue(savedVisitors?.uniqueUsers)}
+          icon={Bookmark}
+          trend={savedVisitors ? `${savedVisitors.views.toLocaleString("pt-BR")} visitas` : undefined}
+          description={`Usuários identificados com análise permitida · ${periodLabel}`}
         />
       </div>
 

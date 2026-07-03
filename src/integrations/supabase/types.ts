@@ -3943,6 +3943,14 @@ export type Database = {
         Args: { p_window_minutes?: number }
         Returns: number
       }
+      admin_overview_saved_visitors: {
+        Args: { end_at?: string; start_at?: string }
+        Returns: {
+          unique_users: number
+          visitors: number
+          views: number
+        }[]
+      }
       admin_overview_sources: {
         Args: { end_at?: string; p_limit?: number; start_at?: string }
         Returns: {
@@ -3955,6 +3963,13 @@ export type Database = {
         Returns: Json
       }
       admin_overview_top_pages: {
+        Args: { end_at?: string; p_limit?: number; start_at?: string }
+        Returns: {
+          path: string
+          visitors: number
+        }[]
+      }
+      admin_overview_top_pages_public: {
         Args: { end_at?: string; p_limit?: number; start_at?: string }
         Returns: {
           path: string
