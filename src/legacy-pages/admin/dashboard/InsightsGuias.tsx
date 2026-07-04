@@ -8,6 +8,7 @@ import { ChartCard } from "@/components/admin/dashboard/ChartCard";
 import { DataTable } from "@/components/admin/dashboard/DataTable";
 import { HorizontalBarsCard } from "@/components/admin/dashboard/HorizontalBarsCard";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { periodToRange } from "@/components/admin/dashboard/periodHelper";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,17 +68,23 @@ interface OverviewRow {
 
 const PAGE_SIZE = 5;
 
-type PageKey = "ranking" | "scroll" | "read" | "sources" | "guideClicks" | "ctas" | "links";
+type PageKey = "sources" | "guideClicks" | "ctas" | "links";
 type PageState = Record<PageKey, number>;
+type ChartKey = "ranking" | "scroll" | "read";
+type ChartLimit = "10" | "20" | "50" | "all";
+type ChartLimitState = Record<ChartKey, ChartLimit>;
 
 const INITIAL_PAGES: PageState = {
-  ranking: 1,
-  scroll: 1,
-  read: 1,
   sources: 1,
   guideClicks: 1,
   ctas: 1,
   links: 1,
+};
+
+const INITIAL_CHART_LIMITS: ChartLimitState = {
+  ranking: "10",
+  scroll: "10",
+  read: "10",
 };
 
 function paginate<T>(items: T[], requestedPage: number) {
@@ -88,6 +95,26 @@ function paginate<T>(items: T[], requestedPage: number) {
     page,
     totalPages,
   };
+}
+
+function limitChartItems<T>(items: T[], limit: ChartLimit) {
+  return limit === "all" ? items : items.slice(0, Number(limit));
+}
+
+function ChartLimitSelect({ value, onChange }: { value: ChartLimit; onChange: (value: ChartLimit) => void }) {
+  return (
+    <Select value={value} onValueChange={(next) => onChange(next as ChartLimit)}>
+      <SelectTrigger className="h-8 w-[110px] text-xs">
+        <SelectValue aria-label="Quantidade exibida" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="10">10 itens</SelectItem>
+        <SelectItem value="20">20 itens</SelectItem>
+        <SelectItem value="50">50 itens</SelectItem>
+        <SelectItem value="all">Todos</SelectItem>
+      </SelectContent>
+    </Select>
+  );
 }
 
 function PaginationControls({
@@ -131,12 +158,16 @@ function PaginationControls({
 export default function InsightsGuias() {
   const [period, setPeriod] = useState<Period>("month");
   const [pages, setPages] = useState<PageState>(INITIAL_PAGES);
+  const [chartLimits, setChartLimits] = useState<ChartLimitState>(INITIAL_CHART_LIMITS);
   const setPage = (key: PageKey, page: number) => {
     setPages((current) => ({ ...current, [key]: page }));
   };
   const changePeriod = (nextPeriod: Period) => {
     setPeriod(nextPeriod);
     setPages(INITIAL_PAGES);
+  };
+  const setChartLimit = (key: ChartKey, limit: ChartLimit) => {
+    setChartLimits((current) => ({ ...current, [key]: limit }));
   };
   const range = periodToRange(period);
   const args = { start_at: range.start_at, end_at: range.end_at };
@@ -281,9 +312,9 @@ export default function InsightsGuias() {
     clicks: String(row.clicks),
   }));
 
-  const rankingPage = paginate(rankingChart, pages.ranking);
-  const scrollPage = paginate(scrollChart, pages.scroll);
-  const readPage = paginate(readChart, pages.read);
+  const rankingDisplay = limitChartItems(rankingChart, chartLimits.ranking);
+  const scrollDisplay = limitChartItems(scrollChart, chartLimits.scroll);
+  const readDisplay = limitChartItems(readChart, chartLimits.read);
   const sourcesPage = paginate(sourceRows, pages.sources);
   const guideClicksPage = paginate(guideClickRows, pages.guideClicks);
   const ctasPage = paginate(ctaRows, pages.ctas);
@@ -330,11 +361,14 @@ export default function InsightsGuias() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Ranking de guias" description="Visualizações — 5 por página">
+        <ChartCard
+          title="Ranking de guias"
+          description="Ordenado por visualizações"
+          actions={<ChartLimitSelect value={chartLimits.ranking} onChange={(value) => setChartLimit("ranking", value)} />}
+        >
           {rankingChart.length > 0 ? (
-            <>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={rankingPage.items} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <BarChart data={rankingDisplay} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} angle={-20} textAnchor="end" height={70} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
@@ -350,14 +384,6 @@ export default function InsightsGuias() {
                 <Bar dataKey="cta" name="Cliques CTA" fill="hsl(var(--primary) / 0.4)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-            <div className="mt-4 border-t border-border pt-3">
-              <PaginationControls
-                page={rankingPage.page}
-                totalPages={rankingPage.totalPages}
-                onPageChange={(page) => setPage("ranking", page)}
-              />
-            </div>
-            </>
           ) : (
             <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-muted-foreground">
               {detailedAnalyticsMessage}
@@ -365,11 +391,14 @@ export default function InsightsGuias() {
           )}
         </ChartCard>
 
-        <ChartCard title="Profundidade de rolagem" description="Scroll médio (%) por guia — 5 por página">
+        <ChartCard
+          title="Profundidade de rolagem"
+          description="Scroll médio (%) por guia"
+          actions={<ChartLimitSelect value={chartLimits.scroll} onChange={(value) => setChartLimit("scroll", value)} />}
+        >
           {scrollChart.length > 0 ? (
-            <>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={scrollPage.items} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <BarChart data={scrollDisplay} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis
                   dataKey="guide_label"
@@ -395,14 +424,6 @@ export default function InsightsGuias() {
                 />
               </BarChart>
             </ResponsiveContainer>
-            <div className="mt-4 border-t border-border pt-3">
-              <PaginationControls
-                page={scrollPage.page}
-                totalPages={scrollPage.totalPages}
-                onPageChange={(page) => setPage("scroll", page)}
-              />
-            </div>
-            </>
           ) : (
             <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-muted-foreground">
               {detailedAnalyticsMessage}
@@ -410,11 +431,14 @@ export default function InsightsGuias() {
           )}
         </ChartCard>
 
-        <ChartCard title="Tempo médio de leitura" description="5 por página, em segundos">
+        <ChartCard
+          title="Tempo médio de leitura"
+          description="Em segundos por guia"
+          actions={<ChartLimitSelect value={chartLimits.read} onChange={(value) => setChartLimit("read", value)} />}
+        >
           {readChart.length > 0 ? (
-            <>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={readPage.items} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <BarChart data={readDisplay} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis
                   dataKey="guide_label"
@@ -440,14 +464,6 @@ export default function InsightsGuias() {
                 />
               </BarChart>
             </ResponsiveContainer>
-            <div className="mt-4 border-t border-border pt-3">
-              <PaginationControls
-                page={readPage.page}
-                totalPages={readPage.totalPages}
-                onPageChange={(page) => setPage("read", page)}
-              />
-            </div>
-            </>
           ) : (
             <div className="flex h-48 items-center justify-center px-6 text-center text-sm text-muted-foreground">
               {detailedAnalyticsMessage}
@@ -474,11 +490,11 @@ export default function InsightsGuias() {
       </div>
 
       <DataTable
-        title="Cliques por guia"
+        title="Desempenho por guia"
         columns={[
           { key: "title", label: "Guia" },
-          { key: "views", label: "Views" },
-          { key: "opens", label: "Aberturas" },
+          { key: "views", label: "Visualizações" },
+          { key: "opens", label: "Visitantes únicos" },
           { key: "cta_clicks", label: "Cliques CTA" },
           { key: "internal_link_clicks", label: "Links internos" },
         ]}

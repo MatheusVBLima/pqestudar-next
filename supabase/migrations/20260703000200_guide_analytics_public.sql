@@ -11,61 +11,58 @@ STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  WITH events AS (
+  WITH guide_views AS (
     SELECT
-      ae.*,
-      COALESCE(
-        NULLIF(ae.entity_id, ''),
-        NULLIF(ae.meta->>'guide_slug', ''),
-        CASE
-          WHEN ae.path ~ '^/guias/[^/?#]+' THEN split_part(split_part(ae.path, '?', 1), '/', 3)
-        END
-      ) AS guide_key
+      pv.session_id,
+      split_part(split_part(pv.path, '?', 1), '/', 3) AS guide_slug
+    FROM public.page_views AS pv
+    WHERE public.is_admin()
+      AND pv.actor_type = 'public'
+      AND pv.path LIKE '/guias/%'
+      AND NULLIF(split_part(split_part(pv.path, '?', 1), '/', 3), '') IS NOT NULL
+      AND (start_at IS NULL OR pv.created_at >= start_at)
+      AND (end_at IS NULL OR pv.created_at < end_at)
+  ), events AS (
+    SELECT ae.*
     FROM public.analytics_events AS ae
     WHERE public.is_admin()
-      AND ae.event_name IN (
-        'guide_detail_open',
-        'guide_read_heartbeat',
-        'guide_scroll_depth',
-        'guide_cta_click',
-        'guide_internal_link_click'
-      )
       AND ae.actor_type IN ('public', 'anonymous')
+      AND ae.event_name IN ('guide_read_heartbeat', 'guide_scroll_depth', 'guide_cta_click')
       AND (start_at IS NULL OR ae.created_at >= start_at)
       AND (end_at IS NULL OR ae.created_at < end_at)
   ), session_read AS (
-    SELECT guide_key, session_id,
+    SELECT session_id,
       SUM(COALESCE((meta->>'read_seconds_increment')::NUMERIC, 0)) AS read_seconds
     FROM events
     WHERE event_name = 'guide_read_heartbeat'
-      AND guide_key IS NOT NULL
-    GROUP BY guide_key, session_id
+    GROUP BY session_id
   ), session_scroll AS (
-    SELECT guide_key, session_id,
+    SELECT session_id,
       MAX(COALESCE((meta->>'scroll_depth')::NUMERIC, 0)) AS max_scroll
     FROM events
     WHERE event_name = 'guide_scroll_depth'
-      AND guide_key IS NOT NULL
-    GROUP BY guide_key, session_id
-  ), totals AS (
+    GROUP BY session_id
+  ), view_totals AS (
     SELECT
-      COUNT(*) FILTER (WHERE event_name = 'guide_detail_open') AS total_views,
-      COUNT(DISTINCT guide_key) FILTER (WHERE event_name = 'guide_detail_open') AS unique_guides,
-      COUNT(*) FILTER (WHERE event_name = 'guide_cta_click') AS cta_clicks
+      COUNT(*) AS total_views,
+      COUNT(DISTINCT guide_slug) AS unique_guides
+    FROM guide_views
+  ), event_totals AS (
+    SELECT COUNT(*) FILTER (WHERE event_name = 'guide_cta_click') AS cta_clicks
     FROM events
   )
   SELECT jsonb_build_object(
-    'total_views', totals.total_views,
-    'unique_guides', totals.unique_guides,
+    'total_views', view_totals.total_views,
+    'unique_guides', view_totals.unique_guides,
     'avg_read_seconds', COALESCE((SELECT ROUND(AVG(read_seconds), 1) FROM session_read), 0),
     'avg_completion_pct', COALESCE((
       SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE max_scroll >= 75) / NULLIF(COUNT(*), 0), 1)
       FROM session_scroll
     ), 0),
-    'cta_clicks', totals.cta_clicks,
-    'cta_ctr', COALESCE(ROUND(100.0 * totals.cta_clicks / NULLIF(totals.total_views, 0), 2), 0)
+    'cta_clicks', event_totals.cta_clicks,
+    'cta_ctr', COALESCE(ROUND(100.0 * event_totals.cta_clicks / NULLIF(view_totals.total_views, 0), 2), 0)
   )
-  FROM totals;
+  FROM view_totals CROSS JOIN event_totals;
 $$;
 
 CREATE OR REPLACE FUNCTION public.analytics_guides_ranking_public(
@@ -88,19 +85,34 @@ STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  WITH events AS (
+  WITH view_totals AS (
+    SELECT
+      split_part(split_part(pv.path, '?', 1), '/', 3) AS entity_id,
+      COUNT(*) AS views,
+      COUNT(DISTINCT pv.session_id) AS opens
+    FROM public.page_views AS pv
+    WHERE public.is_admin()
+      AND pv.actor_type = 'public'
+      AND pv.path LIKE '/guias/%'
+      AND NULLIF(split_part(split_part(pv.path, '?', 1), '/', 3), '') IS NOT NULL
+      AND (start_at IS NULL OR pv.created_at >= start_at)
+      AND (end_at IS NULL OR pv.created_at < end_at)
+    GROUP BY 1
+  ), events AS (
     SELECT
       ae.event_name,
       ae.session_id,
       ae.meta,
       COALESCE(
-        NULLIF(ae.entity_id, ''),
         NULLIF(ae.meta->>'guide_slug', ''),
+        g.slug,
         CASE
           WHEN ae.path ~ '^/guias/[^/?#]+' THEN split_part(split_part(ae.path, '?', 1), '/', 3)
-        END
+        END,
+        NULLIF(ae.entity_id, '')
       ) AS entity_id
     FROM public.analytics_events AS ae
+    LEFT JOIN public.guides AS g ON g.id::TEXT = ae.entity_id
     WHERE public.is_admin()
       AND ae.event_name IN (
         'guide_detail_open',
@@ -122,6 +134,10 @@ AS $$
       COUNT(*) FILTER (WHERE event_name = 'guide_internal_link_click') AS internal_link_clicks
     FROM resolved_events
     GROUP BY entity_id
+  ), guide_keys AS (
+    SELECT entity_id FROM view_totals
+    UNION
+    SELECT entity_id FROM event_totals
   ), session_read AS (
     SELECT entity_id, session_id,
       SUM(COALESCE((meta->>'read_seconds_increment')::NUMERIC, 0)) AS read_seconds
@@ -144,20 +160,22 @@ AS $$
     GROUP BY entity_id
   )
   SELECT
-    et.entity_id,
-    COALESCE(g.title, et.entity_id) AS guide_label,
-    COALESCE(g.slug, et.entity_id) AS slug,
-    et.opens AS views,
-    et.opens,
-    et.cta_clicks,
-    et.internal_link_clicks,
+    keys.entity_id,
+    COALESCE(g.title, keys.entity_id) AS guide_label,
+    COALESCE(g.slug, keys.entity_id) AS slug,
+    COALESCE(vt.views, 0) AS views,
+    COALESCE(vt.opens, 0) AS opens,
+    COALESCE(et.cta_clicks, 0) AS cta_clicks,
+    COALESCE(et.internal_link_clicks, 0) AS internal_link_clicks,
     COALESCE(rs.avg_read_seconds, 0),
     COALESCE(ss.avg_max_scroll, 0)
-  FROM event_totals AS et
-  LEFT JOIN public.guides AS g ON g.id::TEXT = et.entity_id OR g.slug = et.entity_id
-  LEFT JOIN read_stats AS rs ON rs.entity_id = et.entity_id
-  LEFT JOIN scroll_stats AS ss ON ss.entity_id = et.entity_id
-  ORDER BY et.opens DESC, guide_label ASC;
+  FROM guide_keys AS keys
+  LEFT JOIN public.guides AS g ON g.slug = keys.entity_id OR g.id::TEXT = keys.entity_id
+  LEFT JOIN view_totals AS vt ON vt.entity_id = keys.entity_id
+  LEFT JOIN event_totals AS et ON et.entity_id = keys.entity_id
+  LEFT JOIN read_stats AS rs ON rs.entity_id = keys.entity_id
+  LEFT JOIN scroll_stats AS ss ON ss.entity_id = keys.entity_id
+  ORDER BY COALESCE(vt.views, 0) DESC, guide_label ASC;
 $$;
 
 CREATE OR REPLACE FUNCTION public.analytics_guide_avg_read_public(
@@ -274,19 +292,19 @@ SET search_path = public
 AS $$
   WITH sessions AS (
     SELECT
-      ae.session_id,
+      pv.session_id,
       COALESCE(
-        NULLIF(MAX(ae.meta->>'source'), ''),
-        NULLIF(MAX(ae.meta->>'referrer_host'), ''),
+        NULLIF(MAX(pv.meta->>'referrer_host'), ''),
         'Direto'
       ) AS raw_source
-    FROM public.analytics_events AS ae
+    FROM public.page_views AS pv
     WHERE public.is_admin()
-      AND ae.event_name = 'guide_detail_open'
-      AND ae.actor_type IN ('public', 'anonymous')
-      AND (start_at IS NULL OR ae.created_at >= start_at)
-      AND (end_at IS NULL OR ae.created_at < end_at)
-    GROUP BY ae.session_id
+      AND pv.actor_type = 'public'
+      AND pv.path LIKE '/guias/%'
+      AND NULLIF(split_part(split_part(pv.path, '?', 1), '/', 3), '') IS NOT NULL
+      AND (start_at IS NULL OR pv.created_at >= start_at)
+      AND (end_at IS NULL OR pv.created_at < end_at)
+    GROUP BY pv.session_id
   ), normalized AS (
     SELECT CASE
       WHEN raw_source IN ('l.instagram.com', 'lm.instagram.com', 'instagram.com', 'www.instagram.com') THEN 'Instagram'
