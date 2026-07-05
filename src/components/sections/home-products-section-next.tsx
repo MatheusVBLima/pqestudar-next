@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import type { Json } from "@/integrations/supabase/types";
+import { parseProductSalesPage } from "@/lib/product-sales-page";
 
 interface Product {
   id: string;
@@ -21,6 +23,7 @@ interface Product {
   clicks_count: number;
   is_active: boolean;
   sort_order: number;
+  sales_page: Json;
 }
 
 const PLACEHOLDER_CARD = {
@@ -64,8 +67,21 @@ function ProductCard({
   product: Product;
   onClickSaibaMais: () => void;
 }) {
+  const salesPage = parseProductSalesPage(product.sales_page);
+
   return (
-    <Card className="flex flex-col h-full overflow-hidden relative rounded-[1.2rem]">
+    <Card
+      className="group flex h-full cursor-pointer flex-col overflow-hidden relative rounded-[1.2rem] transition-all hover:-translate-y-1 hover:shadow-lg"
+      role="link"
+      tabIndex={0}
+      onClick={onClickSaibaMais}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClickSaibaMais();
+        }
+      }}
+    >
       {/* Click counter */}
       <div className="absolute top-3 right-3 z-10">
         <span className="inline-flex items-center gap-1 rounded-full bg-background/80 backdrop-blur-sm border px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-sm">
@@ -94,11 +110,28 @@ function ProductCard({
           {product.description}
         </p>
         <div className="flex flex-col gap-3 mt-auto pt-2">
-          <Badge variant="secondary" className="w-fit text-xs">
-            {product.category}
-          </Badge>
-          <Button className="w-full" onClick={onClickSaibaMais}>
-            {product.title === "Mapa dos Benefícios Ocultos" ? "Explorar o mapa" : "Acessar produto"}
+          <div className="flex items-center justify-between gap-3">
+            <Badge variant="secondary" className="w-fit text-xs">
+              {product.category}
+            </Badge>
+            {salesPage.priceLabel ? (
+              <span className="flex shrink-0 flex-col items-end leading-tight">
+                {salesPage.oldPriceLabel ? (
+                  <span className="text-xs text-muted-foreground line-through decoration-1">
+                    {salesPage.oldPriceLabel}
+                  </span>
+                ) : null}
+                <span className={salesPage.oldPriceLabel ? "text-base font-bold text-primary" : "text-sm font-semibold"}>
+                  {salesPage.priceLabel}
+                </span>
+              </span>
+            ) : null}
+          </div>
+          <Button className="w-full" onClick={(event) => {
+            event.stopPropagation();
+            onClickSaibaMais();
+          }}>
+            {salesPage.ctaLabel || (product.title === "Mapa dos Benefícios Ocultos" ? "Explorar o mapa" : "Acessar produto")}
           </Button>
         </div>
       </div>
@@ -134,10 +167,10 @@ export function HomeProductsSectionNext() {
   });
 
   const handleSaibaMais = (product: Product) => {
-    clickMutation.mutate(product.id);
-    if (product.cta_url && product.cta_url !== "#") {
-      window.open(product.cta_url, "_blank", "noopener,noreferrer");
-    }
+    if (!product.cta_url || product.cta_url === "#") return;
+    clickMutation.mutate(product.id, {
+      onSettled: () => window.location.assign(product.cta_url),
+    });
   };
 
   const displayProducts = products.slice(0, 3);

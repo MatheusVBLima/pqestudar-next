@@ -5,7 +5,6 @@ import { QueryHydration } from "@/components/providers/query-hydration";
 import { createQueryClient } from "@/lib/query-client";
 import { getActiveProducts } from "@/lib/data/products";
 import { getPageSettings } from "@/lib/data/page-settings";
-import { slugifyProductTitle } from "@/lib/product-slug";
 import { JsonLd, absoluteUrl } from "@/lib/seo/jsonld";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -31,7 +30,7 @@ export default async function ExclusivosPage() {
   queryClient.setQueryData(["page_settings", "/exclusivos"], pageSettings ?? null);
   queryClient.setQueryData(["products-public"], products ?? []);
 
-  const productList = (products ?? []) as Array<{ title: string }>;
+  const productList = (products ?? []) as Array<{ title: string; cta_url: string }>;
   const collectionLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -46,7 +45,7 @@ export default async function ExclusivosPage() {
       itemListElement: productList.map((product, index) => ({
         "@type": "ListItem",
         position: index + 1,
-        url: absoluteUrl(`/exclusivos/${slugifyProductTitle(product.title)}`),
+        url: product.cta_url.startsWith("http") ? product.cta_url : absoluteUrl(product.cta_url),
         name: product.title,
       })),
     },

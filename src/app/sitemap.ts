@@ -4,7 +4,6 @@ import { getPublishedOportunidades } from "@/lib/data/oportunidades";
 import { getPublishedGuides } from "@/lib/data/guides";
 import { getPublishedCurations } from "@/lib/data/curations";
 import { getPublicTools } from "@/lib/data/tools";
-import { slugifyProductTitle } from "@/lib/product-slug";
 import { absoluteSiteUrl } from "@/lib/site";
 
 function url(path: string): string {
@@ -69,9 +68,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  const productEntries: MetadataRoute.Sitemap = (products as Array<{ title: string; updated_at?: string }>).
-    map((p) => ({
-      url: url(`/exclusivos/${slugifyProductTitle(p.title)}`),
+  const staticPaths = new Set(STATIC_INDEXABLE.map((entry) => entry.path));
+  const productEntries: MetadataRoute.Sitemap = (products as Array<{ cta_url: string; updated_at?: string }>)
+    .filter((product) => product.cta_url.startsWith("/") && !staticPaths.has(product.cta_url))
+    .map((p) => ({
+      url: url(p.cta_url),
       lastModified: p.updated_at ? new Date(p.updated_at) : now,
       changeFrequency: "monthly" as const,
       priority: 0.6,

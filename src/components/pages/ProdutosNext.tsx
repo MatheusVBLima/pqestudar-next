@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import NextLink from "next/link";
 import { PageHero } from "@/components/layout/PageHero";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useManagementMode } from "@/hooks/useManagementMode";
 import { supabase } from "@/integrations/supabase/client";
-import { slugifyProductTitle } from "@/lib/product-slug";
 import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +38,8 @@ import { Eye, Pencil, Trash2, EyeOff, Upload, Link as LinkIcon, X } from "lucide
 import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/error-message";
 import { revalidateProductsAction } from "@/app/actions/revalidate";
+import type { Json } from "@/integrations/supabase/types";
+import { parseProductSalesPage } from "@/lib/product-sales-page";
 
 interface Product {
   id: string;
@@ -50,6 +50,7 @@ interface Product {
   cta_url: string;
   clicks_count: number;
   is_active: boolean;
+  sales_page: Json;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -64,6 +65,9 @@ type ProductFormData = {
   sort_order: string;
   imageFile: File | null;
   imageTab: "upload" | "url";
+  priceLabel: string;
+  oldPriceLabel: string;
+  ctaLabel: string;
 };
 
 const EMPTY_FORM: ProductFormData = {
@@ -75,6 +79,9 @@ const EMPTY_FORM: ProductFormData = {
   sort_order: "0",
   imageFile: null,
   imageTab: "url",
+  priceLabel: "",
+  oldPriceLabel: "",
+  ctaLabel: "Quero acessar",
 };
 
 const MAX_FILE_SIZE = 3 * 1024 * 1024;
@@ -97,10 +104,22 @@ function ProductCard({
   onDelete: () => void;
   onToggleActive: () => void;
 }) {
-  const detailHref = `/exclusivos/${slugifyProductTitle(product.title)}`;
+  const salesPage = parseProductSalesPage(product.sales_page);
+  const navigable = !adminMode;
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden relative transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+    <Card
+      className={`group flex flex-col h-full overflow-hidden relative transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${navigable ? "cursor-pointer" : ""}`}
+      role={navigable ? "link" : undefined}
+      tabIndex={navigable ? 0 : undefined}
+      onClick={navigable ? onClickSaibaMais : undefined}
+      onKeyDown={navigable ? (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClickSaibaMais();
+        }
+      } : undefined}
+    >
       <div className="absolute top-3 right-3 z-10">
         <span className="inline-flex items-center gap-1 rounded-full bg-background/80 backdrop-blur-sm border px-2.5 py-1 text-xs font-medium text-muted-foreground shadow-sm">
           <Eye className="h-3 w-3" />
@@ -116,7 +135,7 @@ function ProductCard({
         </div>
       )}
 
-      <NextLink href={detailHref} className="block w-full aspect-[16/10] overflow-hidden bg-muted group">
+      <div className="group block aspect-[16/10] w-full overflow-hidden bg-muted">
         <img
           src={product.image_url || "/placeholder.svg"}
           alt={product.title}
@@ -126,38 +145,53 @@ function ProductCard({
             (e.target as HTMLImageElement).src = "/placeholder.svg";
           }}
         />
-      </NextLink>
+      </div>
 
       <div className="flex flex-col flex-1 p-5 gap-3">
-        <NextLink href={detailHref} className="hover:text-primary transition-colors">
-          <h3 className="text-lg font-semibold leading-tight">{product.title}</h3>
-        </NextLink>
+        <h3 className="text-lg font-semibold leading-tight transition-colors group-hover:text-primary">{product.title}</h3>
         <p className="text-sm text-muted-foreground leading-relaxed flex-1">
           {product.description}
         </p>
 
         <div className="flex flex-col gap-3 mt-auto pt-2">
-          <Badge variant="secondary" className="w-fit text-xs">
-            {product.category}
-          </Badge>
-          <Button className="w-full" onClick={onClickSaibaMais}>
-            Saiba Mais
+          <div className="flex items-center justify-between gap-3">
+            <Badge variant="secondary" className="w-fit text-xs">
+              {product.category}
+            </Badge>
+            {salesPage.priceLabel ? (
+              <span className="flex shrink-0 flex-col items-end leading-tight">
+                {salesPage.oldPriceLabel ? (
+                  <span className="text-xs text-muted-foreground line-through decoration-1">
+                    {salesPage.oldPriceLabel}
+                  </span>
+                ) : null}
+                <span className={salesPage.oldPriceLabel ? "text-base font-bold text-primary" : "text-sm font-semibold text-foreground"}>
+                  {salesPage.priceLabel}
+                </span>
+              </span>
+            ) : null}
+          </div>
+          <Button className="w-full" onClick={(event) => {
+            event.stopPropagation();
+            onClickSaibaMais();
+          }}>
+            {salesPage.ctaLabel || "Saiba Mais"}
           </Button>
         </div>
 
         {isAdmin && adminMode && (
           <div className="flex items-center gap-2 pt-2 border-t">
-            <Button size="sm" variant="ghost" onClick={onEdit}>
+            <Button size="sm" variant="ghost" onClick={(event) => { event.stopPropagation(); onEdit(); }}>
               <Pencil className="h-4 w-4 mr-1" /> Editar
             </Button>
-            <Button size="sm" variant="ghost" onClick={onToggleActive}>
+            <Button size="sm" variant="ghost" onClick={(event) => { event.stopPropagation(); onToggleActive(); }}>
               {product.is_active ? (
                 <><EyeOff className="h-4 w-4 mr-1" /> Ocultar</>
               ) : (
                 <><Eye className="h-4 w-4 mr-1" /> Mostrar</>
               )}
             </Button>
-            <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={onDelete}>
+            <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={(event) => { event.stopPropagation(); onDelete(); }}>
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -223,7 +257,7 @@ function ProductModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar Produto" : "Adicionar Produto"}</DialogTitle>
           <DialogDescription>
@@ -326,6 +360,21 @@ function ProductModal({
             <Label htmlFor="prod-order">Ordem</Label>
             <Input id="prod-order" type="number" value={form.sort_order} onChange={(e) => setForm((f) => ({ ...f, sort_order: e.target.value }))} />
           </div>
+
+          <div className="grid gap-4 border-t pt-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="prod-price">Preço atual (opcional)</Label>
+              <Input id="prod-price" placeholder="R$ 10,00" value={form.priceLabel} onChange={(e) => setForm((f) => ({ ...f, priceLabel: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="prod-old-price">Preço anterior riscado (opcional)</Label>
+              <Input id="prod-old-price" placeholder="R$ 47,00" value={form.oldPriceLabel} onChange={(e) => setForm((f) => ({ ...f, oldPriceLabel: e.target.value }))} />
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="prod-cta-label">Texto do botão (opcional)</Label>
+              <Input id="prod-cta-label" placeholder="Quero acessar" value={form.ctaLabel} onChange={(e) => setForm((f) => ({ ...f, ctaLabel: e.target.value }))} />
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
@@ -391,12 +440,15 @@ export default function ProdutosNext() {
   });
 
   const handleSaibaMais = (product: Product) => {
+    if (!product.cta_url || product.cta_url === "#") return;
+    const navigate = () => window.location.assign(product.cta_url);
+
     if (!rolesLoading && !isAdmin) {
-      clickMutation.mutate(product.id);
+      clickMutation.mutate(product.id, { onSettled: navigate });
+      return;
     }
-    if (product.cta_url && product.cta_url !== "#") {
-      window.open(product.cta_url, "_blank", "noopener,noreferrer");
-    }
+
+    navigate();
   };
 
   const adminMutation = useMutation({
@@ -443,6 +495,11 @@ export default function ProdutosNext() {
       cta_url: form.cta_url.trim(),
       image_url: finalImageUrl,
       sort_order: parseInt(form.sort_order, 10) || 0,
+      sales_page: {
+        priceLabel: form.priceLabel.trim(),
+        oldPriceLabel: form.oldPriceLabel.trim(),
+        ctaLabel: form.ctaLabel.trim(),
+      },
     };
 
     if (editingProduct) {
@@ -517,7 +574,9 @@ export default function ProdutosNext() {
   };
 
   const formInitial: ProductFormData = editingProduct
-    ? {
+    ? (() => {
+        const salesPage = parseProductSalesPage(editingProduct.sales_page);
+        return {
         title: editingProduct.title,
         description: editingProduct.description,
         category: editingProduct.category,
@@ -526,7 +585,11 @@ export default function ProdutosNext() {
         sort_order: String(editingProduct.sort_order),
         imageFile: null,
         imageTab: editingProduct.image_url ? "url" : "upload",
-      }
+        priceLabel: salesPage.priceLabel ?? "",
+        oldPriceLabel: salesPage.oldPriceLabel ?? "",
+        ctaLabel: salesPage.ctaLabel ?? "Quero acessar",
+      };
+      })()
     : EMPTY_FORM;
 
   return (

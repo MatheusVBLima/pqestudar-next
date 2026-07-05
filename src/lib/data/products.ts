@@ -1,6 +1,7 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface ProductRow {
   id: string;
@@ -11,6 +12,7 @@ export interface ProductRow {
   cta_url: string;
   clicks_count: number;
   is_active: boolean;
+  sales_page: Json;
   sort_order: number;
   created_at: string;
   updated_at: string;
