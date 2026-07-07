@@ -349,6 +349,21 @@ All colors MUST be HSL.
 }
 
 /* Admin sidebar card appearance */
+.admin-sidebar-flyout {
+  display: none;
+}
+
+[data-mobile="true"][data-sidebar="sidebar"] [data-slot="admin-sidebar"] {
+  height: 100%;
+  border-right: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow: var(--admin-shadow);
+}
+
+[data-mobile="true"][data-sidebar="sidebar"] [data-slot="admin-sidebar"] .admin-sidebar-collapsible-content {
+  overflow: hidden;
+}
+
 .admin-radius [data-slot="admin-sidebar"] {
   border-radius: 0;
   background: hsl(var(--card));

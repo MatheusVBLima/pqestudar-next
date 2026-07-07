@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminSidebar } from "./AdminSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -60,6 +60,17 @@ function AdminLayoutShell({ children }: AdminLayoutProps) {
         <AdminSidebar />
         <div className="flex-1 min-w-0">
           <div className="rounded-[var(--admin-radius)] border bg-card shadow-[var(--admin-shadow)] flex flex-col min-h-[calc(100vh-2rem)]">
+            <div className="flex items-center justify-between border-b px-4 py-3 md:hidden">
+              <div>
+                <p className="text-sm font-semibold">Admin</p>
+                <p className="text-xs text-muted-foreground">Menu de navegação</p>
+              </div>
+              <SidebarTrigger
+                className="h-10 w-10 rounded-xl border bg-background text-foreground shadow-sm"
+                aria-label="Abrir menu admin"
+                title="Abrir menu admin"
+              />
+            </div>
             <main className="flex-1 p-6 overflow-auto">{children}</main>
           </div>
         </div>
