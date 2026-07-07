@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, BarChart3, Wrench, BookOpen, Search, FileText,
   Crown, Users, Ticket, ChevronDown, Settings2, UserCog,
-  Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Moon, Sun, Sparkles, Share2, Bookmark, LogOut, Home, MessageSquareText,
+  Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Moon, Sun, Sparkles, Share2, Bookmark, LogOut, Home, MessageSquareText, GraduationCap,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -376,6 +376,28 @@ export function AdminSidebar() {
               </SidebarGroupContent>
             </CollapsibleContent>
           </Collapsible>
+        </SidebarGroup>
+
+        <SectionLabel>Produtos</SectionLabel>
+        {/* Certificado que Conta */}
+        <SidebarGroup className={groupClass}>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/admin/certificado-que-conta'}
+                  data-hover-label="Certificado que Conta"
+                  className={itemClass(pathname === '/admin/certificado-que-conta')}
+                >
+                  <Link href="/admin/certificado-que-conta">
+                    <GraduationCap className="h-4 w-4" />
+                    <span>Certificado que Conta</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
         </SidebarGroup>
 
         <SectionLabel>Site</SectionLabel>

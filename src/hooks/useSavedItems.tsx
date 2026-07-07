@@ -4,7 +4,7 @@ import type { Json, TablesInsert } from '@/integrations/supabase/types';
 import { useAuth } from './useAuth';
 import { toast } from '@/hooks/use-toast';
 
-export type SavedItemType = 'tool' | 'contest';
+export type SavedItemType = 'tool' | 'contest' | 'course_analysis';
 
 export interface SavedItemMetadata {
   title?: string;
@@ -18,6 +18,13 @@ export interface SavedItemMetadata {
   tags?: string[];
   url?: string;
   attachment_url?: string;
+  course_name?: string;
+  provider_name?: string;
+  verdict?: string;
+  confidence?: string;
+  result?: Json;
+  form?: Json;
+  measurement?: Json;
 }
 
 export interface SavedItem {
@@ -33,7 +40,8 @@ export const useSavedItems = () => {
   const { user } = useAuth();
   const [savedItemIds, setSavedItemIds] = useState<Map<string, Set<string>>>(new Map([
     ['tool', new Set()],
-    ['contest', new Set()]
+    ['contest', new Set()],
+    ['course_analysis', new Set()]
   ]));
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,7 +55,8 @@ export const useSavedItems = () => {
     if (!user) {
       setSavedItemIds(new Map([
         ['tool', new Set()],
-        ['contest', new Set()]
+        ['contest', new Set()],
+        ['course_analysis', new Set()]
       ]));
       return;
     }
@@ -62,18 +71,22 @@ export const useSavedItems = () => {
 
       const toolIds = new Set<string>();
       const contestIds = new Set<string>();
+      const courseAnalysisIds = new Set<string>();
 
       data?.forEach(item => {
         if (item.item_type === 'tool') {
           toolIds.add(item.item_id);
         } else if (item.item_type === 'contest') {
           contestIds.add(item.item_id);
+        } else if (item.item_type === 'course_analysis') {
+          courseAnalysisIds.add(item.item_id);
         }
       });
 
       setSavedItemIds(new Map([
         ['tool', toolIds],
-        ['contest', contestIds]
+        ['contest', contestIds],
+        ['course_analysis', courseAnalysisIds]
       ]));
     } catch (error) {
       console.error('Error fetching saved item IDs:', error);
