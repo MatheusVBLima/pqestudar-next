@@ -3,6 +3,9 @@ import { getServerSession } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 
+const CHECKOUT_UNAVAILABLE_MESSAGE =
+  "Não foi possível abrir o checkout agora. Tente novamente em instantes.";
+
 const PRODUCT_CATALOG = {
   "certificado-que-conta": {
     name: "Certificado que Conta",
@@ -32,10 +35,8 @@ export async function POST(request: NextRequest) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
   if (!stripeSecretKey) {
-    return NextResponse.json(
-      { error: "STRIPE_SECRET_KEY não configurada no ambiente." },
-      { status: 500 }
-    );
+    console.error("[stripe] STRIPE_SECRET_KEY is not configured.");
+    return NextResponse.json({ error: CHECKOUT_UNAVAILABLE_MESSAGE }, { status: 500 });
   }
 
   const body = (await request.json().catch(() => ({}))) as { productKey?: string };
@@ -53,7 +54,8 @@ export async function POST(request: NextRequest) {
   params.append("mode", "payment");
   params.append("success_url", `${siteUrl}/certificado-que-conta/sucesso?session_id={CHECKOUT_SESSION_ID}`);
   params.append("cancel_url", `${siteUrl}/certificado-que-conta`);
-  params.append("automatic_payment_methods[enabled]", "true");
+  params.append("payment_method_types[0]", "card");
+  params.append("payment_method_types[1]", "pix");
   params.append("line_items[0][quantity]", "1");
   params.append("line_items[0][price_data][currency]", product.currency);
   params.append("line_items[0][price_data][unit_amount]", String(product.unitAmount));
@@ -81,11 +83,15 @@ export async function POST(request: NextRequest) {
     body: params.toString(),
   });
 
-  const data = (await response.json().catch(() => ({}))) as { url?: string; error?: { message?: string } };
+  const data = (await response.json().catch(() => ({}))) as {
+    url?: string;
+    error?: { message?: string };
+  };
 
   if (!response.ok || !data.url) {
+    console.error("[stripe] Failed to create checkout session.", data.error?.message);
     return NextResponse.json(
-      { error: data.error?.message ?? "Não foi possível criar o checkout no Stripe." },
+      { error: CHECKOUT_UNAVAILABLE_MESSAGE },
       { status: response.status || 500 }
     );
   }
