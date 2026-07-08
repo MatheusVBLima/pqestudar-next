@@ -576,7 +576,15 @@ export default function CertificateCourseAiLabClient() {
       setSavedAnalysisId(analysisId);
       toast.success("Análise salva em Salvos.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível salvar a análise.");
+      console.error("Failed to save course analysis", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error && "message" in error
+            ? String((error as { message?: unknown }).message)
+            : "Não foi possível salvar a análise.";
+
+      toast.error(message || "Não foi possível salvar a análise.");
     } finally {
       setSavingAnalysis(false);
     }
