@@ -30,22 +30,37 @@ export const useUserRoles = () => {
   const adminQuery = useQuery({
     queryKey: ['check-admin', user?.id ?? 'anon'],
     queryFn: async () => {
-      if (!user) return { isAdmin: false };
-      const { data, error } = await supabase.functions.invoke('check-admin');
-      if (error) {
-        console.error('Error checking admin status:', error);
-        return { isAdmin: false };
-      }
-      return { isAdmin: data?.isAdmin || false };
+      if (!user) return { roles: [] as AppRole[] };
+
+      const roleChecks = await Promise.all(
+        (['admin', 'developer', 'moderator', 'user'] as AppRole[]).map(async (role) => {
+          const { data, error } = await supabase.rpc('has_role', {
+            _user_id: user.id,
+            _role: role,
+          });
+
+          if (error) {
+            console.error(`Error checking ${role} role:`, error);
+            return null;
+          }
+
+          return data === true ? role : null;
+        }),
+      );
+
+      return { roles: roleChecks.filter(Boolean) as AppRole[] };
     },
     enabled: !!user,
     ...ADMIN_CACHE,
   });
 
-  const isAdmin = adminQuery.data?.isAdmin ?? false;
+  const roles = adminQuery.data?.roles ?? [];
+  const isAdmin = roles.includes('admin');
+  const isDeveloper = roles.includes('developer');
+  const canAccessAdmin = isAdmin || isDeveloper;
   const loading = adminQuery.isLoading;
 
-  const hasRole = (_role: AppRole): boolean => false;
+  const hasRole = (role: AppRole): boolean => roles.includes(role);
 
   const assignRole = async (userId: string, role: AppRole) => {
     try {
@@ -78,8 +93,16 @@ export const useUserRoles = () => {
   };
 
   return {
-    userRoles: [] as UserRole[],
+    userRoles: roles.map((role) => ({
+      id: `${user?.id ?? 'anon'}:${role}`,
+      user_id: user?.id ?? '',
+      role,
+      created_at: '',
+      updated_at: '',
+    })) as UserRole[],
     isAdmin,
+    isDeveloper,
+    canAccessAdmin,
     loading,
     hasRole,
     assignRole,

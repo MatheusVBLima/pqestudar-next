@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, type CSSProperties, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,17 +14,20 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, loading: rolesLoading } = useUserRoles();
+  const { isAdmin, isDeveloper, loading: rolesLoading } = useUserRoles();
   const router = useRouter();
+  const pathname = usePathname() ?? "";
 
   const stillLoading = authLoading || rolesLoading;
+  const isDeveloperAllowedRoute = pathname === "/admin/certificado-que-conta";
+  const canAccessCurrentRoute = isAdmin || (isDeveloper && isDeveloperAllowedRoute);
 
   useEffect(() => {
     if (stillLoading) return;
-    if (!user || !isAdmin) {
+    if (!user || !canAccessCurrentRoute) {
       router.replace("/");
     }
-  }, [stillLoading, user, isAdmin, router]);
+  }, [stillLoading, user, canAccessCurrentRoute, router]);
 
   if (stillLoading) {
     return (
@@ -38,7 +41,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
-  if (!user || !isAdmin) {
+  if (!user || !canAccessCurrentRoute) {
     return null;
   }
 

@@ -343,7 +343,7 @@ serve(async (req) => {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "admin")
+      .in("role", ["admin", "developer"])
       .limit(1);
     if (!roles?.length) return jsonResponse({ error: "Acesso negado" }, 403);
 

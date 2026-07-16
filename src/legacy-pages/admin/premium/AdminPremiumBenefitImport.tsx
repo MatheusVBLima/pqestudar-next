@@ -80,6 +80,37 @@ const splitList = (value: string) =>
     return items;
   }, []);
 
+async function getUniquePremiumSlug(rawSlug: string, title: string, page: number, reservedSlugs: Set<string>) {
+  const baseSlug = slugify(rawSlug || title) || `beneficio-${page}`;
+  let suffix = 1;
+
+  while (suffix < 500) {
+    const candidate = suffix === 1 ? baseSlug : `${baseSlug}-${suffix}`;
+
+    if (reservedSlugs.has(candidate)) {
+      suffix += 1;
+      continue;
+    }
+
+    const { data, error } = await supabase
+      .from("premium_items")
+      .select("id")
+      .eq("slug", candidate)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      reservedSlugs.add(candidate);
+      return candidate;
+    }
+
+    suffix += 1;
+  }
+
+  throw new Error(`Não foi possível gerar um slug único para "${title}".`);
+}
+
 function textItemsToLines(items: PdfTextItem[]) {
   const rows = items
     .filter((item) => item.str?.trim())
@@ -239,7 +270,10 @@ export default function AdminPremiumBenefitImport() {
     setIsSaving(true);
 
     try {
+      const reservedSlugs = new Set<string>();
+
       for (const item of items) {
+        const uniqueSlug = await getUniquePremiumSlug(item.slug.trim(), item.title.trim(), item.page, reservedSlugs);
         const tags = Array.from(new Set([
           PREMIUM_BENEFIT_TAG,
           ...item.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
@@ -248,7 +282,7 @@ export default function AdminPremiumBenefitImport() {
         const { error } = await supabase.from("premium_items").insert({
           item_type: "course",
           title: item.title.trim(),
-          slug: item.slug.trim(),
+          slug: uniqueSlug,
           description_short: item.description_short.trim() || null,
           description_full: item.description_full.trim() || null,
           external_url: item.external_url.trim() || null,
@@ -264,7 +298,7 @@ export default function AdminPremiumBenefitImport() {
           throw error;
         }
 
-        setDrafts((prev) => prev.map((draft) => (draft === item ? { ...draft, imported: true, error: undefined } : draft)));
+        setDrafts((prev) => prev.map((draft) => (draft === item ? { ...draft, slug: uniqueSlug, imported: true, error: undefined } : draft)));
       }
 
       toast({

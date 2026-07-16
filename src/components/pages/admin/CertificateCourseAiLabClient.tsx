@@ -401,8 +401,12 @@ export default function CertificateCourseAiLabClient() {
     if (error) {
       const response = (error as { context?: Response }).context;
       if (response) {
-        const payload = await response.clone().json().catch(() => null) as { error?: string } | null;
-        if (payload?.error) throw new Error(payload.error);
+        const payload = await response.clone().json().catch(() => null) as { error?: string; message?: string } | null;
+        if (payload?.error || payload?.message) throw new Error(payload.error || payload.message);
+      }
+      const message = error instanceof Error ? error.message : String(error);
+      if (/failed to send|fetch|edge function/i.test(message)) {
+        throw new Error("Não foi possível chamar a função certificate-course-ai. Verifique se ela foi publicada no Supabase e se os secrets LOVABLE_API_KEY/OPENAI_API_KEY estão configurados.");
       }
       throw error;
     }

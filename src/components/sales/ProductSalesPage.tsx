@@ -268,10 +268,10 @@ function CheckoutButton({
 
 function ProductVisual() {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-fuchsia-400/25 bg-[radial-gradient(circle_at_top,rgba(226,59,232,0.34),transparent_38%),linear-gradient(135deg,#120912,#2a102d_42%,#0e0b10)] p-6 shadow-[0_24px_80px_rgba(226,59,232,0.14)]">
+    <div className="relative overflow-hidden rounded-2xl border border-fuchsia-400/25 bg-[radial-gradient(circle_at_top,rgba(226,59,232,0.34),transparent_38%),linear-gradient(135deg,#120912,#2a102d_42%,#0e0b10)] p-5 shadow-[0_24px_80px_rgba(226,59,232,0.14)] sm:p-6">
       <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-fuchsia-500/30 blur-3xl" />
       <div className="absolute -bottom-16 left-8 h-40 w-40 rounded-full bg-fuchsia-500/20 blur-3xl" />
-      <div className="relative flex min-h-[220px] flex-col justify-between">
+      <div className="relative flex min-h-[180px] flex-col justify-between sm:min-h-[220px]">
         <div className="flex items-center justify-between gap-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white">
             <ShieldCheck className="h-4 w-4 text-fuchsia-200" />
@@ -288,7 +288,7 @@ function ProductVisual() {
           <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e23be8] text-white shadow-lg">
             <FileCheck2 className="h-7 w-7" />
           </div>
-          <h2 className="max-w-xl text-3xl font-black leading-tight text-white sm:text-4xl">
+          <h2 className="max-w-xl text-2xl font-black leading-tight text-white sm:text-4xl">
             Certificado que Conta
           </h2>
           <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/75">
@@ -314,7 +314,7 @@ function Testimonials({ testimonials }: { testimonials: SalesTestimonial[] }) {
       {testimonials.map((testimonial) => (
         <article
           key={testimonial.name}
-          className="flex h-full min-h-[340px] flex-col rounded-2xl border border-[var(--sales-border)] bg-[var(--sales-surface)] p-5 text-center text-[var(--sales-text)] shadow-sm"
+          className="flex h-full min-h-[260px] flex-col rounded-2xl border border-[var(--sales-border)] bg-[var(--sales-surface)] p-5 text-center text-[var(--sales-text)] shadow-sm md:min-h-[340px]"
         >
           <div className="mb-4 flex flex-col items-center justify-center gap-3">
             {testimonial.imageUrl && (
@@ -332,7 +332,7 @@ function Testimonials({ testimonials }: { testimonials: SalesTestimonial[] }) {
               ))}
             </div>
           </div>
-          <p className="text-lg font-black leading-snug">“{testimonial.quote}”</p>
+          <p className="text-base font-black leading-snug sm:text-lg">“{testimonial.quote}”</p>
           <p className="mt-auto pt-6 text-sm text-[var(--sales-muted)]">
             {testimonial.name}
             {testimonial.role ? ` · ${testimonial.role}` : ""}
@@ -345,7 +345,7 @@ function Testimonials({ testimonials }: { testimonials: SalesTestimonial[] }) {
 
 function OfferSummary({ config }: { config: SalesPageConfig }) {
   return (
-    <aside className="lg:sticky lg:top-6">
+    <aside className="hidden lg:sticky lg:top-6 lg:block">
       <div className="overflow-hidden rounded-2xl border border-fuchsia-400/25 bg-[var(--sales-surface)] text-[var(--sales-text)] shadow-[0_18px_60px_rgba(0,0,0,0.16)]">
         <div className="border-b border-fuchsia-400/20 bg-[var(--sales-surface-strong)] px-5 py-4 text-center text-lg font-black text-[var(--sales-text)]">
           Compra segura
@@ -453,7 +453,7 @@ export function ProductSalesPage({ config }: { config: SalesPageConfig }) {
 
   return (
     <main
-      className="min-h-screen bg-[var(--sales-bg)] text-[var(--sales-text)] transition-colors duration-300"
+      className="min-h-screen bg-[var(--sales-bg)] pb-28 text-[var(--sales-text)] transition-colors duration-300 lg:pb-0"
       style={salesThemeVars[themeMode]}
     >
       <button
@@ -472,7 +472,7 @@ export function ProductSalesPage({ config }: { config: SalesPageConfig }) {
 
           <ProductVisual />
 
-          <section className="rounded-2xl border border-[var(--sales-border)] bg-[var(--sales-surface)] p-6 shadow-sm">
+          <section className="rounded-2xl border border-[var(--sales-border)] bg-[var(--sales-surface)] p-5 shadow-sm sm:p-6">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-fuchsia-400/12 px-3 py-1 text-xs font-black uppercase text-fuchsia-300">
               <BadgeCheck className="h-4 w-4" />
               {config.badge}
