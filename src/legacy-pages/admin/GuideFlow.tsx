@@ -209,12 +209,14 @@ export default function GuideFlow() {
         .map(e => `[Diretriz: ${e.title}]\n${e.content}`)
         .join('\n\n---\n\n');
 
-      const libraryContext = sources.activeLibraryEntries
+      const resolvedLibraryEntries = sources.resolveLibraryEntries(inputs.tema, inputs.palavraChave);
+
+      const libraryContext = resolvedLibraryEntries
         .map(e => `[Biblioteca: ${e.title}]\n${e.content}`)
         .join('\n\n---\n\n');
 
-      const selectedLibraryName = sources.activeLibraryEntries.length > 0
-        ? sources.activeLibraryEntries.map(e => e.title).join(', ')
+      const selectedLibraryName = resolvedLibraryEntries.length > 0
+        ? resolvedLibraryEntries.map(e => e.title).join(', ')
         : null;
 
       // Resolve editorial metadata for the prompt
@@ -287,12 +289,12 @@ export default function GuideFlow() {
         generated_images: generated.generated_images ?? [],
       });
 
-      const hasLib = sources.activeLibraryEntries.length > 0;
+      const hasLib = resolvedLibraryEntries.length > 0;
       const hasStruct = sources.activeStructureEntries.length > 0;
       toast({
         title: 'Guia gerado com sucesso',
         description: hasLib && hasStruct
-          ? `Gerado com ${sources.activeStructureEntries.length} diretriz(es) e ${sources.activeLibraryEntries.length} biblioteca(s).`
+          ? `Gerado com ${sources.activeStructureEntries.length} diretriz(es) e ${resolvedLibraryEntries.length} biblioteca(s).`
           : hasStruct
             ? 'Gerado com diretrizes editoriais — sem biblioteca factual.'
             : 'Gerado sem fontes da Biblioteca — revisão manual recomendada.',

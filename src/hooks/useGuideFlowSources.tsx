@@ -31,6 +31,7 @@ export interface GuideFlowSources {
   setManualLibraryIds: (ids: string[]) => void;
   clearManualOverride: () => void;
   autoSuggest: (tema: string, palavraChave: string) => void;
+  resolveLibraryEntries: (tema: string, palavraChave: string) => KnowledgeEntry[];
 
   // Derived
   activeStructureEntries: KnowledgeEntry[];
@@ -44,6 +45,22 @@ export interface GuideFlowSources {
 // ── Helpers ─────────────────────────────────────────────────────
 function normalize(s: string): string {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function isSuccessfulLibraryEntry(entry: KnowledgeEntry): boolean {
+  return entry.extraction_status === 'success' || entry.extraction_status === 'partial';
+}
+
+function isReferenceContextEntry(entry: KnowledgeEntry): boolean {
+  const category = normalize(entry.category);
+  const title = normalize(entry.title);
+
+  return (
+    category === 'referencia' ||
+    category === 'reference' ||
+    title.startsWith('contexto ') ||
+    title.includes(' contexto ')
+  );
 }
 
 function scoreRelevance(entry: KnowledgeEntry, terms: string[]): number {
@@ -122,12 +139,25 @@ export function useGuideFlowSources(): GuideFlowSources {
 
   // ── Derived lists ──
   const structureEntries = useMemo(
-    () => entries.filter(e => e.source_bucket === 'guide-structure' && e.is_active && e.extraction_status === 'success'),
+    () => entries.filter(e =>
+      e.source_bucket === 'guide-structure' &&
+      e.is_active &&
+      (e.extraction_status === 'success' || e.extraction_status === 'partial' || e.extraction_status === 'not_applicable')
+    ),
     [entries]
   );
 
   const libraryEntries = useMemo(
-    () => entries.filter(e => e.source_bucket === 'guide-library' && e.is_active && e.extraction_status === 'success'),
+    () => entries.filter((entry) => {
+      if (!entry.is_active) return false;
+      if (entry.source_bucket !== 'guide-library') return false;
+      if (isSuccessfulLibraryEntry(entry)) return true;
+
+      // Manual "Referência" entries are factual context too. They are saved
+      // with extraction_status="not_applicable" because there is no file
+      // extraction step, but they still must appear in the flow sources.
+      return entry.extraction_status === 'not_applicable' && isReferenceContextEntry(entry);
+    }),
     [entries]
   );
 
@@ -216,12 +246,29 @@ export function useGuideFlowSources(): GuideFlowSources {
 
     const scored = libraryEntries.map(entry => ({
       id: entry.id,
-      score: scoreRelevance(entry, allTerms),
+      score: scoreRelevance(entry, allTerms) + (isReferenceContextEntry(entry) ? 1 : 0),
     })).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
 
     // Suggest top matches (up to 3)
     setSuggestedLibraryIds(scored.slice(0, 3).map(s => s.id));
   }, [libraryEntries]);
+
+  const resolveLibraryEntries = useCallback((tema: string, palavraChave: string) => {
+    if (manualLibraryIds !== null) {
+      return libraryEntries.filter(e => manualLibraryIds.includes(e.id));
+    }
+
+    const terms = [tema, palavraChave].filter(Boolean);
+    if (terms.length === 0) return [];
+
+    const allTerms = [...terms, ...tema.split(/\s+/).filter(w => w.length > 3)];
+    const scored = libraryEntries.map(entry => ({
+      entry,
+      score: scoreRelevance(entry, allTerms) + (isReferenceContextEntry(entry) ? 1 : 0),
+    })).filter(item => item.score > 0).sort((a, b) => b.score - a.score);
+
+    return scored.slice(0, 3).map(item => item.entry);
+  }, [libraryEntries, manualLibraryIds]);
 
   // ── Library actions ──
   const toggleLibrary = useCallback((id: string) => {
@@ -278,6 +325,7 @@ export function useGuideFlowSources(): GuideFlowSources {
     setManualLibraryIds,
     clearManualOverride,
     autoSuggest,
+    resolveLibraryEntries,
     activeStructureEntries,
     activeLibraryEntries,
     isReady,
