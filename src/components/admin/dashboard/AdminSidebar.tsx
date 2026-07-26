@@ -4,7 +4,7 @@ import type { ElementType, ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  LayoutDashboard, BarChart3, Wrench, BookOpen, Search, FileText,
+  LayoutDashboard, BarChart3, Wrench, BookOpen, Search, FileText, Mail,
   Crown, Users, Ticket, ChevronDown, Settings2, UserCog,
   Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Moon, Sun, Sparkles, Share2, Bookmark, LogOut, Home, MessageSquareText, GraduationCap,
 } from 'lucide-react';
@@ -393,6 +393,28 @@ export function AdminSidebar() {
                   <Link href="/admin/certificado-que-conta">
                     <GraduationCap className="h-4 w-4" />
                     <span>Certificado que Conta</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SectionLabel>Marketing</SectionLabel>
+        {/* Central de E-mails */}
+        <SidebarGroup className={groupClass}>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/admin/emails'}
+                  data-hover-label="Central de E-mails"
+                  className={itemClass(pathname === '/admin/emails')}
+                >
+                  <Link href="/admin/emails">
+                    <Mail className="h-4 w-4" />
+                    <span>Central de E-mails</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
