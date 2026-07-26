@@ -124,7 +124,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Assunto e conteúdo HTML são obrigatórios." }, { status: 400 });
   }
 
-  const admin = createSupabaseAdminClient();
+  let admin: ReturnType<typeof createSupabaseAdminClient>;
+
+  try {
+    admin = createSupabaseAdminClient();
+  } catch (error) {
+    console.error("[emails] Supabase admin client unavailable", error);
+    return NextResponse.json(
+      {
+        error:
+          "A Central de E-mails precisa da variável SUPABASE_SERVICE_ROLE_KEY no ambiente para registrar os envios.",
+      },
+      { status: 500 },
+    );
+  }
 
   const recipients =
     mode === "test"

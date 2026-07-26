@@ -318,15 +318,26 @@ function getCampaignDeliveryStatus(campaign: EmailCampaign) {
 async function readJsonResponse(response: Response) {
   const text = await response.text();
 
-  if (!text) return {};
+  if (!text) {
+    if (!response.ok) {
+      return {
+        error: `A API respondeu ${response.status} sem detalhes. Verifique as variáveis de ambiente e faça um novo deploy.`,
+      };
+    }
+
+    return {};
+  }
 
   try {
     return JSON.parse(text);
   } catch {
+    const cleanText = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const details = cleanText ? ` Resposta: ${cleanText.slice(0, 180)}` : "";
+
     return {
       error: response.ok
         ? "A resposta da API veio em um formato inesperado."
-        : "A API não respondeu em JSON. Verifique se a migration foi aplicada e se o servidor reiniciou.",
+        : `A API não respondeu em JSON (${response.status}). Verifique as variáveis de ambiente e o deploy.${details}`,
     };
   }
 }

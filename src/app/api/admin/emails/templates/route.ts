@@ -19,6 +19,24 @@ function normalizeText(value?: string | null) {
   return value?.trim() || null;
 }
 
+function getEmailAdminClient() {
+  try {
+    return { admin: createSupabaseAdminClient(), error: null };
+  } catch (error) {
+    console.error("[emails] Supabase admin client unavailable", error);
+    return {
+      admin: null,
+      error: NextResponse.json(
+        {
+          error:
+            "A Central de E-mails precisa da variável SUPABASE_SERVICE_ROLE_KEY no ambiente para gerenciar modelos.",
+        },
+        { status: 500 },
+      ),
+    };
+  }
+}
+
 export async function POST(request: NextRequest) {
   const auth = await requireAdminApi();
   if (auth.error) return auth.error;
@@ -35,7 +53,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const admin = createSupabaseAdminClient();
+  const adminResult = getEmailAdminClient();
+  if (adminResult.error) return adminResult.error;
+  const { admin } = adminResult;
   const payload = {
     name,
     description: normalizeText(body.description),
@@ -85,7 +105,9 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "ID do modelo é obrigatório." }, { status: 400 });
   }
 
-  const admin = createSupabaseAdminClient();
+  const adminResult = getEmailAdminClient();
+  if (adminResult.error) return adminResult.error;
+  const { admin } = adminResult;
   const { error } = await admin
     .from("email_templates")
     .update({

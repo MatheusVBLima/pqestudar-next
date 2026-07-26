@@ -8,7 +8,20 @@ export async function GET() {
   const auth = await requireAdminApi();
   if (auth.error) return auth.error;
 
-  const admin = createSupabaseAdminClient();
+  let admin: ReturnType<typeof createSupabaseAdminClient>;
+
+  try {
+    admin = createSupabaseAdminClient();
+  } catch (error) {
+    console.error("[emails] Supabase admin client unavailable", error);
+    return NextResponse.json(
+      {
+        error:
+          "A Central de E-mails precisa da variável SUPABASE_SERVICE_ROLE_KEY no ambiente para carregar os dados.",
+      },
+      { status: 500 },
+    );
+  }
 
   const [{ data: templates, error: templatesError }, { data: campaigns, error: campaignsError }] = await Promise.all([
     admin
