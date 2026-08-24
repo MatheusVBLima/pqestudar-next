@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useGuides } from '@/hooks/useGuides';
+import { useModeratorTrailCoverage } from '@/hooks/useModeratorTrailCoverage';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   buildAllTrailCoverages,
@@ -202,14 +204,26 @@ function SubjectSelect({
 }
 
 function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
+  const pathname = usePathname();
+  const isModeratorPanel = pathname.startsWith('/moderador');
   const { data: guides = [] } = useGuides(true);
+  const { data: coverageStatuses = [] } = useModeratorTrailCoverage(isModeratorPanel);
   const [subject, setSubject] = useState('');
   const [showOverview, setShowOverview] = useState(false);
 
-  const subjects = useMemo(() => getTrailSubjects(guides), [guides]);
+  const subjects = useMemo(
+    () => Array.from(new Set([...getTrailSubjects(guides), ...coverageStatuses.map((item) => item.subject)])),
+    [guides, coverageStatuses],
+  );
   const activeSubject = subject.trim();
-  const coverage = useMemo(() => buildTrailCoverage(guides, activeSubject), [guides, activeSubject]);
-  const allCoverages = useMemo(() => buildAllTrailCoverages(guides), [guides]);
+  const coverage = useMemo(
+    () => buildTrailCoverage(guides, activeSubject, coverageStatuses),
+    [guides, activeSubject, coverageStatuses],
+  );
+  const allCoverages = useMemo(
+    () => buildAllTrailCoverages(guides, coverageStatuses),
+    [guides, coverageStatuses],
+  );
 
   const applyRecommendation = () => {
     if (!coverage.recommendation) return;

@@ -1401,6 +1401,7 @@ export type Database = {
           content_markdown: string
           cover_image_url: string | null
           created_at: string
+          created_by: string | null
           cta_final_label: string | null
           cta_final_text: string | null
           cta_final_url: string | null
@@ -1432,6 +1433,7 @@ export type Database = {
           content_markdown?: string
           cover_image_url?: string | null
           created_at?: string
+          created_by?: string | null
           cta_final_label?: string | null
           cta_final_text?: string | null
           cta_final_url?: string | null
@@ -1463,6 +1465,7 @@ export type Database = {
           content_markdown?: string
           cover_image_url?: string | null
           created_at?: string
+          created_by?: string | null
           cta_final_label?: string | null
           cta_final_text?: string | null
           cta_final_url?: string | null
@@ -3863,6 +3866,10 @@ export type Database = {
       }
     }
     Functions: {
+      moderator_authors: {
+        Args: Record<PropertyKey, never>
+        Returns: { user_id: string; display_name: string; email: string }[]
+      }
       _guide_comment_has_link: { Args: { p_text: string }; Returns: boolean }
       _guide_comment_has_profanity: {
         Args: { p_text: string }

@@ -25,7 +25,7 @@ const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : 'Erro inesperado';
 
 export const useUserRoles = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const adminQuery = useQuery({
     queryKey: ['check-admin', user?.id ?? 'anon'],
@@ -57,8 +57,10 @@ export const useUserRoles = () => {
   const roles = adminQuery.data?.roles ?? [];
   const isAdmin = roles.includes('admin');
   const isDeveloper = roles.includes('developer');
+  const isModerator = roles.includes('moderator');
   const canAccessAdmin = isAdmin || isDeveloper;
-  const loading = adminQuery.isLoading;
+  const canAccessModerator = isModerator || isAdmin;
+  const loading = authLoading || (!!user && adminQuery.isLoading);
 
   const hasRole = (role: AppRole): boolean => roles.includes(role);
 
@@ -102,7 +104,9 @@ export const useUserRoles = () => {
     })) as UserRole[],
     isAdmin,
     isDeveloper,
+    isModerator,
     canAccessAdmin,
+    canAccessModerator,
     loading,
     hasRole,
     assignRole,

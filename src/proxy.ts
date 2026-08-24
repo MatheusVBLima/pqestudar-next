@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/meu-perfil", "/meus-materiais", "/salvos", "/ferramentas/salvos", "/premium", "/admin"];
+const PROTECTED_PREFIXES = ["/meu-perfil", "/meus-materiais", "/salvos", "/ferramentas/salvos", "/premium", "/admin", "/moderador"];
 
 function hasSupabaseAuthCookie(request: NextRequest): boolean {
   return request.cookies.getAll().some((c) => {

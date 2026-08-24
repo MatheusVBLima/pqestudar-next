@@ -131,6 +131,44 @@ Deno.serve(async (req) => {
       return json(200, { success: true });
     }
 
+    if (action === "move") {
+      const userId = String(body.user_id ?? "");
+      const fromRole = body.from_role as Role;
+      const toRole = body.to_role as Role;
+      const validRoles: Role[] = ["admin", "developer", "moderator", "user"];
+
+      if (!userId || !validRoles.includes(fromRole) || !validRoles.includes(toRole)) {
+        return json(400, { error: "user_id, from_role and to_role are required" });
+      }
+      if (fromRole === toRole) return json(200, { success: true });
+      if (userId === user.id && fromRole === "admin") {
+        return json(400, { error: "Cannot change your own admin role" });
+      }
+
+      const { error: insertError } = await admin
+        .from("user_roles")
+        .insert({ user_id: userId, role: toRole });
+
+      if (insertError && !String(insertError.message).toLowerCase().includes("duplicate")) {
+        return json(500, { error: insertError.message });
+      }
+
+      const { error: deleteError } = await admin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", fromRole);
+
+      if (deleteError) {
+        if (!insertError) {
+          await admin.from("user_roles").delete().eq("user_id", userId).eq("role", toRole);
+        }
+        return json(500, { error: deleteError.message });
+      }
+
+      return json(200, { success: true, user_id: userId, role: toRole });
+    }
+
     return json(400, { error: "Unknown action" });
   } catch (error) {
     console.error("admin-manage-roles error", error);

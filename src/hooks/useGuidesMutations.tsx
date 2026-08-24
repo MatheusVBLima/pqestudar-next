@@ -20,9 +20,12 @@ export function useGuidesMutations() {
 
   const createGuide = useMutation({
     mutationFn: async (guide: TablesInsert<"guides">) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Sessao expirada");
+      const payload: TablesInsert<"guides"> = { ...guide, created_by: user.id };
       const { data, error } = await supabase
         .from("guides")
-        .insert(guide)
+        .insert(payload)
         .select()
         .single();
       if (error) throw error;

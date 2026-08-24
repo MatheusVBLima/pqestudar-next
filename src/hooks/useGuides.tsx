@@ -35,6 +35,7 @@ export interface Guide {
   views_count?: number | null;
   sort_order: number;
   author_name: string;
+  created_by: string | null;
   cover_image_url: string | null;
   flow_data: Json | null;
   created_at: string;

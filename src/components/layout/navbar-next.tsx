@@ -84,7 +84,7 @@ export function Navbar() {
   const router = useRouter();
   const pathname = usePathname() ?? "/";
   const { user, signOut, loading } = useAuth();
-  const { isAdmin } = useUserRoles();
+  const { isAdmin, isModerator } = useUserRoles();
   const { isActive } = useSubscription();
   const { isDark, toggleTheme } = useTheme();
   const { items: navItems, logos, loading: navLoading } = useNavConfig();
@@ -379,6 +379,14 @@ export function Navbar() {
                           <BarChart3 className="h-4 w-4 mr-2" />Dashboard admin
                         </DropdownMenuItem>
                       )}
+                      {isModerator && (
+                        <DropdownMenuItem
+                          onClick={() => handleNavigation("/moderador")}
+                          className="cursor-pointer"
+                        >
+                          <BookOpen className="h-4 w-4 mr-2" />Painel do moderador
+                        </DropdownMenuItem>
+                      )}
                       {showPremiumArea && (
                         <DropdownMenuItem
                           onMouseEnter={() => !isOnKitSubdomain && router.prefetch("/premium")}
@@ -529,6 +537,14 @@ export function Navbar() {
                             className="cursor-pointer"
                           >
                             <BarChart3 className="h-4 w-4 mr-2" />Dashboard admin
+                          </DropdownMenuItem>
+                        )}
+                        {isModerator && (
+                          <DropdownMenuItem
+                            onClick={() => handleNavigation("/moderador")}
+                            className="cursor-pointer"
+                          >
+                            <BookOpen className="h-4 w-4 mr-2" />Painel do moderador
                           </DropdownMenuItem>
                         )}
                         {showPremiumArea && (

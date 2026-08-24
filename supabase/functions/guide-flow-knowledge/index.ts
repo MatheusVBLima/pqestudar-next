@@ -34,6 +34,49 @@ function bucketForCategory(category: string) {
     : "guide-library";
 }
 
+const TRAIL_SUBJECT_RULES = [
+  ["Cursos gratuitos", ["curso gratuito", "cursos gratuitos", "certificado", "plataforma de curso"]],
+  ["Horas complementares", ["hora complementar", "horas complementares", "atividade complementar"]],
+  ["Carteirinha de estudante", ["carteirinha", "documento do estudante", "meia-entrada"]],
+  ["Concurso público", ["concurso", "edital", "banca"]],
+  ["ENEM", ["enem", "sisu", "prouni", "redação"]],
+  ["Currículo", ["currículo", "curriculo", "linkedin", "perfil profissional"]],
+  ["Inteligência artificial", ["inteligência artificial", "inteligencia artificial", "chatgpt"]],
+  ["Benefícios sociais", ["benefício social", "beneficio social", "cadúnico", "cadunico", "bolsa família"]],
+] as const;
+
+const TRAIL_STAGE_RULES = [
+  ["busca", ["como conseguir", "como encontrar", "o que é", "o que são", "para que serve"]],
+  ["exploracao", ["melhores", "sites", "plataformas", "opções", "opcoes", "onde encontrar"]],
+  ["decisao", ["como escolher", "vale mais", "melhor para começar", "comparar"]],
+  ["validacao", ["é aceito", "e aceito", "vale para", "funciona", "é confiável", "e confiavel"]],
+  ["expansao", ["ajudar no currículo", "ajudar no curriculo", "benefícios", "beneficios", "fortalecer", "usar para"]],
+  ["aplicacao", ["como colocar", "como baixar", "passo a passo", "como usar", "como fazer"]],
+] as const;
+
+function trailInput(flowData: unknown, keys: string[]) {
+  if (!flowData || typeof flowData !== "object" || Array.isArray(flowData)) return "";
+  const inputs = (flowData as Record<string, unknown>).inputs;
+  if (!inputs || typeof inputs !== "object" || Array.isArray(inputs)) return "";
+  for (const key of keys) {
+    const value = (inputs as Record<string, unknown>)[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function classifyTrailGuide(guide: Record<string, unknown>) {
+  const subjectHaystack = `${guide.title ?? ""} ${guide.short_description ?? ""} ${guide.category ?? ""} ${guide.public_category ?? ""}`.toLocaleLowerCase("pt-BR");
+  const stageHaystack = `${guide.title ?? ""} ${guide.short_description ?? ""}`.toLocaleLowerCase("pt-BR");
+  const subject = trailInput(guide.flow_data, ["assuntoPrincipal", "trailSubject", "editorialSubject", "subject"])
+    || TRAIL_SUBJECT_RULES.find(([, terms]) => terms.some((term) => subjectHaystack.includes(term)))?.[0]
+    || "";
+  const stage = trailInput(guide.flow_data, ["tipo", "trailStage", "stage"])
+    || TRAIL_STAGE_RULES.find(([, terms]) => terms.some((term) => stageHaystack.includes(term)))?.[0]
+    || "";
+  return { subject, stage };
+}
+
 function stripHtml(html: string) {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -242,16 +285,42 @@ serve(async (req) => {
     const { data: { user }, error: authErr } = await anonClient.auth.getUser();
     if (authErr || !user) return jsonResponse({ error: "Nao autenticado" }, 401);
 
-    const { data: roles } = await supabase
+    const body = await req.json();
+    const action = body.action;
+
+    const { data: roles, error: rolesError } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "admin");
+      .in("role", ["admin", "moderator"]);
 
-    if (!roles || roles.length === 0) return jsonResponse({ error: "Acesso negado" }, 403);
+    if (rolesError) return jsonResponse({ error: "Erro ao verificar permissoes" }, 500);
 
-    const body = await req.json();
-    const action = body.action;
+    const roleNames = new Set((roles ?? []).map((entry) => entry.role));
+    const isAdmin = roleNames.has("admin");
+    const isModerator = roleNames.has("moderator");
+
+    if (!isAdmin && !(isModerator && (action === "list" || action === "trail-coverage"))) {
+      return jsonResponse({ error: "Acesso negado" }, 403);
+    }
+
+    if (action === "trail-coverage") {
+      const { data: guides, error } = await supabase
+        .from("guides")
+        .select("title, short_description, category, public_category, flow_data, is_published");
+      if (error) return jsonResponse({ error: error.message }, 500);
+
+      const aggregate = new Map<string, { subject: string; stage: string; status: "published" | "draft" }>();
+      for (const guide of guides ?? []) {
+        const { subject, stage } = classifyTrailGuide(guide as Record<string, unknown>);
+        if (!subject || !TRAIL_STAGE_RULES.some(([value]) => value === stage)) continue;
+        const key = `${subject}\u0000${stage}`;
+        const status = guide.is_published ? "published" : "draft";
+        const current = aggregate.get(key);
+        if (!current || status === "published") aggregate.set(key, { subject, stage, status });
+      }
+      return jsonResponse(Array.from(aggregate.values()));
+    }
 
     if (action === "list") {
       const { data, error } = await supabase

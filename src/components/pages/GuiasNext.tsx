@@ -13,6 +13,8 @@ import { useManagementMode } from "@/hooks/useManagementMode";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const GuidesAdminView = lazy(() => import("@/components/pages/GuidesAdminView"));
 
@@ -106,7 +108,7 @@ function GuidesList({
 
 export default function GuiasNext() {
   const ps = usePageSettings("/guias");
-  const { isAdmin } = useUserRoles();
+  const { isAdmin, isModerator, loading: rolesLoading } = useUserRoles();
   const { isManagementMode } = useManagementMode();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -171,6 +173,11 @@ export default function GuiasNext() {
       />
 
       <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 pb-16">
+        {!rolesLoading && isModerator && (
+          <div className="mb-6 flex justify-end">
+            <Button asChild><Link href="/moderador">Painel do moderador</Link></Button>
+          </div>
+        )}
         <div className="mb-8 flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <nav

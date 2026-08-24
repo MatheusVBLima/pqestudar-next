@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -239,6 +239,7 @@ function InternalCodeField({ code }: { code?: string }) {
 
 export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: publicCategoriesRows } = useGuidePublicCategories();
   const publicCategoryNames = (publicCategoriesRows ?? []).map((c) => c.name);
   const [title, setTitle] = useState("");
@@ -774,7 +775,8 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
                 className="gap-1.5"
                 onClick={() => {
                   onClose();
-                  router.push(`/admin/fluxo-guias?guide=${guide.id}`);
+                  const flowPath = pathname.startsWith("/moderador") ? "/moderador/fluxos" : "/admin/fluxo-guias";
+                  router.push(`${flowPath}?guide=${guide.id}`);
                 }}
               >
                 <Workflow className="h-4 w-4" />

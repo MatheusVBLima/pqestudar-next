@@ -2,6 +2,11 @@ import type { Guide } from '@/hooks/useGuides';
 
 export type TrailStage = 'busca' | 'exploracao' | 'decisao' | 'validacao' | 'expansao' | 'aplicacao';
 export type TrailStageStatus = 'published' | 'draft' | 'missing';
+export interface TrailCoverageStatusOverride {
+  subject: string;
+  stage: TrailStage;
+  status: Exclude<TrailStageStatus, 'missing'>;
+}
 
 export interface TrailSubjectCoverage {
   subject: string;
@@ -250,7 +255,11 @@ export function buildTrailRecommendation(subject: string, stage: TrailStage, sta
   };
 }
 
-export function buildTrailCoverage(guides: Guide[], subject: string): TrailSubjectCoverage {
+export function buildTrailCoverage(
+  guides: Guide[],
+  subject: string,
+  statusOverrides: TrailCoverageStatusOverride[] = [],
+): TrailSubjectCoverage {
   const stages = emptyStages();
   const normalizedSubject = normalize(subject);
 
@@ -271,6 +280,15 @@ export function buildTrailCoverage(guides: Guide[], subject: string): TrailSubje
     }
   });
 
+  statusOverrides
+    .filter((item) => normalize(item.subject) === normalizedSubject)
+    .forEach((item) => {
+      const current = stages[item.stage].status;
+      if (item.status === 'published' || current === 'missing') {
+        stages[item.stage].status = item.status;
+      }
+    });
+
   const coveredCount = TRAIL_STAGES.filter(({ value }) => stages[value].status !== 'missing').length;
   const integrity = Math.round((coveredCount / TRAIL_STAGES.length) * 100);
   const missingStages = TRAIL_STAGES.map((stage) => stage.value).filter((stage) => stages[stage].status === 'missing');
@@ -287,6 +305,14 @@ export function buildTrailCoverage(guides: Guide[], subject: string): TrailSubje
   };
 }
 
-export function buildAllTrailCoverages(guides: Guide[]) {
-  return getTrailSubjects(guides).map((subject) => buildTrailCoverage(guides, subject));
+export function buildAllTrailCoverages(guides: Guide[], statusOverrides: TrailCoverageStatusOverride[] = []) {
+  const subjects = new Map<string, string>();
+  getTrailSubjects(guides).forEach((subject) => subjects.set(normalize(subject), subject));
+  statusOverrides.forEach((item) => {
+    const canonical = canonicalSubject(item.subject);
+    subjects.set(normalize(canonical), canonical);
+  });
+  return Array.from(subjects.values())
+    .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+    .map((subject) => buildTrailCoverage(guides, subject, statusOverrides));
 }

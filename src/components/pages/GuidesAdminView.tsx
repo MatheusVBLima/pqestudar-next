@@ -20,6 +20,8 @@ import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { Guide } from "@/hooks/useGuides";
 import { useGuidesMutations } from "@/hooks/useGuidesMutations";
 import type { TablesInsert } from "@/integrations/supabase/types";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 interface GuidesAdminViewProps {
   guides: Guide[] | undefined;
@@ -39,6 +41,9 @@ export default function GuidesAdminView({
   const [editGuide, setEditGuide] = useState<Guide | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Guide | null>(null);
   const { createGuide, updateGuide, deleteGuide, togglePublished, toggleFeatured } = useGuidesMutations();
+  const { user } = useAuth();
+  const { isAdmin } = useUserRoles();
+  const canManage = (guide: Guide) => isAdmin || guide.created_by === user?.id;
 
   const publishedCount = useMemo(() => guides?.filter((g) => g.is_published).length ?? 0, [guides]);
   const draftsCount = useMemo(() => guides?.filter((g) => !g.is_published).length ?? 0, [guides]);
@@ -92,14 +97,14 @@ export default function GuidesAdminView({
     return (
       <>
         {featuredGuide && (
-          <FeaturedGuideCard guide={featuredGuide} showAdmin {...adminActions} />
+          <FeaturedGuideCard guide={featuredGuide} showAdmin={canManage(featuredGuide)} {...adminActions} />
         )}
         <div className="space-y-4">
           {listGuides.map((guide) => (
             <GuideListItem
               key={guide.id}
               guide={guide}
-              showAdmin
+              showAdmin={canManage(guide)}
               showFeaturedBadge={adminTab === "published"}
               {...adminActions}
             />

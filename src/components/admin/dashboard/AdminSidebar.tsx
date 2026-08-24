@@ -60,6 +60,7 @@ export function AdminSidebar() {
   const isSidebarCollapsed = sidebarState === 'collapsed';
   const isActive = (href: string) => pathname === href;
   const isInsightsActive = pathname.startsWith('/admin/insights');
+  const isGuideInsightsActive = pathname.startsWith('/admin/insights/guias');
   const isPremiumActive = pathname.startsWith('/admin/premium');
   const isConcursosActive = pathname.startsWith('/admin/concursos');
   const { logos } = useNavConfig();
@@ -207,7 +208,32 @@ export function AdminSidebar() {
               <SidebarGroupContent>
                 <SidebarMenuSub className={expandableSubListClass}>
                   {insightsItems.map((item) => {
-                    const active = isActive(item.href);
+                    const active = item.href === '/admin/insights/guias' ? isGuideInsightsActive : isActive(item.href);
+                    if (item.href === '/admin/insights/guias') {
+                      return (
+                        <SidebarMenuSubItem key={item.href}>
+                          <Collapsible defaultOpen={isGuideInsightsActive}>
+                            <CollapsibleTrigger className={cn(expandableSubItemClass(active), "flex w-full items-center justify-between")}>
+                              <span className="flex items-center gap-2">
+                                <item.icon className={cn('h-3.5 w-3.5', active ? 'text-primary' : 'text-muted-foreground')} />
+                                <span>Guias</span>
+                              </span>
+                              <ChevronDown className="h-3 w-3 transition-transform [[data-state=open]>&]:rotate-180" />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border/70 pl-2">
+                                <Link href="/admin/insights/guias" className={cn("block rounded-md px-2 py-1.5 text-[11px] font-medium", pathname === '/admin/insights/guias' ? "bg-primary/10 text-primary" : "text-sidebar-foreground/55 hover:bg-sidebar-accent/70")}>
+                                  Visão geral
+                                </Link>
+                                <Link href="/admin/insights/guias/autores" className={cn("block rounded-md px-2 py-1.5 text-[11px] font-medium", pathname === '/admin/insights/guias/autores' ? "bg-primary/10 text-primary" : "text-sidebar-foreground/55 hover:bg-sidebar-accent/70")}>
+                                  Por autor
+                                </Link>
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        </SidebarMenuSubItem>
+                      );
+                    }
                     return (
                       <SidebarMenuSubItem key={item.href}>
                         <SidebarMenuSubButton

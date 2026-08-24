@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/admin/dashboard/PageHeader';
 import { FlowCanvas } from '@/components/admin/guide-flow/FlowCanvas';
@@ -19,6 +19,7 @@ import { toast } from '@/hooks/use-toast';
 import { Save, Send, RotateCcw } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-message';
 import { PUBLIC_SUPABASE_URL } from '@/lib/runtime-env';
+import { useAuth } from '@/hooks/useAuth';
 
 const EMPTY_GUIDE: GeneratedGuideData = {
   title: '', slug: '', short_description: '', seo_title: '', seo_description: '',
@@ -40,7 +41,10 @@ type ToolRow = Tables<'tools'>;
 
 export default function GuideFlow() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const isModeratorPanel = pathname.startsWith('/moderador');
   const { createGuide, updateGuide } = useGuidesMutations();
   const sources = useGuideFlowSources();
   const { applyTargetDefaults } = sources;
@@ -51,6 +55,8 @@ export default function GuideFlow() {
   const [linkedGuideId, setLinkedGuideId] = useState<string | null>(null);
   const [linkedToolId, setLinkedToolId] = useState<string | null>(null);
   const [currentInputs, setCurrentInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
+
+  const currentAuthor = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Moderador';
 
   // Load guide from URL param ?guide=ID
   useEffect(() => {
@@ -277,7 +283,7 @@ export default function GuideFlow() {
         seo_description: generated.seo_description ?? '',
         category: isToolFlow ? (preservedToolTags[0] ?? inputs.categoria) : (generated.category ?? (categoriaOption?.label || inputs.categoria)),
         public_category: isToolFlow ? (preservedToolTags[0] ?? (inputs.categoriaPublica || 'Ferramentas')) : (inputs.categoriaPublica || mapInternaToPublica(inputs.categoria)),
-        author_name: generated.author_name ?? 'Matheus Dias',
+        author_name: isModeratorPanel ? currentAuthor : (generated.author_name ?? 'Matheus Dias'),
         content_markdown: generated.content_markdown ?? '',
         cta_top: generated.cta_top ?? null,
         cta_middle: generated.cta_middle ?? null,
@@ -420,6 +426,10 @@ export default function GuideFlow() {
   const handleSave = async (publish: boolean) => {
     if (!guideData) return;
     const isToolFlow = currentInputs.targetType === 'tool';
+    if (isModeratorPanel && isToolFlow) {
+      toast({ title: 'Acesso restrito', description: 'Moderadores podem criar e editar somente guias.', variant: 'destructive' });
+      return;
+    }
     if (!isToolFlow && hasValidationErrors(guideData)) {
       toast({ title: 'Erros de validação', description: 'Corrija os campos obrigatórios antes de salvar.', variant: 'destructive' });
       return;
@@ -501,7 +511,7 @@ export default function GuideFlow() {
         seo_description: guideData.seo_description,
         category: guideData.category,
         public_category: guideData.public_category,
-        author_name: guideData.author_name,
+        author_name: isModeratorPanel ? currentAuthor : guideData.author_name,
         content_markdown: finalMarkdown,
         cover_image_url: guideData.cover_image_url || null,
         is_published: publish,
@@ -535,7 +545,7 @@ export default function GuideFlow() {
         title: publish ? 'Guia publicado!' : 'Rascunho salvo!',
         description: `"${guideData.title}" foi ${publish ? 'publicado' : 'salvo como rascunho'}.`,
       });
-      router.push('/guias');
+      router.push(isModeratorPanel ? '/moderador/guias' : '/guias');
     } catch (err: unknown) {
       toast({ title: 'Erro ao salvar', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
