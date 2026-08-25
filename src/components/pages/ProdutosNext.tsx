@@ -135,11 +135,11 @@ function ProductCard({
         </div>
       )}
 
-      <div className="group block aspect-[16/10] w-full overflow-hidden bg-muted">
+      <div className="block aspect-[16/10] w-full overflow-hidden bg-muted">
         <img
           src={product.image_url || "/placeholder.svg"}
           alt={product.title}
-          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+          className="h-full w-full object-cover"
           referrerPolicy="no-referrer"
           onError={(e) => {
             (e.target as HTMLImageElement).src = "/placeholder.svg";

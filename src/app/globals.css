@@ -145,6 +145,7 @@ All colors MUST be HSL.
   html {
     min-height: 100%;
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
     overflow-x: hidden; /* Prevent horizontal scroll */
   }
 
@@ -339,6 +340,14 @@ All colors MUST be HSL.
 }
 .admin-radius .admin-r-sm {
   border-radius: calc(var(--admin-radius) - 0.2rem);
+}
+
+/* Keep form controls visually consistent across every admin screen. */
+.admin-radius input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+.admin-radius textarea,
+.admin-radius select,
+.admin-radius [role="combobox"] {
+  border-radius: var(--admin-radius) !important;
 }
 
 /* Auto-apply radius + shadow to all Card-based components inside admin */
@@ -783,7 +792,7 @@ body[data-scroll-locked] {
   margin-right: 0 !important;
   padding-right: 0 !important;
   overflow-x: hidden !important;
-  overflow-y: scroll !important;
+  overflow-y: hidden !important;
 }
 html.is-drag-scrolling,
 html.is-drag-scrolling * {

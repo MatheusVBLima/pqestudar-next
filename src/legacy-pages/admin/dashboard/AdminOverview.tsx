@@ -30,6 +30,7 @@ const PERIOD_LABELS: Record<Period, string> = {
 
 export default function AdminOverview() {
   const [period, setPeriod] = useState<Period>("month");
+  const [chartMetric, setChartMetric] = useState<"visitors" | "signups">("visitors");
   const [activityPage, setActivityPage] = useState(1);
   const range = useMemo(() => periodToRange(period), [period]);
   const periodLabel = PERIOD_LABELS[period];
@@ -49,7 +50,7 @@ export default function AdminOverview() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: chartData } = useQuery({
+  const { data: visitorChartData } = useQuery({
     queryKey: ["admin-overview-visitors-chart", period],
     queryFn: async () => {
       const bucket = period === "day" ? "hour" : "day";
@@ -100,12 +101,30 @@ export default function AdminOverview() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: newSignups } = useQuery({
+  const { data: newSignups, isError: newSignupsError } = useQuery({
     queryKey: ["admin-overview-new-signups", period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("admin_new_signups", range);
-      if (error) throw error;
-      return Number(data ?? 0);
+      const bucket = period === "day" ? "hour" : "day";
+      const params = new URLSearchParams({ bucket });
+      if (range.start_at) params.set("start_at", range.start_at);
+      if (range.end_at) params.set("end_at", range.end_at);
+      const response = await fetch(`/api/admin/dashboard/new-signups?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const payload = await response.json() as {
+        count?: number;
+        series?: Array<{ bucket_at: string; signups: number }>;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(payload.error || "Não foi possível carregar os novos inscritos.");
+      const fmt = bucket === "hour" ? "HH:mm" : "dd/MM";
+      return {
+        count: Number(payload.count ?? 0),
+        series: (payload.series || []).map((item) => ({
+          day: format(new Date(item.bucket_at), fmt, { locale: ptBR }),
+          value: Number(item.signups),
+        })),
+      };
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -165,6 +184,13 @@ export default function AdminOverview() {
   );
   const activityStart = activityRows.length === 0 ? 0 : (safeActivityPage - 1) * ACTIVITY_PAGE_SIZE + 1;
   const activityEnd = Math.min(safeActivityPage * ACTIVITY_PAGE_SIZE, activityRows.length);
+  const chartData = chartMetric === "visitors"
+    ? (visitorChartData || []).map((item) => ({ day: item.day, value: item.visitors }))
+    : newSignups?.series || [];
+  const chartTitle = chartMetric === "visitors" ? "Visitantes" : "Novos inscritos";
+  const chartDescription = chartMetric === "visitors"
+    ? `Sessões únicas · ${periodLabel}`
+    : `Contas criadas · ${periodLabel}`;
 
   useEffect(() => {
     setActivityPage(1);
@@ -194,47 +220,67 @@ export default function AdminOverview() {
           title="Visitantes"
           value={formatValue(stats?.visitors_30d)}
           icon={Users}
-          description={`Sessões únicas · ${periodLabel}`}
         />
         <StatCard
-          title="Novos inscritos"
-          value={formatValue(newSignups)}
+          title="Inscritos"
+          value={newSignupsError ? "Erro" : formatValue(newSignups?.count)}
           icon={UserPlus}
-          description={`Contas criadas · ${periodLabel}`}
         />
         <StatCard
-          title="Ferramentas ativas"
+          title="Ferramentas"
           value={formatValue(stats?.tools_active)}
           icon={Wrench}
-          description="Visíveis no site"
         />
         <StatCard
-          title="Concursos publicados"
+          title="Concursos"
           value={formatValue(stats?.concursos_published)}
           icon={BookOpen}
-          description={`Publicados · ${periodLabel}`}
         />
         <StatCard
-          title="Taxa de cliques"
+          title="Cliques"
           value={ctrDisplay}
           icon={TrendingUp}
-          description={`Cliques ferramentas / visitas · ${periodLabel}`}
         />
         <StatCard
-          title="Usuários em Salvos"
+          title="Salvos"
           value={formatValue(savedVisitors?.uniqueUsers)}
           icon={Bookmark}
-          trend={savedVisitors ? `${savedVisitors.views.toLocaleString("pt-BR")} visitas` : undefined}
-          description={`Usuários identificados com análise permitida · ${periodLabel}`}
         />
       </div>
 
-      <ChartCard title="Visitantes" description={`Sessões únicas · ${periodLabel}`}>
+      <ChartCard
+        title={chartTitle}
+        description={chartDescription}
+        actions={
+          <div className="flex items-center gap-1 rounded-[1.2rem] border bg-muted/30 p-1">
+            <Button
+              type="button"
+              size="sm"
+              variant={chartMetric === "visitors" ? "default" : "ghost"}
+              className="h-8 rounded-[1rem] text-xs"
+              onClick={() => setChartMetric("visitors")}
+            >
+              <Users className="mr-1.5 h-3.5 w-3.5" />
+              Visitantes
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={chartMetric === "signups" ? "default" : "ghost"}
+              className="h-8 rounded-[1rem] text-xs"
+              onClick={() => setChartMetric("signups")}
+            >
+              <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+              Novos inscritos
+            </Button>
+          </div>
+        }
+      >
         {chartData && chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
               <defs>
-                <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="colorOverviewMetric" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                 </linearGradient>
@@ -252,9 +298,10 @@ export default function AdminOverview() {
               />
               <Area
                 type="monotone"
-                dataKey="visitors"
+                dataKey="value"
+                name={chartTitle}
                 stroke="hsl(var(--primary))"
-                fill="url(#colorVisitors)"
+                fill="url(#colorOverviewMetric)"
                 strokeWidth={2}
               />
             </AreaChart>
