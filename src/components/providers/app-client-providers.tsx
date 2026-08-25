@@ -9,6 +9,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ManagementModeProvider } from "@/hooks/useManagementMode";
 import { PageViewTracker } from "@/components/providers/page-view-tracker";
 import { CookieConsentRuntime } from "@/components/providers/cookie-consent-runtime";
+import { GlobalDragScroll } from "@/components/providers/global-drag-scroll";
 
 export function AppClientProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -33,6 +34,7 @@ export function AppClientProviders({ children }: { children: React.ReactNode }) 
           <TooltipProvider>
             <PageViewTracker />
             <CookieConsentRuntime />
+            <GlobalDragScroll />
             <Toaster />
             <Sonner />
             {children}

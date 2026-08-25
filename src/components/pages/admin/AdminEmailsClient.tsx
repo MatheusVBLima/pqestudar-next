@@ -755,6 +755,7 @@ export default function AdminEmailsClient() {
   const quickTemplatesRef = useRef<HTMLDivElement>(null);
   const quickTemplatesDragRef = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false });
   const [draggingQuickTemplates, setDraggingQuickTemplates] = useState(false);
+  const [quickTemplateEdges, setQuickTemplateEdges] = useState({ left: false, right: false });
   const [selectedEmailTools, setSelectedEmailTools] = useState<Array<Tool | null>>([null, null, null]);
   const [toolPickerSlot, setToolPickerSlot] = useState<number | null>(null);
   const [toolPickerSearch, setToolPickerSearch] = useState("");
@@ -1548,15 +1549,18 @@ export default function AdminEmailsClient() {
       scrollLeft: quickTemplatesRef.current.scrollLeft,
       moved: false,
     };
-    setDraggingQuickTemplates(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const moveQuickTemplatesDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = quickTemplatesDragRef.current;
     if (!drag.active || !quickTemplatesRef.current) return;
     const distance = event.clientX - drag.startX;
-    if (Math.abs(distance) > 4) drag.moved = true;
+    if (!drag.moved) {
+      if (Math.abs(distance) < 8) return;
+      drag.moved = true;
+      setDraggingQuickTemplates(true);
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
     quickTemplatesRef.current.scrollLeft = drag.scrollLeft - distance;
   };
 
@@ -1565,6 +1569,31 @@ export default function AdminEmailsClient() {
     setDraggingQuickTemplates(false);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   };
+
+  useEffect(() => {
+    const element = quickTemplatesRef.current;
+    if (!element) return;
+
+    const updateEdges = () => {
+      const next = {
+        left: element.scrollLeft > 2,
+        right: element.scrollLeft + element.clientWidth < element.scrollWidth - 2,
+      };
+      setQuickTemplateEdges((current) =>
+        current.left === next.left && current.right === next.right ? current : next,
+      );
+    };
+
+    updateEdges();
+    element.addEventListener("scroll", updateEdges, { passive: true });
+    const resizeObserver = new ResizeObserver(updateEdges);
+    resizeObserver.observe(element);
+
+    return () => {
+      element.removeEventListener("scroll", updateEdges);
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   return (
     <div className="flex w-full flex-col gap-6 [&_input]:rounded-[1.2rem] [&_select]:rounded-[1.2rem] [&_textarea]:rounded-[1.2rem]">
@@ -3055,36 +3084,45 @@ export default function AdminEmailsClient() {
                 <CardDescription>Monte e salve modelos reutilizáveis. O envio acontece na aba Contatos.</CardDescription>
                 <div className="flex min-w-0 items-center gap-2 pt-2">
                   <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Modelos rápidos</span>
-                  <div
-                    ref={quickTemplatesRef}
-                    onPointerDown={startQuickTemplatesDrag}
-                    onPointerMove={moveQuickTemplatesDrag}
-                    onPointerUp={stopQuickTemplatesDrag}
-                    onPointerCancel={stopQuickTemplatesDrag}
-                    onClickCapture={(event) => {
-                      if (!quickTemplatesDragRef.current.moved) return;
-                      event.preventDefault();
-                      event.stopPropagation();
-                      quickTemplatesDragRef.current.moved = false;
-                    }}
-                    className={cn(
-                      "flex min-w-0 flex-1 select-none gap-2 overflow-x-auto pb-1 [scrollbar-color:hsl(var(--primary))_transparent] [scrollbar-width:thin]",
-                      draggingQuickTemplates ? "cursor-grabbing" : "cursor-grab",
+                  <div className="relative min-w-0 flex-1 overflow-hidden rounded-lg">
+                    <div
+                      ref={quickTemplatesRef}
+                      data-no-drag-scroll
+                      onPointerDown={startQuickTemplatesDrag}
+                      onPointerMove={moveQuickTemplatesDrag}
+                      onPointerUp={stopQuickTemplatesDrag}
+                      onPointerCancel={stopQuickTemplatesDrag}
+                      onClickCapture={(event) => {
+                        if (!quickTemplatesDragRef.current.moved) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        quickTemplatesDragRef.current.moved = false;
+                      }}
+                      className={cn(
+                        "scrollbar-none flex w-full select-none gap-2 overflow-x-auto overscroll-x-contain",
+                        draggingQuickTemplates ? "cursor-grabbing" : "cursor-grab",
+                      )}
+                      style={{ touchAction: "pan-y" }}
+                    >
+                      <Button type="button" variant="outline" size="sm" onClick={createToolAnnouncementTemplate} className="shrink-0">
+                        <Wrench className="mr-2 h-4 w-4" />
+                        Lançamento premium de ferramenta
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={createThreeToolsNewsletterTemplate} className="shrink-0">
+                        <Rows3 className="mr-2 h-4 w-4" />
+                        Newsletter premium — 3 ferramentas
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={createAffiliateOfferTemplate} className="shrink-0">
+                        <Link2 className="mr-2 h-4 w-4" />
+                        Oferta parceira — QConcursos
+                      </Button>
+                    </div>
+                    {quickTemplateEdges.left && (
+                      <span className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-card/90 via-card/60 to-transparent backdrop-blur-[3px]" />
                     )}
-                    style={{ touchAction: "pan-y" }}
-                  >
-                    <Button type="button" variant="outline" size="sm" onClick={createToolAnnouncementTemplate} className="shrink-0">
-                      <Wrench className="mr-2 h-4 w-4" />
-                      Lançamento premium de ferramenta
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={createThreeToolsNewsletterTemplate} className="shrink-0">
-                      <Rows3 className="mr-2 h-4 w-4" />
-                      Newsletter premium — 3 ferramentas
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={createAffiliateOfferTemplate} className="shrink-0">
-                      <Link2 className="mr-2 h-4 w-4" />
-                      Oferta parceira — QConcursos
-                    </Button>
+                    {quickTemplateEdges.right && (
+                      <span className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-card/90 via-card/60 to-transparent backdrop-blur-[3px]" />
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -3715,7 +3753,15 @@ export default function AdminEmailsClient() {
                           <Badge className="w-fit" variant="secondary">
                             {template.category}
                           </Badge>
-                          {template.is_builtin ? <Badge variant="outline" className="border-primary/30 text-primary">Pronto</Badge> : <Button type="button" size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" title="Remover modelo" onClick={() => setTemplateToDelete(template)}><Trash2 className="h-4 w-4" /></Button>}
+                          {template.is_builtin ? (
+                            <Badge
+                              variant="outline"
+                              className="border-primary/30 text-primary"
+                              title="Molde nativo do sistema. Use uma cópia ou edite o molde pelos botões abaixo."
+                            >
+                              Molde padrão
+                            </Badge>
+                          ) : <Button type="button" size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" title="Remover modelo" onClick={() => setTemplateToDelete(template)}><Trash2 className="h-4 w-4" /></Button>}
                         </div>
                         <div>
                           <CardTitle className="text-base">{template.name}</CardTitle>
