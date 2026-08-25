@@ -7,7 +7,7 @@ import { StatCard } from "@/components/admin/dashboard/StatCard";
 import { ChartCard } from "@/components/admin/dashboard/ChartCard";
 import { DataTable } from "@/components/admin/dashboard/DataTable";
 import { PeriodSelector, type Period } from "@/components/admin/dashboard/PeriodSelector";
-import { periodToRange } from "@/components/admin/dashboard/periodHelper";
+import { periodToRange, previousPeriodRange } from "@/components/admin/dashboard/periodHelper";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -33,6 +33,7 @@ export default function AdminOverview() {
   const [chartMetric, setChartMetric] = useState<"visitors" | "signups">("visitors");
   const [activityPage, setActivityPage] = useState(1);
   const range = useMemo(() => periodToRange(period), [period]);
+  const previousRange = useMemo(() => previousPeriodRange(range), [range]);
   const periodLabel = PERIOD_LABELS[period];
 
   const { data: stats } = useQuery({
@@ -101,6 +102,22 @@ export default function AdminOverview() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: previousStats } = useQuery({
+    queryKey: ["admin-overview-stats-previous", period],
+    enabled: previousRange !== null,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_overview_stats", previousRange!);
+      if (error) throw error;
+      return data as {
+        visitors_30d: number;
+        tools_active: number;
+        concursos_published: number;
+        ctr_30d: number | null;
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: newSignups, isError: newSignupsError } = useQuery({
     queryKey: ["admin-overview-new-signups", period],
     queryFn: async () => {
@@ -129,6 +146,24 @@ export default function AdminOverview() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: previousSignups } = useQuery({
+    queryKey: ["admin-overview-new-signups-previous", period],
+    enabled: previousRange !== null,
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        start_at: previousRange!.start_at,
+        end_at: previousRange!.end_at,
+      });
+      const response = await fetch(`/api/admin/dashboard/new-signups?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const payload = await response.json() as { count?: number; error?: string };
+      if (!response.ok) throw new Error(payload.error || "Não foi possível consultar o período anterior.");
+      return Number(payload.count ?? 0);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: savedVisitors } = useQuery({
     queryKey: ["admin-overview-saved-visitors", period],
     queryFn: async () => {
@@ -140,6 +175,17 @@ export default function AdminOverview() {
         visitors: Number(row?.visitors ?? 0),
         views: Number(row?.views ?? 0),
       };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: previousSavedVisitors } = useQuery({
+    queryKey: ["admin-overview-saved-visitors-previous", period],
+    enabled: previousRange !== null,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_overview_saved_visitors", previousRange!);
+      if (error) throw error;
+      return Number(data?.[0]?.unique_users ?? 0);
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -175,6 +221,14 @@ export default function AdminOverview() {
 
   const formatValue = (v: number | null | undefined) => (v != null ? String(v) : "—");
   const ctrDisplay = stats?.ctr_30d != null ? `${stats.ctr_30d}%` : "—";
+  const comparison = (current: number | null | undefined, previous: number | null | undefined) => {
+    if (current == null || previous == null || previousRange === null) return {};
+    const percent = previous === 0 ? (current === 0 ? 0 : 100) : ((current - previous) / previous) * 100;
+    const rounded = Math.abs(percent).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+    if (percent > 0) return { trend: `↗ ${rounded}%`, trendTone: "positive" as const };
+    if (percent < 0) return { trend: `↘ ${rounded}%`, trendTone: "negative" as const };
+    return { trend: "→ 0%", trendTone: "neutral" as const };
+  };
   const activityRows = useMemo(() => activity ?? [], [activity]);
   const totalActivityPages = Math.max(1, Math.ceil(activityRows.length / ACTIVITY_PAGE_SIZE));
   const safeActivityPage = Math.min(activityPage, totalActivityPages);
@@ -220,31 +274,37 @@ export default function AdminOverview() {
           title="Visitantes"
           value={formatValue(stats?.visitors_30d)}
           icon={Users}
+          {...comparison(stats?.visitors_30d, previousStats?.visitors_30d)}
         />
         <StatCard
           title="Inscritos"
           value={newSignupsError ? "Erro" : formatValue(newSignups?.count)}
           icon={UserPlus}
+          {...comparison(newSignups?.count, previousSignups)}
         />
         <StatCard
           title="Ferramentas"
           value={formatValue(stats?.tools_active)}
           icon={Wrench}
+          {...comparison(stats?.tools_active, previousStats?.tools_active)}
         />
         <StatCard
           title="Concursos"
           value={formatValue(stats?.concursos_published)}
           icon={BookOpen}
+          {...comparison(stats?.concursos_published, previousStats?.concursos_published)}
         />
         <StatCard
           title="Cliques"
           value={ctrDisplay}
           icon={TrendingUp}
+          {...comparison(stats?.ctr_30d, previousStats?.ctr_30d)}
         />
         <StatCard
           title="Salvos"
           value={formatValue(savedVisitors?.uniqueUsers)}
           icon={Bookmark}
+          {...comparison(savedVisitors?.uniqueUsers, previousSavedVisitors)}
         />
       </div>
 

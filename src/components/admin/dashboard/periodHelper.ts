@@ -34,3 +34,16 @@ export function periodToRange(period: Period): { start_at: string | null; end_at
 
   return { start_at: start.toISOString(), end_at };
 }
+
+export function previousPeriodRange(range: { start_at: string | null; end_at: string | null }) {
+  if (!range.start_at || !range.end_at) return null;
+
+  const start = new Date(range.start_at).getTime();
+  const end = new Date(range.end_at).getTime();
+  const duration = end - start;
+
+  return {
+    start_at: new Date(start - duration).toISOString(),
+    end_at: new Date(start).toISOString(),
+  };
+}

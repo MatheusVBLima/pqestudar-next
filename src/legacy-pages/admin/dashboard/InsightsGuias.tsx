@@ -9,7 +9,7 @@ import { DataTable } from "@/components/admin/dashboard/DataTable";
 import { HorizontalBarsCard } from "@/components/admin/dashboard/HorizontalBarsCard";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { periodToRange } from "@/components/admin/dashboard/periodHelper";
+import { periodToRange, previousPeriodRange } from "@/components/admin/dashboard/periodHelper";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -171,11 +171,23 @@ export default function InsightsGuias() {
   };
   const range = periodToRange(period);
   const args = { start_at: range.start_at, end_at: range.end_at };
+  const previousRange = previousPeriodRange(range);
 
   const overview = useQuery({
     queryKey: ["insights-guides-overview", period],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("analytics_guides_overview_public", args);
+      if (error) throw error;
+      return data as OverviewRow;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const previousOverview = useQuery({
+    queryKey: ["insights-guides-overview-previous", period],
+    enabled: previousRange !== null,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("analytics_guides_overview_public", previousRange!);
       if (error) throw error;
       return data as OverviewRow;
     },
@@ -243,6 +255,15 @@ export default function InsightsGuias() {
   });
 
   const ov = overview.data ?? {};
+  const previousOv = previousOverview.data;
+  const comparison = (current: number | null | undefined, previous: number | null | undefined) => {
+    if (current == null || previous == null || previousRange === null) return {};
+    const percent = previous === 0 ? (current === 0 ? 0 : 100) : ((current - previous) / previous) * 100;
+    const rounded = Math.abs(percent).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+    if (percent > 0) return { trend: `↗ ${rounded}%`, trendTone: "positive" as const };
+    if (percent < 0) return { trend: `↘ ${rounded}%`, trendTone: "negative" as const };
+    return { trend: "→ 0%", trendTone: "neutral" as const };
+  };
   const fmtSec = (s: number) => {
     if (!s) return "0s";
     if (s < 60) return `${Math.round(s)}s`;
@@ -339,24 +360,31 @@ export default function InsightsGuias() {
           title="Visualizações"
           value={Number(ov.total_views ?? 0).toLocaleString("pt-BR")}
           icon={Eye}
+          {...comparison(ov.total_views, previousOv?.total_views)}
         />
-        <StatCard title="Guias únicos" value={String(ov.unique_guides ?? 0)} icon={BookOpen} />
+        <StatCard
+          title="Guias únicos"
+          value={String(ov.unique_guides ?? 0)}
+          icon={BookOpen}
+          {...comparison(ov.unique_guides, previousOv?.unique_guides)}
+        />
         <StatCard
           title="Tempo médio"
           value={fmtSec(Number(ov.avg_read_seconds ?? 0))}
           icon={Clock}
+          {...comparison(ov.avg_read_seconds, previousOv?.avg_read_seconds)}
         />
         <StatCard
           title="Conclusão"
           value={`${Number(ov.avg_completion_pct ?? 0)}%`}
-          description="≥75% de scroll"
           icon={Target}
+          {...comparison(ov.avg_completion_pct, previousOv?.avg_completion_pct)}
         />
         <StatCard
           title="CTR de CTA"
           value={ov.cta_ctr != null ? `${ov.cta_ctr}%` : "—"}
-          description={`${Number(ov.cta_clicks ?? 0)} cliques`}
           icon={MousePointerClick}
+          {...comparison(ov.cta_ctr, previousOv?.cta_ctr)}
         />
       </div>
 
