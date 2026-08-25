@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Users, Wrench, BookOpen, TrendingUp, Bookmark } from "lucide-react";
+import { Users, UserPlus, Wrench, BookOpen, TrendingUp, Bookmark } from "lucide-react";
 import { PageHeader } from "@/components/admin/dashboard/PageHeader";
 import { StatCard } from "@/components/admin/dashboard/StatCard";
 import { ChartCard } from "@/components/admin/dashboard/ChartCard";
@@ -100,6 +100,16 @@ export default function AdminOverview() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: newSignups } = useQuery({
+    queryKey: ["admin-overview-new-signups", period],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_new_signups", range);
+      if (error) throw error;
+      return Number(data ?? 0);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: savedVisitors } = useQuery({
     queryKey: ["admin-overview-saved-visitors", period],
     queryFn: async () => {
@@ -179,12 +189,18 @@ export default function AdminOverview() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard
           title="Visitantes"
           value={formatValue(stats?.visitors_30d)}
           icon={Users}
           description={`Sessões únicas · ${periodLabel}`}
+        />
+        <StatCard
+          title="Novos inscritos"
+          value={formatValue(newSignups)}
+          icon={UserPlus}
+          description={`Contas criadas · ${periodLabel}`}
         />
         <StatCard
           title="Ferramentas ativas"

@@ -3986,6 +3986,10 @@ export type Database = {
         Args: { end_at?: string; start_at?: string }
         Returns: Json
       }
+      admin_new_signups: {
+        Args: { end_at?: string | null; start_at?: string | null }
+        Returns: number
+      }
       admin_overview_top_pages: {
         Args: { end_at?: string; p_limit?: number; start_at?: string }
         Returns: {
