@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { FormEvent, PointerEvent as ReactPointerEvent } from "react";
 import {
   AlertCircle,
   Archive,
@@ -49,8 +49,11 @@ import {
   UserCheck,
   UserX,
   Users,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTools, type Tool } from "@/hooks/useTools";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +62,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
 type Segment = "all" | "registered" | "standard" | "premium" | "newsletter" | "unsubscribed";
@@ -67,6 +80,8 @@ type NameSort = "recent" | "az" | "za";
 type NewsletterFilter = "all" | "subscribed" | "not_subscribed" | "unsubscribed";
 type ContactsFilterMenu = "plan" | "newsletter" | "origin" | "segment" | null;
 type EmailComposerMode = "blocks" | "html";
+type ToolEmailPreset = "single" | "three" | null;
+type AiTopicSuggestion = { title: string; angle: string; tool_names?: string[] };
 type EmailBlockAlign = "left" | "center";
 type EmailTextStyle = {
   bold?: boolean;
@@ -100,6 +115,7 @@ type EmailTemplate = {
   html_body: string;
   text_body: string | null;
   created_at: string;
+  is_builtin?: boolean;
 };
 
 type EmailCampaign = {
@@ -227,6 +243,254 @@ const defaultEmailBlocks: EmailBlock[] = [
     align: "left",
   },
 ];
+
+const premiumToolAnnouncementHtml = `<div style="margin:0;background:#f5f2f6;padding:28px 12px;font-family:Arial,Helvetica,sans-serif;color:#211d23">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #eadfea;box-shadow:0 18px 48px rgba(60,30,60,.12)">
+    <tr>
+      <td style="padding:20px 28px;background:#211d23">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td><span style="display:inline-block;background:#e438df;color:#ffffff;font-size:19px;font-weight:800;line-height:1;padding:9px 10px;border-radius:7px 7px 7px 2px">Pq</span><span style="margin-left:9px;color:#ffffff;font-size:18px;font-weight:800">Estudar</span></td>
+          <td align="right" style="color:#c9bdca;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.12em">Nova ferramenta</td>
+        </tr></table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:46px 36px 40px;background:#2a222b;background-image:linear-gradient(135deg,#2a222b 0%,#3c243d 58%,#6b2669 100%)">
+        <span style="display:inline-block;margin-bottom:18px;padding:7px 11px;border:1px solid rgba(255,255,255,.22);border-radius:999px;color:#f6b8f3;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em">Grátis · prática · feita para estudantes</span>
+        <h1 style="max-width:530px;margin:0 0 18px;color:#ffffff;font-size:38px;line-height:1.08;letter-spacing:-.03em">[NOME DA FERRAMENTA]</h1>
+        <p style="max-width:520px;margin:0 0 28px;color:#eadfea;font-size:18px;line-height:1.6">[PROMESSA PRINCIPAL: explique em uma frase o resultado que o usuário terá]</p>
+        <a href="https://www.pqestudar.com.br/ferramentas/[SLUG]" style="display:inline-block;background:#e438df;color:#160e16;text-decoration:none;padding:15px 22px;border-radius:12px;font-size:16px;font-weight:900">Experimentar agora →</a>
+        <p style="margin:14px 0 0;color:#bfaebf;font-size:12px">Acesso direto pelo navegador. Sem complicação.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:38px 36px 12px">
+        <p style="margin:0 0 10px;color:#a10a99;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.11em">Menos tempo procurando. Mais tempo avançando.</p>
+        <h2 style="margin:0 0 14px;color:#211d23;font-size:27px;line-height:1.2">Por que vale a pena testar?</h2>
+        <p style="margin:0;color:#615863;font-size:16px;line-height:1.7">Criamos esta ferramenta para resolver uma dificuldade comum de quem estuda: <strong style="color:#211d23">[PROBLEMA QUE A FERRAMENTA RESOLVE]</strong>.</p>
+      </td>
+    </tr>
+    <tr><td style="padding:18px 36px 8px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr><td style="padding:17px 18px;background:#faf5fa;border:1px solid #efddef;border-radius:14px"><strong style="color:#97008f;font-size:17px">01 · [BENEFÍCIO 1]</strong><br><span style="color:#665d67;font-size:14px;line-height:1.6">[Explique o benefício de forma concreta e curta.]</span></td></tr>
+        <tr><td height="10"></td></tr>
+        <tr><td style="padding:17px 18px;background:#faf5fa;border:1px solid #efddef;border-radius:14px"><strong style="color:#97008f;font-size:17px">02 · [BENEFÍCIO 2]</strong><br><span style="color:#665d67;font-size:14px;line-height:1.6">[Mostre como isso economiza tempo ou melhora uma decisão.]</span></td></tr>
+        <tr><td height="10"></td></tr>
+        <tr><td style="padding:17px 18px;background:#faf5fa;border:1px solid #efddef;border-radius:14px"><strong style="color:#97008f;font-size:17px">03 · [BENEFÍCIO 3]</strong><br><span style="color:#665d67;font-size:14px;line-height:1.6">[Destaque o diferencial mais valioso da ferramenta.]</span></td></tr>
+      </table>
+    </td></tr>
+    <tr>
+      <td style="padding:30px 36px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#211d23;border-radius:18px"><tr><td style="padding:26px 26px">
+          <p style="margin:0 0 8px;color:#ee75e8;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em">Em poucos passos</p>
+          <h2 style="margin:0 0 16px;color:#ffffff;font-size:24px">Como funciona</h2>
+          <p style="margin:0;color:#ded3df;font-size:15px;line-height:1.75"><strong style="color:#ffffff">1.</strong> [Primeiro passo simples]<br><strong style="color:#ffffff">2.</strong> [Segundo passo simples]<br><strong style="color:#ffffff">3.</strong> [Resultado entregue ao usuário]</p>
+        </td></tr></table>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding:8px 36px 42px">
+        <h2 style="margin:0 0 10px;color:#211d23;font-size:27px">Pronto para experimentar?</h2>
+        <p style="margin:0 0 22px;color:#665d67;font-size:15px;line-height:1.6">A ferramenta já está disponível no PqEstudar.</p>
+        <a href="https://www.pqestudar.com.br/ferramentas/[SLUG]" style="display:inline-block;background:#d936d0;color:#190f19;text-decoration:none;padding:15px 24px;border-radius:12px;font-size:16px;font-weight:900">Acessar [NOME DA FERRAMENTA]</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 28px;background:#f5eef5;border-top:1px solid #eadfea">
+        <p style="margin:0 0 8px;color:#302832;font-size:14px;font-weight:800">PqEstudar — escolhas mais simples para quem quer avançar.</p>
+        <p style="margin:0;color:#746b75;font-size:12px;line-height:1.6">Ferramentas, guias e oportunidades reunidos para você estudar melhor e perder menos tempo.</p>
+      </td>
+    </tr>
+  </table>
+</div>`;
+
+const premiumToolAnnouncementText = `[NOME DA FERRAMENTA]
+
+[PROMESSA PRINCIPAL]
+
+Por que testar:
+1. [BENEFÍCIO 1]
+2. [BENEFÍCIO 2]
+3. [BENEFÍCIO 3]
+
+Como funciona:
+1. [Primeiro passo simples]
+2. [Segundo passo simples]
+3. [Resultado entregue]
+
+Acesse: https://www.pqestudar.com.br/ferramentas/[SLUG]
+
+PqEstudar — escolhas mais simples para quem quer avançar.`;
+
+const premiumToolTemplate: EmailTemplate = {
+  id: "builtin-tool-launch-premium",
+  name: "Lançamento premium de ferramenta",
+  description: "Campanha visual para apresentar uma nova ferramenta e conduzir o leitor até a página.",
+  category: "newsletter",
+  subject: "Chegou a [nome da ferramenta] — experimente grátis",
+  preheader: "Uma nova forma de [resultado principal], sem complicação e direto pelo navegador.",
+  html_body: premiumToolAnnouncementHtml,
+  text_body: premiumToolAnnouncementText,
+  created_at: "2026-08-24T00:00:00.000Z",
+  is_builtin: true,
+};
+
+const threeToolsNewsletterHtml = `<div style="margin:0;background:#f5f2f6;padding:28px 12px;font-family:Arial,Helvetica,sans-serif;color:#211d23">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #eadfea;box-shadow:0 18px 48px rgba(60,30,60,.12)">
+    <tr><td style="padding:20px 28px;background:#211d23"><table role="presentation" width="100%"><tr><td><span style="display:inline-block;background:#e438df;color:#fff;font-size:19px;font-weight:800;padding:9px 10px;border-radius:7px 7px 7px 2px">Pq</span><span style="margin-left:9px;color:#fff;font-size:18px;font-weight:800">Estudar</span></td><td align="right" style="color:#c9bdca;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.12em">Seleção da semana</td></tr></table></td></tr>
+    <tr><td style="padding:44px 36px 38px;background:#2a222b;background-image:linear-gradient(135deg,#2a222b 0%,#4a274a 65%,#7a2875 100%)">
+      <span style="display:inline-block;margin-bottom:17px;color:#f6b8f3;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.12em">3 ferramentas para conhecer</span>
+      <h1 style="margin:0 0 17px;color:#fff;font-size:37px;line-height:1.08;letter-spacing:-.03em">Três atalhos para estudar melhor e perder menos tempo</h1>
+      <p style="margin:0;color:#eadfea;font-size:17px;line-height:1.65">Selecionamos três ferramentas úteis para ajudar você a [RESULTADO GERAL DESTA EDIÇÃO]. Escolha a que combina com o seu momento e experimente gratuitamente.</p>
+    </td></tr>
+    <tr><td style="padding:34px 36px 8px"><p style="margin:0;color:#97008f;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em">Escolha por onde começar</p></td></tr>
+    <tr><td style="padding:14px 36px 8px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf5fa;border:1px solid #eadbea;border-radius:18px"><tr><td style="padding:24px">
+      <span style="display:inline-block;margin-bottom:12px;padding:5px 9px;background:#f0dcef;color:#8d0786;border-radius:999px;font-size:11px;font-weight:800">FERRAMENTA 01</span>
+      <h2 style="margin:0 0 9px;color:#211d23;font-size:25px">[NOME DA FERRAMENTA 1]</h2><p style="margin:0 0 13px;color:#625864;font-size:15px;line-height:1.65">[Explique em duas frases o problema resolvido e o principal benefício.]</p>
+      <p style="margin:0 0 18px;color:#302832;font-size:14px"><strong>Ideal para:</strong> [perfil ou situação de uso]</p><a href="https://www.pqestudar.com.br/ferramentas/[SLUG-1]" style="display:inline-block;background:#d936d0;color:#190f19;text-decoration:none;padding:12px 17px;border-radius:10px;font-weight:900">Conhecer a ferramenta →</a>
+    </td></tr></table></td></tr>
+    <tr><td style="padding:14px 36px 8px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f8ff;border:1px solid #dfe4f2;border-radius:18px"><tr><td style="padding:24px">
+      <span style="display:inline-block;margin-bottom:12px;padding:5px 9px;background:#e3e8fa;color:#384d96;border-radius:999px;font-size:11px;font-weight:800">FERRAMENTA 02</span>
+      <h2 style="margin:0 0 9px;color:#211d23;font-size:25px">[NOME DA FERRAMENTA 2]</h2><p style="margin:0 0 13px;color:#625864;font-size:15px;line-height:1.65">[Explique em duas frases o problema resolvido e o principal benefício.]</p>
+      <p style="margin:0 0 18px;color:#302832;font-size:14px"><strong>Ideal para:</strong> [perfil ou situação de uso]</p><a href="https://www.pqestudar.com.br/ferramentas/[SLUG-2]" style="display:inline-block;background:#343f78;color:#fff;text-decoration:none;padding:12px 17px;border-radius:10px;font-weight:900">Conhecer a ferramenta →</a>
+    </td></tr></table></td></tr>
+    <tr><td style="padding:14px 36px 8px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3faf7;border:1px solid #d7ece2;border-radius:18px"><tr><td style="padding:24px">
+      <span style="display:inline-block;margin-bottom:12px;padding:5px 9px;background:#dcefe5;color:#226345;border-radius:999px;font-size:11px;font-weight:800">FERRAMENTA 03</span>
+      <h2 style="margin:0 0 9px;color:#211d23;font-size:25px">[NOME DA FERRAMENTA 3]</h2><p style="margin:0 0 13px;color:#625864;font-size:15px;line-height:1.65">[Explique em duas frases o problema resolvido e o principal benefício.]</p>
+      <p style="margin:0 0 18px;color:#302832;font-size:14px"><strong>Ideal para:</strong> [perfil ou situação de uso]</p><a href="https://www.pqestudar.com.br/ferramentas/[SLUG-3]" style="display:inline-block;background:#287050;color:#fff;text-decoration:none;padding:12px 17px;border-radius:10px;font-weight:900">Conhecer a ferramenta →</a>
+    </td></tr></table></td></tr>
+    <tr><td align="center" style="padding:38px 36px 42px"><h2 style="margin:0 0 10px;font-size:27px;color:#211d23">Ainda procurando a ferramenta certa?</h2><p style="margin:0 0 21px;color:#665d67;font-size:15px;line-height:1.65">Explore o catálogo completo e encontre outros recursos para estudo, carreira e organização.</p><a href="https://www.pqestudar.com.br/ferramentas" style="display:inline-block;border:2px solid #d936d0;color:#97008f;text-decoration:none;padding:13px 20px;border-radius:11px;font-weight:900">Ver todas as ferramentas</a></td></tr>
+    <tr><td style="padding:24px 28px;background:#211d23"><p style="margin:0 0 7px;color:#fff;font-size:14px;font-weight:800">PqEstudar — escolhas mais simples para quem quer avançar.</p><p style="margin:0;color:#bfb3c0;font-size:12px;line-height:1.6">Guias, ferramentas e oportunidades reunidos para você estudar melhor.</p></td></tr>
+  </table>
+</div>`;
+
+const threeToolsNewsletterText = `3 ferramentas para conhecer
+
+Selecionamos três ferramentas para ajudar você a [RESULTADO GERAL].
+
+1. [NOME DA FERRAMENTA 1]
+[Descrição]
+https://www.pqestudar.com.br/ferramentas/[SLUG-1]
+
+2. [NOME DA FERRAMENTA 2]
+[Descrição]
+https://www.pqestudar.com.br/ferramentas/[SLUG-2]
+
+3. [NOME DA FERRAMENTA 3]
+[Descrição]
+https://www.pqestudar.com.br/ferramentas/[SLUG-3]
+
+Veja todas: https://www.pqestudar.com.br/ferramentas`;
+
+const threeToolsNewsletterTemplate: EmailTemplate = {
+  id: "builtin-three-tools-newsletter",
+  name: "Newsletter premium — 3 ferramentas",
+  description: "Edição editorial com três ferramentas, CTAs individuais e acesso ao catálogo completo.",
+  category: "newsletter",
+  subject: "3 ferramentas úteis para facilitar sua rotina de estudos",
+  preheader: "Uma seleção rápida com três recursos gratuitos para você conhecer hoje.",
+  html_body: threeToolsNewsletterHtml,
+  text_body: threeToolsNewsletterText,
+  created_at: "2026-08-24T00:00:00.000Z",
+  is_builtin: true,
+};
+
+const affiliateOfferHtml = `<div style="margin:0;background:#f4f0f5;padding:28px 12px;font-family:Arial,Helvetica,sans-serif;color:#211d23">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:0 auto;background:#fff;border:1px solid #eadfea;border-radius:24px;overflow:hidden;box-shadow:0 20px 55px rgba(54,29,56,.14)">
+    <tr><td style="padding:20px 28px;background:#211d23"><table role="presentation" width="100%"><tr><td><span style="display:inline-block;background:#e438df;color:#fff;font-size:19px;font-weight:900;padding:9px 10px;border-radius:7px 7px 7px 2px">Pq</span><span style="margin-left:9px;color:#fff;font-size:18px;font-weight:800">Estudar</span></td><td align="right" style="color:#d6c8d7;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em">Recomendação parceira</td></tr></table></td></tr>
+    <tr><td style="padding:44px 36px 40px;background:#2a222b;background-image:linear-gradient(135deg,#251f27 0%,#432a45 62%,#752773 100%)">
+      <span style="display:inline-block;margin-bottom:17px;padding:7px 11px;border:1px solid rgba(255,255,255,.2);border-radius:999px;color:#f7baf3;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.1em">Para quem está se preparando para provas</span>
+      <h1 style="margin:0 0 17px;color:#fff;font-size:37px;line-height:1.08;letter-spacing:-.03em">Estude com mais questões e menos improviso</h1>
+      <p style="margin:0 0 27px;color:#eadfea;font-size:17px;line-height:1.65">Conheça o QConcursos, uma plataforma para praticar questões, acompanhar seu desempenho e direcionar melhor a preparação.</p>
+      <a href="[LINK-DE-AFILIADO]" data-affiliate-link="qconcursos" style="display:inline-block;background:#e438df;color:#180f18;text-decoration:none;padding:15px 22px;border-radius:12px;font-size:16px;font-weight:900">Conhecer o QConcursos →</a>
+    </td></tr>
+    <tr><td style="padding:38px 36px 12px"><p style="margin:0 0 9px;color:#97008f;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.1em">Por que pode valer a pena</p><h2 style="margin:0 0 14px;font-size:27px;line-height:1.2">Uma rotina de estudo mais objetiva</h2><p style="margin:0;color:#625964;font-size:16px;line-height:1.7">Use filtros, resolva questões e identifique os assuntos que ainda precisam de atenção antes da prova.</p></td></tr>
+    <tr><td style="padding:20px 36px 10px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="padding:17px 18px;background:#faf5fa;border:1px solid #eeddee;border-radius:14px"><strong style="color:#97008f">01 · Prática direcionada</strong><br><span style="color:#665d67;font-size:14px;line-height:1.6">Encontre questões por banca, disciplina, assunto e nível de dificuldade.</span></td></tr><tr><td height="10"></td></tr>
+      <tr><td style="padding:17px 18px;background:#faf5fa;border:1px solid #eeddee;border-radius:14px"><strong style="color:#97008f">02 · Acompanhamento de desempenho</strong><br><span style="color:#665d67;font-size:14px;line-height:1.6">Observe seus resultados e descubra onde concentrar o próximo ciclo de estudos.</span></td></tr><tr><td height="10"></td></tr>
+      <tr><td style="padding:17px 18px;background:#faf5fa;border:1px solid #eeddee;border-radius:14px"><strong style="color:#97008f">03 · Preparação consistente</strong><br><span style="color:#665d67;font-size:14px;line-height:1.6">Transforme a resolução de questões em uma rotina simples e mensurável.</span></td></tr>
+    </table></td></tr>
+    <tr><td align="center" style="padding:31px 36px 39px"><h2 style="margin:0 0 9px;font-size:26px">Quer conhecer a plataforma?</h2><p style="margin:0 0 21px;color:#665d67;font-size:15px;line-height:1.6">Confira os planos, recursos e condições diretamente no QConcursos.</p><a href="[LINK-DE-AFILIADO]" data-affiliate-link="qconcursos" style="display:inline-block;background:#d936d0;color:#190f19;text-decoration:none;padding:15px 24px;border-radius:12px;font-weight:900">Ver o QConcursos</a></td></tr>
+    <tr><td style="padding:23px 28px;background:#f5eef5;border-top:1px solid #eadfea"><p style="margin:0 0 7px;color:#302832;font-size:13px;font-weight:800">Transparência PqEstudar</p><p style="margin:0;color:#746b75;font-size:11px;line-height:1.6">Este e-mail contém links de afiliado. O PqEstudar pode receber uma comissão se você contratar por meio deles, sem custo adicional para você. Consulte preços, condições e disponibilidade no site da empresa parceira.</p></td></tr>
+  </table>
+</div>`;
+
+const affiliateOfferText = `Recomendação parceira — QConcursos
+
+Conheça uma plataforma para praticar questões, acompanhar seu desempenho e direcionar melhor a preparação.
+
+Acesse: [LINK-DE-AFILIADO]
+
+Transparência: este e-mail contém um link de afiliado. O PqEstudar pode receber uma comissão se você contratar por meio dele, sem custo adicional para você.`;
+
+const affiliateOfferTemplate: EmailTemplate = {
+  id: "builtin-affiliate-offer-qconcursos",
+  name: "Oferta parceira — QConcursos",
+  description: "Campanha promocional transparente para divulgar o QConcursos com link de afiliado.",
+  category: "promotion",
+  subject: "QConcursos: pratique questões e direcione melhor seus estudos",
+  preheader: "Conheça uma plataforma para organizar sua preparação por meio da prática de questões.",
+  html_body: affiliateOfferHtml,
+  text_body: affiliateOfferText,
+  created_at: "2026-08-25T00:00:00.000Z",
+  is_builtin: true,
+};
+
+const toolPageUrl = (tool: Tool) =>
+  `https://www.pqestudar.com.br/ferramentas/${encodeURIComponent(tool.slug || tool.id)}`;
+
+function replaceFirst(value: string, search: string, replacement: string) {
+  const index = value.indexOf(search);
+  if (index < 0) return value;
+  return `${value.slice(0, index)}${replacement}${value.slice(index + search.length)}`;
+}
+
+function getEmailHrefs(html: string) {
+  return [...html.matchAll(/href=["']([^"']*)["']/gi)].map((match) => match[1]).sort();
+}
+
+function buildSingleToolEmail(tool: Tool) {
+  const name = escapeHtml(tool.name);
+  const description = escapeHtml(tool.description || "Conheça este recurso e veja como ele pode facilitar sua rotina.");
+  const url = escapeHtml(toolPageUrl(tool));
+  const html = premiumToolAnnouncementHtml
+    .replaceAll("[NOME DA FERRAMENTA]", name)
+    .replace("[PROMESSA PRINCIPAL: explique em uma frase o resultado que o usuário terá]", description)
+    .replace("[PROBLEMA QUE A FERRAMENTA RESOLVE]", description)
+    .replaceAll("https://www.pqestudar.com.br/ferramentas/[SLUG]", url);
+  const text = premiumToolAnnouncementText
+    .replace("[NOME DA FERRAMENTA]", tool.name)
+    .replace("[PROMESSA PRINCIPAL]", tool.description)
+    .replace("https://www.pqestudar.com.br/ferramentas/[SLUG]", toolPageUrl(tool));
+
+  return { html, text };
+}
+
+function buildThreeToolsEmail(tools: Array<Tool | null>) {
+  let html = threeToolsNewsletterHtml;
+  let text = threeToolsNewsletterText;
+
+  tools.forEach((tool, index) => {
+    if (!tool) return;
+    const position = index + 1;
+    const name = escapeHtml(tool.name);
+    const description = escapeHtml(tool.description || "Conheça este recurso e veja como ele pode facilitar sua rotina.");
+    const idealFor = escapeHtml(tool.tags?.slice(0, 3).join(", ") || "quem busca estudar com mais praticidade");
+    const url = escapeHtml(toolPageUrl(tool));
+
+    html = html
+      .replace(`[NOME DA FERRAMENTA ${position}]`, name)
+      .replace(`https://www.pqestudar.com.br/ferramentas/[SLUG-${position}]`, url);
+    html = replaceFirst(html, "[Explique em duas frases o problema resolvido e o principal benefício.]", description);
+    html = replaceFirst(html, "[perfil ou situação de uso]", idealFor);
+    text = text
+      .replace(`[NOME DA FERRAMENTA ${position}]`, tool.name)
+      .replace("[Descrição]", tool.description)
+      .replace(`https://www.pqestudar.com.br/ferramentas/[SLUG-${position}]`, toolPageUrl(tool));
+  });
+
+  return { html, text };
+}
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
@@ -461,6 +725,9 @@ export default function AdminEmailsClient() {
   const [loadingOverview, setLoadingOverview] = useState(true);
   const [sending, setSending] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [editingMold, setEditingMold] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<EmailTemplate | null>(null);
+  const [deletingTemplate, setDeletingTemplate] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
   const [testEmail, setTestEmail] = useState("pqestudar.suporte@gmail.com");
 
@@ -474,6 +741,38 @@ export default function AdminEmailsClient() {
   const [emailBlocks, setEmailBlocks] = useState<EmailBlock[]>(defaultEmailBlocks);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(defaultEmailBlocks[1]?.id || null);
   const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null);
+  const [toolEmailPreset, setToolEmailPreset] = useState<ToolEmailPreset>(null);
+  const [affiliateTemplateActive, setAffiliateTemplateActive] = useState(false);
+  const [affiliateUrl, setAffiliateUrl] = useState("");
+  const [appliedAffiliateUrl, setAppliedAffiliateUrl] = useState("");
+  const [aiGenerationAvailable, setAiGenerationAvailable] = useState(false);
+  const [aiPanelCollapsed, setAiPanelCollapsed] = useState(false);
+  const [aiTheme, setAiTheme] = useState("");
+  const [generatingWithAi, setGeneratingWithAi] = useState(false);
+  const [suggestingAiTopics, setSuggestingAiTopics] = useState(false);
+  const [aiTopicSuggestions, setAiTopicSuggestions] = useState<AiTopicSuggestion[]>([]);
+  const [emailStructureCollapsed, setEmailStructureCollapsed] = useState(false);
+  const quickTemplatesRef = useRef<HTMLDivElement>(null);
+  const quickTemplatesDragRef = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false });
+  const [draggingQuickTemplates, setDraggingQuickTemplates] = useState(false);
+  const [selectedEmailTools, setSelectedEmailTools] = useState<Array<Tool | null>>([null, null, null]);
+  const [toolPickerSlot, setToolPickerSlot] = useState<number | null>(null);
+  const [toolPickerSearch, setToolPickerSearch] = useState("");
+  const { tools: emailTools, loading: loadingEmailTools } = useTools({ pageSize: 500 });
+
+  const filteredEmailTools = useMemo(() => {
+    const query = toolPickerSearch.trim().toLocaleLowerCase("pt-BR");
+    const selectedIds = new Set(selectedEmailTools.filter(Boolean).map((tool) => tool?.id));
+    return emailTools
+      .filter((tool) => {
+        if (selectedIds.has(tool.id) && selectedEmailTools[toolPickerSlot ?? -1]?.id !== tool.id) return false;
+        if (!query) return true;
+        return [tool.name, tool.description, ...(tool.tags || [])]
+          .join(" ")
+          .toLocaleLowerCase("pt-BR")
+          .includes(query);
+      });
+  }, [emailTools, selectedEmailTools, toolPickerSearch, toolPickerSlot]);
 
   const visibleContacts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -507,10 +806,25 @@ export default function AdminEmailsClient() {
     [contacts, selectedIds],
   );
 
-  const selectedTemplate = useMemo(() => {
-    const templates = overview?.templates || [];
-    return templates.find((template) => template.id === selectedTemplateId) || templates[0] || null;
-  }, [overview?.templates, selectedTemplateId]);
+  const availableTemplates = useMemo(() => {
+    const savedTemplates = overview?.templates || [];
+    const premiumOverride = savedTemplates.find((template) => template.name === premiumToolTemplate.name);
+    const threeToolsOverride = savedTemplates.find((template) => template.name === threeToolsNewsletterTemplate.name);
+    const affiliateOverride = savedTemplates.find((template) => template.name === affiliateOfferTemplate.name);
+
+    return [
+      premiumOverride || premiumToolTemplate,
+      threeToolsOverride || threeToolsNewsletterTemplate,
+      affiliateOverride || affiliateOfferTemplate,
+      ...savedTemplates.filter(
+        (template) => template.name !== premiumToolTemplate.name && template.name !== threeToolsNewsletterTemplate.name && template.name !== affiliateOfferTemplate.name,
+      ),
+    ];
+  }, [overview?.templates]);
+  const selectedTemplate = useMemo(
+    () => availableTemplates.find((template) => template.id === selectedTemplateId) || availableTemplates[0] || null,
+    [availableTemplates, selectedTemplateId],
+  );
 
   const totalContactPages = Math.max(1, Math.ceil(visibleContacts.length / CONTACTS_PAGE_SIZE));
   const paginatedContacts = useMemo(() => {
@@ -540,6 +854,11 @@ export default function AdminEmailsClient() {
   ];
   const activePlanFilter = planFilterOptions.find((option) => option.value === segment);
   const activeCampaignType = campaignTypeOptions.find((option) => option.value === campaignType) || campaignTypeOptions[0]!;
+  const aiSelectionReady = toolEmailPreset === "single"
+    ? Boolean(selectedEmailTools[0])
+    : toolEmailPreset === "three"
+      ? selectedEmailTools.filter(Boolean).length === 3
+      : true;
   const selectedEmailBlock = emailBlocks.find((block) => block.id === selectedBlockId) || emailBlocks[0] || null;
 
   const syncEmailBlocks = (nextBlocks: EmailBlock[]) => {
@@ -731,10 +1050,10 @@ export default function AdminEmailsClient() {
   }, []);
 
   useEffect(() => {
-    if (!selectedTemplateId && overview?.templates?.[0]?.id) {
-      setSelectedTemplateId(overview.templates[0].id);
+    if (!selectedTemplateId && availableTemplates[0]?.id) {
+      setSelectedTemplateId(availableTemplates[0].id);
     }
-  }, [overview?.templates, selectedTemplateId]);
+  }, [availableTemplates, selectedTemplateId]);
 
   useEffect(() => {
     loadContacts();
@@ -814,7 +1133,48 @@ export default function AdminEmailsClient() {
   }, []);
 
   const applyTemplate = (template: EmailTemplate) => {
-    setEditingTemplateId(template.id);
+    const preset: ToolEmailPreset = template.id === premiumToolTemplate.id || template.name === premiumToolTemplate.name
+      ? "single"
+      : template.id === threeToolsNewsletterTemplate.id || template.name === threeToolsNewsletterTemplate.name
+        ? "three"
+        : null;
+    // Personalizar usa uma cópia. O molde escolhido nunca é sobrescrito.
+    setEditingTemplateId(null);
+    setEditingMold(false);
+    setAiGenerationAvailable(true);
+    setAiTheme("");
+    setAffiliateTemplateActive(template.id === affiliateOfferTemplate.id || template.name === affiliateOfferTemplate.name);
+    setAffiliateUrl("");
+    setAppliedAffiliateUrl("");
+    setToolEmailPreset(preset);
+    setSelectedEmailTools([null, null, null]);
+    setToolPickerSlot(null);
+    setCampaignName(`${template.name} — edição`);
+    setCampaignType(template.category);
+    setSubject(template.subject);
+    setPreheader(template.preheader || "");
+    setHtmlBody(template.html_body);
+    setTextBody(template.text_body || "");
+    setComposerMode("html");
+    setActiveTab("compose");
+    toast.success("Cópia aberta para personalização. O molde original será preservado.");
+  };
+
+  const editTemplateMold = (template: EmailTemplate) => {
+    const preset: ToolEmailPreset = template.id === premiumToolTemplate.id || template.name === premiumToolTemplate.name
+      ? "single"
+      : template.id === threeToolsNewsletterTemplate.id || template.name === threeToolsNewsletterTemplate.name
+        ? "three"
+        : null;
+    setEditingTemplateId(template.is_builtin ? null : template.id);
+    setEditingMold(true);
+    setAiGenerationAvailable(false);
+    setAffiliateTemplateActive(template.id === affiliateOfferTemplate.id || template.name === affiliateOfferTemplate.name);
+    setAffiliateUrl("");
+    setAppliedAffiliateUrl("");
+    setToolEmailPreset(preset);
+    setSelectedEmailTools([null, null, null]);
+    setToolPickerSlot(null);
     setCampaignName(template.name);
     setCampaignType(template.category);
     setSubject(template.subject);
@@ -823,10 +1183,20 @@ export default function AdminEmailsClient() {
     setTextBody(template.text_body || "");
     setComposerMode("html");
     setActiveTab("compose");
-    toast.success("Modelo aberto para edição.");
+    toast.info(template.is_builtin
+      ? "Editando o molde padrão. Ao salvar, uma versão personalizada substituirá sua exibição."
+      : "Editando o molde salvo. As alterações substituirão este modelo.");
   };
 
   const createNewTemplate = () => {
+    setEditingMold(false);
+    setAiGenerationAvailable(false);
+    setAffiliateTemplateActive(false);
+    setAffiliateUrl("");
+    setAppliedAffiliateUrl("");
+    setToolEmailPreset(null);
+    setSelectedEmailTools([null, null, null]);
+    setToolPickerSlot(null);
     setEditingTemplateId(null);
     setCampaignName("Curadoria PqEstudar");
     setCampaignType("newsletter");
@@ -836,9 +1206,225 @@ export default function AdminEmailsClient() {
     setActiveTab("compose");
   };
 
+  const createToolAnnouncementTemplate = () => {
+    setEditingMold(false);
+    setAiGenerationAvailable(false);
+    setAffiliateTemplateActive(false);
+    setToolEmailPreset("single");
+    setSelectedEmailTools([null, null, null]);
+    setToolPickerSlot(null);
+    setEditingTemplateId(null);
+    setCampaignName("Lançamento premium — Nova ferramenta");
+    setCampaignType("newsletter");
+    setSubject("Chegou a [nome da ferramenta] — experimente grátis");
+    setPreheader("Uma nova forma de [resultado principal], sem complicação e direto pelo navegador.");
+    setHtmlBody(premiumToolAnnouncementHtml);
+    setTextBody(premiumToolAnnouncementText);
+    setSelectedBlockId(null);
+    setComposerMode("html");
+    setActiveTab("compose");
+    toast.success("Modelo premium carregado. Substitua todos os campos entre colchetes antes de salvar.");
+  };
+
+  const createThreeToolsNewsletterTemplate = () => {
+    setEditingMold(false);
+    setAiGenerationAvailable(false);
+    setAffiliateTemplateActive(false);
+    setToolEmailPreset("three");
+    setSelectedEmailTools([null, null, null]);
+    setToolPickerSlot(null);
+    setEditingTemplateId(null);
+    setCampaignName("Newsletter premium — 3 ferramentas");
+    setCampaignType("newsletter");
+    setSubject(threeToolsNewsletterTemplate.subject);
+    setPreheader(threeToolsNewsletterTemplate.preheader || "");
+    setHtmlBody(threeToolsNewsletterHtml);
+    setTextBody(threeToolsNewsletterText);
+    setSelectedBlockId(null);
+    setComposerMode("html");
+    setActiveTab("compose");
+    toast.success("Newsletter de três ferramentas carregada. Substitua os campos entre colchetes antes de salvar.");
+  };
+
+  const createAffiliateOfferTemplate = () => {
+    setEditingMold(false);
+    setAiGenerationAvailable(false);
+    setAffiliateTemplateActive(true);
+    setAffiliateUrl("");
+    setAppliedAffiliateUrl("");
+    setToolEmailPreset(null);
+    setEditingTemplateId(null);
+    setCampaignName(affiliateOfferTemplate.name);
+    setCampaignType(affiliateOfferTemplate.category);
+    setSubject(affiliateOfferTemplate.subject);
+    setPreheader(affiliateOfferTemplate.preheader || "");
+    setHtmlBody(affiliateOfferHtml);
+    setTextBody(affiliateOfferText);
+    setSelectedBlockId(null);
+    setComposerMode("html");
+    setActiveTab("compose");
+    toast.success("Modelo de oferta parceira carregado. Adicione seu link de afiliado antes de enviar.");
+  };
+
+  const applyAffiliateUrl = () => {
+    const nextUrl = affiliateUrl.trim();
+    if (!/^https?:\/\//i.test(nextUrl)) {
+      toast.error("Informe um link completo começando com http:// ou https://.");
+      return;
+    }
+
+    setHtmlBody((current) => current.replace(
+      /href="[^"]*" data-affiliate-link="qconcursos"/g,
+      `href="${escapeHtml(nextUrl)}" data-affiliate-link="qconcursos"`,
+    ));
+    setTextBody((current) => current.replace(/^Acesse: .*$/m, `Acesse: ${nextUrl}`));
+    setAppliedAffiliateUrl(nextUrl);
+    toast.success("Link de afiliado aplicado aos botões e à versão em texto.");
+  };
+
+  const suggestNextAiTopics = async () => {
+    setSuggestingAiTopics(true);
+    try {
+      const previousSubjects = Array.from(new Set([
+        ...(overview?.campaigns || []).map((campaign) => campaign.subject),
+        ...(overview?.templates || []).map((template) => template.subject),
+      ].filter(Boolean)));
+      const catalog = emailTools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        tags: tool.tags,
+        who_for: tool.who_for,
+        how_helps: tool.how_helps,
+      }));
+      const { data, error } = await supabase.functions.invoke("email-template-ai", {
+        body: { action: "suggest_topics", previousSubjects, catalog },
+      });
+      if (error) throw error;
+      const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+      if (!suggestions.length) throw new Error("A IA não encontrou sugestões novas.");
+      setAiTopicSuggestions(suggestions);
+      toast.success("Novas pautas sugeridas com base no histórico.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível sugerir temas.");
+    } finally {
+      setSuggestingAiTopics(false);
+    }
+  };
+
+  const applyAiTopicSuggestion = (suggestion: AiTopicSuggestion) => {
+    setAiTheme(`${suggestion.title} — ${suggestion.angle}`);
+    const matchedTools = (suggestion.tool_names || [])
+      .map((name) => emailTools.find((tool) => tool.name.toLocaleLowerCase("pt-BR") === name.toLocaleLowerCase("pt-BR")))
+      .filter((tool): tool is Tool => Boolean(tool));
+
+    if (toolEmailPreset === "three" && matchedTools.length >= 3) {
+      const nextTools: Array<Tool | null> = matchedTools.slice(0, 3);
+      const content = buildThreeToolsEmail(nextTools);
+      setSelectedEmailTools(nextTools);
+      setHtmlBody(content.html);
+      setTextBody(content.text);
+      setSubject(`3 ferramentas para conhecer: ${matchedTools.slice(0, 3).map((tool) => tool.name).join(", ")}`);
+      toast.success("Tema e três ferramentas sugeridas foram preenchidos.");
+    } else if (toolEmailPreset === "single" && matchedTools[0]) {
+      const tool = matchedTools[0];
+      const content = buildSingleToolEmail(tool);
+      setSelectedEmailTools([tool, null, null]);
+      setHtmlBody(content.html);
+      setTextBody(content.text);
+      setSubject(`Chegou a ${tool.name} — conheça agora`);
+      setPreheader(tool.description);
+      toast.success("Tema e ferramenta sugerida foram preenchidos.");
+    }
+  };
+
+  const generateTemplateWithAi = async () => {
+    const theme = aiTheme.trim();
+    if (!theme) {
+      toast.error("Explique o tema ou o objetivo editorial deste e-mail.");
+      return;
+    }
+    if (toolEmailPreset === "single" && !selectedEmailTools[0]) {
+      toast.error("Selecione a ferramenta antes de gerar o texto com IA.");
+      return;
+    }
+    if (toolEmailPreset === "three" && selectedEmailTools.filter(Boolean).length !== 3) {
+      toast.error("Selecione as três ferramentas para a IA analisar o conjunto.");
+      return;
+    }
+
+    setGeneratingWithAi(true);
+    try {
+      const tools = selectedEmailTools
+        .filter((tool): tool is Tool => Boolean(tool))
+        .map((tool) => ({
+          name: tool.name,
+          description: tool.description,
+          tags: tool.tags,
+          what_is: tool.what_is,
+          who_for: tool.who_for,
+          how_helps: tool.how_helps,
+          content_markdown: tool.content_markdown,
+          page_url: toolPageUrl(tool),
+        }));
+      const { data, error } = await supabase.functions.invoke("email-template-ai", {
+        body: { theme, subject, preheader, htmlBody, textBody, tools },
+      });
+      if (error) throw error;
+      if (!data?.generated) throw new Error(data?.error || "A IA não retornou conteúdo.");
+      const generatedHtml = String(data.generated.html_body || "");
+      if (/<script\b/i.test(generatedHtml)) throw new Error("A resposta da IA incluiu HTML não permitido.");
+      if (JSON.stringify(getEmailHrefs(generatedHtml)) !== JSON.stringify(getEmailHrefs(htmlBody))) {
+        throw new Error("A IA tentou alterar links do molde. A geração foi descartada por segurança.");
+      }
+
+      setSubject(data.generated.subject);
+      setPreheader(data.generated.preheader);
+      setHtmlBody(generatedHtml);
+      setTextBody(data.generated.text_body);
+      setComposerMode("html");
+      toast.success("Texto editorial gerado. Revise a prévia antes de salvar ou enviar.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível gerar o texto com IA.");
+    } finally {
+      setGeneratingWithAi(false);
+    }
+  };
+
+  const selectEmailTool = (tool: Tool) => {
+    if (toolPickerSlot === null) return;
+    const nextTools = [...selectedEmailTools];
+    nextTools[toolPickerSlot] = tool;
+    setSelectedEmailTools(nextTools);
+
+    if (toolEmailPreset === "single") {
+      const content = buildSingleToolEmail(tool);
+      setCampaignName(`Lançamento — ${tool.name}`);
+      setSubject(`Chegou a ${tool.name} — conheça agora`);
+      setPreheader(tool.description);
+      setHtmlBody(content.html);
+      setTextBody(content.text);
+    } else if (toolEmailPreset === "three") {
+      const content = buildThreeToolsEmail(nextTools);
+      const chosen = nextTools.filter((item): item is Tool => Boolean(item));
+      setSubject(chosen.length === 3
+        ? `3 ferramentas para conhecer: ${chosen.map((item) => item.name).join(", ")}`
+        : threeToolsNewsletterTemplate.subject);
+      setHtmlBody(content.html);
+      setTextBody(content.text);
+    }
+
+    setToolPickerSlot(null);
+    setToolPickerSearch("");
+    toast.success(`${tool.name} adicionada ao e-mail.`);
+  };
+
   const saveTemplate = async () => {
     if (!campaignName.trim() || !subject.trim() || !htmlBody.trim()) {
       toast.error("Preencha nome, assunto e HTML antes de salvar.");
+      return;
+    }
+    if (affiliateTemplateActive && htmlBody.includes("[LINK-DE-AFILIADO]")) {
+      toast.error("Aplique o link de afiliado do QConcursos antes de salvar este modelo.");
       return;
     }
 
@@ -873,10 +1459,7 @@ export default function AdminEmailsClient() {
   };
 
   const deleteTemplate = async (template: EmailTemplate) => {
-    if (!window.confirm(`Remover o modelo "${template.name}" da lista de templates?`)) {
-      return;
-    }
-
+    setDeletingTemplate(true);
     try {
       const response = await fetch(`/api/admin/emails/templates?id=${encodeURIComponent(template.id)}`, {
         method: "DELETE",
@@ -887,16 +1470,23 @@ export default function AdminEmailsClient() {
 
       setSelectedTemplateId((current) => (current === template.id ? null : current));
       setEditingTemplateId((current) => (current === template.id ? null : current));
+      setTemplateToDelete(null);
       toast.success("Modelo removido da lista.");
       await loadOverview();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível remover o modelo.");
+    } finally {
+      setDeletingTemplate(false);
     }
   };
 
   const sendEmail = async (mode: "test" | "selected") => {
     if (!selectedTemplate) {
       toast.error("Crie ou selecione um modelo antes de enviar.");
+      return;
+    }
+    if (selectedTemplate.html_body.includes("[LINK-DE-AFILIADO]")) {
+      toast.error("Use ou edite este modelo e aplique seu link de afiliado antes do envio.");
       return;
     }
 
@@ -950,8 +1540,34 @@ export default function AdminEmailsClient() {
     }
   };
 
+  const startQuickTemplatesDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || !quickTemplatesRef.current) return;
+    quickTemplatesDragRef.current = {
+      active: true,
+      startX: event.clientX,
+      scrollLeft: quickTemplatesRef.current.scrollLeft,
+      moved: false,
+    };
+    setDraggingQuickTemplates(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const moveQuickTemplatesDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = quickTemplatesDragRef.current;
+    if (!drag.active || !quickTemplatesRef.current) return;
+    const distance = event.clientX - drag.startX;
+    if (Math.abs(distance) > 4) drag.moved = true;
+    quickTemplatesRef.current.scrollLeft = drag.scrollLeft - distance;
+  };
+
+  const stopQuickTemplatesDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    quickTemplatesDragRef.current.active = false;
+    setDraggingQuickTemplates(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full flex-col gap-6 [&_input]:rounded-[1.2rem] [&_select]:rounded-[1.2rem] [&_textarea]:rounded-[1.2rem]">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
@@ -1086,7 +1702,7 @@ export default function AdminEmailsClient() {
                       </div>
                     </div>
 
-                    {overview?.templates.length ? (
+                    {availableTemplates.length ? (
                       <div className="grid gap-3 lg:grid-cols-[minmax(0,420px)]">
                         <div className="space-y-2">
                           <Label>Modelo</Label>
@@ -1106,7 +1722,7 @@ export default function AdminEmailsClient() {
                             </button>
                             {showTemplatePicker && (
                               <div className="absolute left-0 top-[calc(100%+8px)] z-30 w-full overflow-hidden rounded-2xl border bg-popover p-1 shadow-2xl shadow-black/25">
-                                {overview.templates.map((template) => (
+                                {availableTemplates.map((template) => (
                                   <button
                                     key={template.id}
                                     type="button"
@@ -1306,6 +1922,18 @@ export default function AdminEmailsClient() {
                       {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MailPlus className="mr-2 h-4 w-4" />}
                       Criar campanha com selecionados
                     </Button>
+                    <Button
+                      type="button"
+                      onClick={() => sendEmail("test")}
+                      disabled={sending || !configReady || !selectedTemplate}
+                      variant="outline"
+                      size="sm"
+                      className="h-9 rounded-full border-emerald-500/35 bg-emerald-500/10 px-4 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200"
+                      title={`Enviar ${selectedTemplate?.name || "modelo"} para ${testEmail}`}
+                    >
+                      {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MailCheck className="mr-2 h-4 w-4" />}
+                      Enviar teste
+                    </Button>
                     <Button type="button" variant="ghost" size="icon" className="h-9 w-9 rounded-full" title="Adicionar a segmento" onClick={() => toast.info("Segmentação em massa será conectada na próxima etapa.")}>
                       <UserPlus className="h-4 w-4" />
                     </Button>
@@ -1402,6 +2030,19 @@ export default function AdminEmailsClient() {
                       aria-label="Atualizar contatos"
                     >
                       <RefreshCw className={cn("h-4 w-4", loadingContacts && "animate-spin")} />
+                    </Button>
+
+                    <Button
+                      type="button"
+                      onClick={() => sendEmail("test")}
+                      disabled={sending || !configReady || !selectedTemplate}
+                      variant="outline"
+                      size="sm"
+                      className="h-9 rounded-full border-emerald-500/35 bg-emerald-500/10 px-4 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200"
+                      title={`Enviar ${selectedTemplate?.name || "modelo"} para ${testEmail}`}
+                    >
+                      {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MailCheck className="mr-2 h-4 w-4" />}
+                      Enviar teste
                     </Button>
 
                     <Button
@@ -2227,8 +2868,8 @@ export default function AdminEmailsClient() {
                   </button>
                   {showTemplatePicker && (
                     <div className="absolute left-0 top-[calc(100%+8px)] z-40 w-80 overflow-hidden rounded-2xl border bg-popover p-1 shadow-2xl shadow-black/30">
-                      {overview?.templates.length ? (
-                        overview.templates.map((template) => (
+                      {availableTemplates.length ? (
+                        availableTemplates.map((template) => (
                           <button
                             key={template.id}
                             type="button"
@@ -2280,10 +2921,12 @@ export default function AdminEmailsClient() {
                   onClick={() => sendEmail("test")}
                   disabled={sending || !configReady || !selectedTemplate}
                   variant="outline"
-                  className="h-11 w-11 rounded-2xl border-emerald-500/30 p-0 text-emerald-300"
+                  className="h-11 rounded-2xl border-emerald-500/30 px-4 text-emerald-300"
                   aria-label="Enviar teste"
+                  title={`Enviar teste para ${testEmail}`}
                 >
-                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Code2 className="h-4 w-4" />}
+                  {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MailCheck className="mr-2 h-4 w-4" />}
+                  Enviar teste
                 </Button>
                 <Button
                   type="button"
@@ -2401,8 +3044,8 @@ export default function AdminEmailsClient() {
         </TabsContent>
 
         <TabsContent value="compose" className="space-y-4">
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_440px]">
-            <Card className="overflow-visible border-primary/15 bg-gradient-to-br from-primary/10 via-card to-card shadow-[0_24px_80px_rgba(217,54,208,0.08)]">
+          <div className="grid min-w-0 gap-4 2xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+            <Card className="min-w-0 overflow-visible border-primary/15 bg-gradient-to-br from-primary/10 via-card to-card shadow-[0_24px_80px_rgba(217,54,208,0.08)]">
               <CardHeader className="border-b border-primary/10">
                 <Badge className="mb-3 w-fit gap-2 border-primary/30 bg-primary/15 text-primary" variant="outline">
                   <Sparkles className="h-3.5 w-3.5" />
@@ -2410,8 +3053,233 @@ export default function AdminEmailsClient() {
                 </Badge>
                 <CardTitle>{editingTemplateId ? "Editar modelo de e-mail" : "Criar modelo de e-mail"}</CardTitle>
                 <CardDescription>Monte e salve modelos reutilizáveis. O envio acontece na aba Contatos.</CardDescription>
+                <div className="flex min-w-0 items-center gap-2 pt-2">
+                  <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Modelos rápidos</span>
+                  <div
+                    ref={quickTemplatesRef}
+                    onPointerDown={startQuickTemplatesDrag}
+                    onPointerMove={moveQuickTemplatesDrag}
+                    onPointerUp={stopQuickTemplatesDrag}
+                    onPointerCancel={stopQuickTemplatesDrag}
+                    onClickCapture={(event) => {
+                      if (!quickTemplatesDragRef.current.moved) return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                      quickTemplatesDragRef.current.moved = false;
+                    }}
+                    className={cn(
+                      "flex min-w-0 flex-1 select-none gap-2 overflow-x-auto pb-1 [scrollbar-color:hsl(var(--primary))_transparent] [scrollbar-width:thin]",
+                      draggingQuickTemplates ? "cursor-grabbing" : "cursor-grab",
+                    )}
+                    style={{ touchAction: "pan-y" }}
+                  >
+                    <Button type="button" variant="outline" size="sm" onClick={createToolAnnouncementTemplate} className="shrink-0">
+                      <Wrench className="mr-2 h-4 w-4" />
+                      Lançamento premium de ferramenta
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={createThreeToolsNewsletterTemplate} className="shrink-0">
+                      <Rows3 className="mr-2 h-4 w-4" />
+                      Newsletter premium — 3 ferramentas
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={createAffiliateOfferTemplate} className="shrink-0">
+                      <Link2 className="mr-2 h-4 w-4" />
+                      Oferta parceira — QConcursos
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {aiGenerationAvailable && (
+                  <div className="overflow-hidden rounded-3xl border border-violet-400/25 bg-gradient-to-br from-violet-500/15 via-primary/8 to-background shadow-[0_18px_45px_rgba(117,53,180,.08)]">
+                    <div className={cn("flex items-start gap-3 p-4", !aiPanelCollapsed && "border-b border-violet-400/15")}>
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-violet-300">
+                        <Sparkles className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <p className="font-bold">Criar redação editorial com IA</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          A IA analisa o tema e as ferramentas escolhidas, explica como elas se complementam e preserva o layout, os links e os avisos do molde.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAiPanelCollapsed((value) => !value)}
+                        aria-expanded={!aiPanelCollapsed}
+                        aria-label={aiPanelCollapsed ? "Expandir geração com IA" : "Recolher geração com IA"}
+                        title={aiPanelCollapsed ? "Expandir geração com IA" : "Recolher geração com IA"}
+                        className="ml-auto h-10 w-10 shrink-0 rounded-xl border-violet-400/25 p-0 text-violet-300 hover:bg-violet-500/10 hover:text-violet-200"
+                      >
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", !aiPanelCollapsed && "rotate-180")} />
+                      </Button>
+                    </div>
+                    {!aiPanelCollapsed && <div className="space-y-3 p-4">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <Label htmlFor="email-ai-theme">Tema e enfoque desta edição</Label>
+                          <Button type="button" variant="outline" size="sm" onClick={() => void suggestNextAiTopics()} disabled={suggestingAiTopics || emailTools.length === 0} className="rounded-xl border-violet-400/25 text-violet-300 hover:bg-violet-500/10 hover:text-violet-200">
+                            {suggestingAiTopics ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
+                            {suggestingAiTopics ? "Analisando histórico..." : "Sugerir próximos temas"}
+                          </Button>
+                        </div>
+                        <Textarea
+                          id="email-ai-theme"
+                          value={aiTheme}
+                          onChange={(event) => setAiTheme(event.target.value)}
+                          placeholder="Ex.: IA na educação — mostrar como as três ferramentas se complementam no planejamento, na pesquisa e na revisão dos estudos."
+                          className="min-h-24 rounded-2xl bg-background/80"
+                        />
+                      </div>
+                      {aiTopicSuggestions.length > 0 && (
+                        <div className="grid gap-2 md:grid-cols-2">
+                          {aiTopicSuggestions.map((suggestion, index) => (
+                            <button
+                              key={`${suggestion.title}-${index}`}
+                              type="button"
+                              onClick={() => applyAiTopicSuggestion(suggestion)}
+                              className="rounded-2xl border border-violet-400/15 bg-background/55 p-3 text-left transition hover:border-violet-400/40 hover:bg-violet-500/10"
+                            >
+                              <span className="block text-sm font-bold">{suggestion.title}</span>
+                              <span className="mt-1 line-clamp-3 block text-xs leading-5 text-muted-foreground">{suggestion.angle}</span>
+                              {suggestion.tool_names?.length ? (
+                                <span className="mt-2 block text-[11px] font-semibold text-violet-300">{suggestion.tool_names.join(" + ")}</span>
+                              ) : null}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          {aiSelectionReady ? "A geração não altera o molde original. Revise o resultado antes do envio." : "Selecione primeiro todas as ferramentas solicitadas abaixo."}
+                        </p>
+                        <Button type="button" onClick={() => void generateTemplateWithAi()} disabled={generatingWithAi || !aiSelectionReady} className="rounded-xl bg-violet-500 text-white hover:bg-violet-400">
+                          {generatingWithAi ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                          {generatingWithAi ? "Analisando e escrevendo..." : "Gerar textos com IA"}
+                        </Button>
+                      </div>
+                    </div>}
+                  </div>
+                )}
+
+                {affiliateTemplateActive && (
+                  <div className="rounded-3xl border border-primary/25 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4">
+                    <div className="mb-3">
+                      <p className="flex items-center gap-2 font-bold">
+                        <Link2 className="h-4 w-4 text-primary" />
+                        Link de afiliado do QConcursos
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        O link será aplicado aos dois botões do e-mail e à versão em texto simples.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        type="url"
+                        value={affiliateUrl}
+                        onChange={(event) => setAffiliateUrl(event.target.value)}
+                        placeholder="https://seu-link-de-afiliado..."
+                        className="h-11 flex-1 rounded-xl bg-background/80"
+                      />
+                      <Button type="button" onClick={applyAffiliateUrl} className="h-11 rounded-xl px-5">
+                        <Link2 className="mr-2 h-4 w-4" />
+                        Aplicar link
+                      </Button>
+                    </div>
+                    {appliedAffiliateUrl && (
+                      <p className="mt-2 flex items-center gap-2 text-xs font-medium text-emerald-500">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Link aplicado. Você pode substituí-lo informando outro endereço.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {toolEmailPreset && (
+                  <div className="rounded-3xl border border-primary/25 bg-primary/5 p-4">
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="flex items-center gap-2 font-bold">
+                          <Search className="h-4 w-4 text-primary" />
+                          Preencher com ferramentas do site
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Selecione {toolEmailPreset === "single" ? "a ferramenta" : "as três ferramentas"}. Nome, descrição e links serão aplicados ao HTML automaticamente.
+                        </p>
+                      </div>
+                      <Badge variant="outline" title={`${emailTools.length} ferramentas disponíveis`} aria-label={`${emailTools.length} ferramentas disponíveis`} className="shrink-0 tabular-nums">
+                        {emailTools.length}
+                      </Badge>
+                    </div>
+
+                    <div className={cn("grid gap-3", toolEmailPreset === "three" && "md:grid-cols-3")}>
+                      {Array.from({ length: toolEmailPreset === "single" ? 1 : 3 }, (_, slot) => {
+                        const selectedTool = selectedEmailTools[slot];
+                        return (
+                          <div key={slot} className="relative">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setToolPickerSlot(toolPickerSlot === slot ? null : slot);
+                                setToolPickerSearch("");
+                              }}
+                              className={cn(
+                                "flex min-h-20 w-full items-center gap-3 rounded-2xl border bg-background/80 p-3 text-left transition hover:border-primary/50",
+                                toolPickerSlot === slot && "border-primary ring-2 ring-primary/15",
+                              )}
+                            >
+                              {selectedTool?.icon_url || selectedTool?.cover_image_url ? (
+                                <img src={selectedTool.icon_url || selectedTool.cover_image_url || ""} alt="" className="h-11 w-11 shrink-0 rounded-xl object-cover" />
+                              ) : (
+                                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><Wrench className="h-5 w-5" /></span>
+                              )}
+                              <span className="min-w-0">
+                                <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ferramenta {toolEmailPreset === "three" ? slot + 1 : "principal"}</span>
+                                <span className="mt-1 block truncate font-bold">{selectedTool?.name || "Selecionar ferramenta"}</span>
+                              </span>
+                              <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+                            </button>
+
+                            {toolPickerSlot === slot && (
+                              <div className="absolute left-0 right-0 top-full z-40 mt-2 min-w-[320px] overflow-hidden rounded-2xl border border-primary/20 bg-popover shadow-2xl md:right-auto md:w-[440px]">
+                                <div className="flex items-center gap-2 border-b p-3">
+                                  <Search className="h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    autoFocus
+                                    value={toolPickerSearch}
+                                    onChange={(event) => setToolPickerSearch(event.target.value)}
+                                    placeholder="Buscar por nome, descrição ou categoria..."
+                                    className="border-0 shadow-none focus-visible:ring-0"
+                                  />
+                                </div>
+                                <div className="max-h-80 overflow-y-auto p-2">
+                                  {loadingEmailTools ? (
+                                    <p className="p-5 text-center text-sm text-muted-foreground">Carregando ferramentas...</p>
+                                  ) : filteredEmailTools.length === 0 ? (
+                                    <p className="p-5 text-center text-sm text-muted-foreground">Nenhuma ferramenta encontrada.</p>
+                                  ) : filteredEmailTools.map((tool) => (
+                                    <button key={tool.id} type="button" onClick={() => selectEmailTool(tool)} className="flex w-full items-center gap-3 rounded-xl p-3 text-left transition hover:bg-primary/10">
+                                      {tool.icon_url || tool.cover_image_url ? (
+                                        <img src={tool.icon_url || tool.cover_image_url || ""} alt="" className="h-11 w-11 shrink-0 rounded-xl object-cover" />
+                                      ) : (
+                                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"><Wrench className="h-5 w-5" /></span>
+                                      )}
+                                      <span className="min-w-0">
+                                        <span className="block truncate font-bold">{tool.name}</span>
+                                        <span className="line-clamp-2 text-xs text-muted-foreground">{tool.description}</span>
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Nome interno</Label>
@@ -2422,7 +3290,7 @@ export default function AdminEmailsClient() {
                     <button
                       type="button"
                       onClick={() => setShowCampaignTypePicker((value) => !value)}
-                      className="flex h-12 w-full items-center justify-between rounded-2xl border border-border bg-background/70 px-4 text-left transition hover:border-primary/40 hover:bg-primary/5"
+                      className="flex h-12 w-full items-center justify-between rounded-[1.2rem] border border-border bg-background/70 px-4 text-left transition hover:border-primary/40 hover:bg-primary/5"
                     >
                       <span>
                         <span className="block font-semibold">{activeCampaignType.label}</span>
@@ -2431,7 +3299,7 @@ export default function AdminEmailsClient() {
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     </button>
                     {showCampaignTypePicker && (
-                      <div className="absolute right-0 top-full z-30 mt-2 w-full overflow-hidden rounded-2xl border border-primary/20 bg-popover shadow-2xl">
+                      <div className="absolute right-0 top-full z-30 mt-2 w-full overflow-hidden rounded-[1.2rem] border border-primary/20 bg-popover shadow-2xl">
                         {campaignTypeOptions.map((option) => (
                           <button
                             key={option.value}
@@ -2441,7 +3309,7 @@ export default function AdminEmailsClient() {
                               setShowCampaignTypePicker(false);
                             }}
                             className={cn(
-                              "w-full px-4 py-3 text-left transition hover:bg-primary/10",
+                              "w-full rounded-[1.2rem] px-4 py-3 text-left transition hover:bg-primary/10",
                               campaignType === option.value && "bg-primary/15 text-primary",
                             )}
                           >
@@ -2470,8 +3338,9 @@ export default function AdminEmailsClient() {
                       <p className="text-base font-bold">Estrutura do e-mail</p>
                       <p className="text-sm text-muted-foreground">Monte por blocos e deixe o HTML como modo avançado.</p>
                     </div>
-                    <div className="flex w-fit rounded-2xl border border-border bg-background p-1">
-                      <button
+                    <div className="flex items-center gap-2">
+                      {!emailStructureCollapsed && <div className="flex w-fit rounded-2xl border border-border bg-background p-1">
+                        <button
                         type="button"
                         onClick={() => setComposerMode("blocks")}
                         className={cn(
@@ -2480,8 +3349,8 @@ export default function AdminEmailsClient() {
                         )}
                       >
                         Blocos
-                      </button>
-                      <button
+                        </button>
+                        <button
                         type="button"
                         onClick={() => setComposerMode("html")}
                         className={cn(
@@ -2490,11 +3359,24 @@ export default function AdminEmailsClient() {
                         )}
                       >
                         HTML
-                      </button>
+                        </button>
+                      </div>}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEmailStructureCollapsed((value) => !value)}
+                        aria-expanded={!emailStructureCollapsed}
+                        aria-label={emailStructureCollapsed ? "Expandir estrutura" : "Recolher estrutura"}
+                        title={emailStructureCollapsed ? "Expandir estrutura" : "Recolher estrutura"}
+                        className="h-10 w-10 rounded-xl p-0"
+                      >
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", !emailStructureCollapsed && "rotate-180")} />
+                      </Button>
                     </div>
                   </div>
 
-                  {composerMode === "blocks" ? (
+                  {!emailStructureCollapsed && (composerMode === "blocks" ? (
                     <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
                       <div className="border-b border-primary/10 p-4 lg:border-b-0 lg:border-r">
                         <div className="mb-4 flex flex-wrap gap-2">
@@ -2760,14 +3642,18 @@ export default function AdminEmailsClient() {
                         <Textarea value={textBody} onChange={(event) => setTextBody(event.target.value)} className="min-h-24" />
                       </div>
                     </div>
-                  )}
+                  ))}
                 </div>
 
                 <div className="flex flex-col gap-3 rounded-2xl border bg-muted/30 p-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <p className="font-semibold">{editingTemplateId ? "Modelo salvo aberto" : "Novo modelo"}</p>
+                    <p className="font-semibold">
+                      {editingMold ? "Editando o molde original" : editingTemplateId ? "Versão personalizada salva" : "Edição independente"}
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      Depois de salvar, selecione esse modelo na aba Contatos para enviar teste ou disparar para selecionados.
+                      {editingMold
+                        ? "Ao salvar, este molde será atualizado para os próximos usos."
+                        : "Ao salvar, esta versão será criada separadamente. O molde usado como base continuará intacto."}
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
@@ -2783,7 +3669,7 @@ export default function AdminEmailsClient() {
               </CardContent>
             </Card>
 
-            <Card className="xl:sticky xl:top-5 xl:self-start">
+            <Card className="min-w-0 overflow-hidden 2xl:sticky 2xl:top-5 2xl:self-start">
               <CardHeader>
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -2796,15 +3682,15 @@ export default function AdminEmailsClient() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="min-w-0 space-y-4 px-2">
                 <div className="rounded-2xl border bg-background p-4">
                   <p className="text-xs text-muted-foreground">Assunto</p>
-                  <p className="font-bold">{subject || "Sem assunto"}</p>
+                  <p className="break-words font-bold">{subject || "Sem assunto"}</p>
                   <p className="mt-2 text-xs text-muted-foreground">Prévia</p>
-                  <p className="text-sm">{preheader || "Sem prévia"}</p>
+                  <p className="break-words text-sm">{preheader || "Sem prévia"}</p>
                 </div>
                 {showPreview && (
-                  <iframe title="Prévia do e-mail" srcDoc={htmlBody} className="h-[520px] w-full rounded-2xl border bg-white" />
+                  <iframe title="Prévia do e-mail" srcDoc={htmlBody} className="h-[600px] min-w-0 w-full rounded-2xl border bg-white" />
                 )}
               </CardContent>
             </Card>
@@ -2820,25 +3706,16 @@ export default function AdminEmailsClient() {
             <CardContent>
               {loadingOverview ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">Carregando templates...</div>
-              ) : overview?.templates.length ? (
+              ) : availableTemplates.length ? (
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  {overview.templates.map((template) => (
+                  {availableTemplates.map((template) => (
                     <Card key={template.id} className="flex min-h-[230px] flex-col bg-muted/20">
                       <CardHeader className="space-y-3 p-4">
                         <div className="flex items-start justify-between gap-3">
                           <Badge className="w-fit" variant="secondary">
                             {template.category}
                           </Badge>
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                            title="Remover modelo"
-                            onClick={() => deleteTemplate(template)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {template.is_builtin ? <Badge variant="outline" className="border-primary/30 text-primary">Pronto</Badge> : <Button type="button" size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" title="Remover modelo" onClick={() => setTemplateToDelete(template)}><Trash2 className="h-4 w-4" /></Button>}
                         </div>
                         <div>
                           <CardTitle className="text-base">{template.name}</CardTitle>
@@ -2847,21 +3724,46 @@ export default function AdminEmailsClient() {
                           </CardDescription>
                         </div>
                       </CardHeader>
-                      <CardContent className="mt-auto grid gap-2 p-4 pt-0">
+                      <CardContent className="mt-auto p-4 pt-0">
+                        <div className="ml-auto flex w-fit items-center gap-1.5 rounded-2xl border border-primary/10 bg-background/55 p-1.5 shadow-inner">
+                        <Button
+                          onClick={() => applyTemplate(template)}
+                          variant="ghost"
+                          size="sm"
+                          title="Usar sem alterar o molde"
+                          aria-label="Usar sem alterar o molde"
+                          className="group h-9 w-9 shrink-0 gap-0 overflow-hidden rounded-xl border border-border/80 bg-card px-0 text-muted-foreground shadow-sm transition-[width,color,border-color,background-color] duration-200 hover:w-[88px] hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Layers3 className="h-4 w-4 shrink-0" />
+                          <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:ml-2 group-hover:max-w-12 group-hover:opacity-100">
+                            Usar
+                          </span>
+                        </Button>
+                        <Button
+                          onClick={() => editTemplateMold(template)}
+                          variant="ghost"
+                          size="sm"
+                          title="Editar o molde"
+                          aria-label="Editar o molde"
+                          className="group h-9 w-9 shrink-0 gap-0 overflow-hidden rounded-xl border border-border/80 bg-card px-0 text-muted-foreground shadow-sm transition-[width,color,border-color,background-color] duration-200 hover:w-[92px] hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                        >
+                          <Edit3 className="h-4 w-4 shrink-0" />
+                          <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:ml-2 group-hover:max-w-12 group-hover:opacity-100">
+                            Editar
+                          </span>
+                        </Button>
                         <Button
                           onClick={() => {
                             setSelectedTemplateId(template.id);
                             setActiveTab("contacts");
                           }}
                           size="sm"
-                          className="w-full"
+                          className="h-9 min-w-[104px] rounded-xl px-4 shadow-[0_8px_22px_rgba(217,54,208,.2)]"
                         >
-                          Selecionar para envio
+                          <Send className="mr-2 h-3.5 w-3.5" />
+                          Enviar
                         </Button>
-                        <Button onClick={() => applyTemplate(template)} variant="outline" size="sm" className="w-full">
-                          <Pencil className="mr-2 h-3.5 w-3.5" />
-                          Editar modelo
-                        </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -2982,6 +3884,37 @@ export default function AdminEmailsClient() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={Boolean(templateToDelete)} onOpenChange={(open) => !open && !deletingTemplate && setTemplateToDelete(null)}>
+        <AlertDialogContent className="overflow-hidden border-destructive/25 bg-card p-0 shadow-[0_28px_100px_rgba(0,0,0,.45)] sm:max-w-md">
+          <div className="h-1 bg-gradient-to-r from-destructive via-primary to-fuchsia-400" />
+          <div className="p-6">
+            <AlertDialogHeader>
+              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/10 text-destructive">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <AlertDialogTitle className="text-xl">Remover este modelo?</AlertDialogTitle>
+              <AlertDialogDescription className="text-sm leading-6">
+                O modelo <strong className="text-foreground">{templateToDelete?.name}</strong> será removido permanentemente da sua biblioteca. Os moldes nativos do PqEstudar não serão afetados.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="mt-6 gap-2 sm:gap-2">
+              <AlertDialogCancel disabled={deletingTemplate} className="rounded-xl">Manter modelo</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={deletingTemplate || !templateToDelete}
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (templateToDelete) void deleteTemplate(templateToDelete);
+                }}
+                className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deletingTemplate ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                Remover definitivamente
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
