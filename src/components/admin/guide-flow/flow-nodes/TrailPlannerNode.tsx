@@ -210,6 +210,7 @@ function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
   const { data: coverageStatuses = [] } = useModeratorTrailCoverage(isModeratorPanel);
   const [subject, setSubject] = useState('');
   const [showOverview, setShowOverview] = useState(false);
+  const [recommendationStage, setRecommendationStage] = useState<TrailStage | null>(null);
 
   const subjects = useMemo(
     () => Array.from(new Set([...getTrailSubjects(guides), ...coverageStatuses.map((item) => item.subject)])),
@@ -224,16 +225,25 @@ function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
     () => buildAllTrailCoverages(guides, coverageStatuses),
     [guides, coverageStatuses],
   );
+  const displayedRecommendation = useMemo(() => {
+    const stage = recommendationStage ?? coverage.nextStage;
+    return stage ? buildTrailRecommendation(coverage.subject, stage, coverage.stages) : null;
+  }, [coverage, recommendationStage]);
+
+  useEffect(() => {
+    setRecommendationStage(coverage.nextStage);
+  }, [activeSubject, coverage.nextStage]);
 
   const applyRecommendation = () => {
-    if (!coverage.recommendation) return;
-    data.onApplyInputs?.(recommendationPatch(coverage.recommendation));
+    if (!displayedRecommendation) return;
+    data.onApplyInputs?.(recommendationPatch(displayedRecommendation));
   };
 
   const applyAlternative = () => {
-    const next = coverage.missingStages.find((stage) => stage !== coverage.nextStage) ?? coverage.nextStage;
-    if (!next) return;
-    data.onApplyInputs?.(recommendationPatch(buildTrailRecommendation(coverage.subject, next, coverage.stages)));
+    if (coverage.missingStages.length < 2) return;
+    const currentIndex = coverage.missingStages.indexOf(recommendationStage ?? coverage.nextStage ?? coverage.missingStages[0]);
+    const nextIndex = (Math.max(currentIndex, 0) + 1) % coverage.missingStages.length;
+    setRecommendationStage(coverage.missingStages[nextIndex]);
   };
 
   return (
@@ -300,25 +310,25 @@ function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
           </p>
         </div>
 
-        {coverage.recommendation && (
+        {displayedRecommendation && (
           <div className="space-y-2 rounded-md border border-primary/20 bg-background/70 p-2">
             <div className="space-y-1">
               <p className="text-[10px] text-muted-foreground">Próximo guia recomendado</p>
-              <p className="text-xs font-semibold leading-snug">{coverage.recommendation.title}</p>
+              <p className="text-xs font-semibold leading-snug">{displayedRecommendation.title}</p>
               <p className="text-[10px] text-muted-foreground">
-                Etapa: {TRAIL_STAGES.find((stage) => stage.value === coverage.recommendation?.stage)?.label}
-                {' · '}Palavra-chave: {coverage.recommendation.keyword}
+                Etapa: {TRAIL_STAGES.find((stage) => stage.value === displayedRecommendation.stage)?.label}
+                {' · '}Palavra-chave: {displayedRecommendation.keyword}
               </p>
-              <p className="text-[10px] leading-snug text-muted-foreground">{coverage.recommendation.reason}</p>
+              <p className="text-[10px] leading-snug text-muted-foreground">{displayedRecommendation.reason}</p>
             </div>
 
-            {coverage.recommendation.links.length > 0 && (
+            {displayedRecommendation.links.length > 0 && (
               <div className="space-y-1">
                 <p className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
                   <Link2 className="h-2.5 w-2.5" />
                   Links internos
                 </p>
-                {coverage.recommendation.links.map((link) => (
+                {displayedRecommendation.links.map((link) => (
                   <p key={link.url} className="truncate text-[10px] text-muted-foreground">- {link.label}</p>
                 ))}
               </div>
@@ -328,7 +338,7 @@ function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
               <Button type="button" size="sm" className="h-7 rounded-md text-[10px]" onClick={applyRecommendation}>
                 Usar sugestão
               </Button>
-              <Button type="button" variant="outline" size="sm" className="h-7 rounded-md gap-1 text-[10px]" onClick={applyAlternative}>
+              <Button type="button" variant="outline" size="sm" className="h-7 rounded-md gap-1 text-[10px]" onClick={applyAlternative} disabled={coverage.missingStages.length < 2}>
                 <RefreshCw className="h-2.5 w-2.5" />
                 Outra
               </Button>

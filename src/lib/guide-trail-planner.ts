@@ -1,7 +1,16 @@
 import type { Guide } from '@/hooks/useGuides';
 
 export type TrailStage = 'busca' | 'exploracao' | 'decisao' | 'validacao' | 'expansao' | 'aplicacao';
-export type TrailStageStatus = 'published' | 'draft' | 'missing';
+export type TrailStageStatus = 'published' | 'partial' | 'draft' | 'missing';
+export type TrailCoverageLevel = 'complete' | 'partial';
+export type TrailAssociationRole = 'primary' | 'secondary';
+export interface TrailGuideAssociation {
+  guide: Guide;
+  stage: TrailStage;
+  role: TrailAssociationRole;
+  coverage: TrailCoverageLevel;
+  justification: string;
+}
 export interface TrailCoverageStatusOverride {
   subject: string;
   stage: TrailStage;
@@ -10,8 +19,11 @@ export interface TrailCoverageStatusOverride {
 
 export interface TrailSubjectCoverage {
   subject: string;
-  stages: Record<TrailStage, { status: TrailStageStatus; guides: Guide[] }>;
+  stages: Record<TrailStage, { status: TrailStageStatus; guides: Guide[]; associations: TrailGuideAssociation[] }>;
   coveredCount: number;
+  partialCount: number;
+  draftCount: number;
+  missingCount: number;
   integrity: number;
   missingStages: TrailStage[];
   nextStage: TrailStage | null;
@@ -34,17 +46,17 @@ export interface TrailRecommendation {
 export const TRAIL_STAGES: Array<{ value: TrailStage; label: string; description: string }> = [
   { value: 'busca', label: 'Busca', description: 'Primeiro contato e resposta direta.' },
   { value: 'exploracao', label: 'Exploração', description: 'Opções, caminhos e alternativas.' },
-  { value: 'decisao', label: 'Decisão', description: 'Critérios para escolher melhor.' },
   { value: 'validacao', label: 'Validação', description: 'Redução de risco antes de agir.' },
-  { value: 'expansao', label: 'Expansão', description: 'Usos e benefícios adicionais.' },
+  { value: 'decisao', label: 'Decisão', description: 'Critérios para escolher melhor.' },
   { value: 'aplicacao', label: 'Aplicação', description: 'Execução prática e passo a passo.' },
+  { value: 'expansao', label: 'Expansão', description: 'Usos e benefícios adicionais.' },
 ];
 
 export const TRAIL_PRODUCTION_PRIORITY: TrailStage[] = [
   'busca',
   'exploracao',
-  'decisao',
   'validacao',
+  'decisao',
   'aplicacao',
   'expansao',
 ];
@@ -133,12 +145,114 @@ export function getGuideTrailSubject(guide: Guide): string | null {
 }
 
 export function getGuideTrailStage(guide: Guide): TrailStage | null {
-  const inputs = flowInputsOf(guide);
-  const stored = inputs.tipo ?? inputs.trailStage ?? inputs.stage;
-  if (typeof stored === 'string' && TRAIL_STAGES.some((stage) => stage.value === stored)) return stored as TrailStage;
+  return getGuideTrailAssociations(guide)[0]?.stage ?? null;
+}
 
-  const haystack = normalize(`${guide.title} ${guide.short_description}`);
-  return STAGE_KEYWORDS.find(({ terms }) => terms.some((term) => haystack.includes(normalize(term))))?.stage ?? null;
+function isTrailStage(value: unknown): value is TrailStage {
+  return typeof value === 'string' && TRAIL_STAGES.some((stage) => stage.value === value);
+}
+
+function markdownSignals(guide: Guide) {
+  const markdown = guide.content_markdown ?? '';
+  const headings = markdown.split('\n').filter((line) => /^#{2,3}\s+/.test(line)).join(' ');
+  const firstParagraph = markdown
+    .split(/\n\s*\n/)
+    .map((part) => part.replace(/^#+\s+/gm, '').trim())
+    .find(Boolean) ?? '';
+  return normalize(`${guide.title} ${guide.short_description} ${firstParagraph} ${headings} ${markdown.slice(0, 6000)}`);
+}
+
+const STAGE_FORMAT_SIGNALS: Record<TrailStage, string[]> = {
+  busca: ['o que e', 'o que sao', 'como funciona', 'entenda', 'conceito', 'para que serve'],
+  exploracao: ['onde encontrar', 'melhores opcoes', 'melhores plataformas', 'lista de', 'alternativas', 'plataformas'],
+  validacao: ['confiavel', 'vale a pena', 'verificar', 'riscos', 'alerta', 'validade', 'cuidado', 'antes de'],
+  decisao: ['como escolher', 'qual escolher', 'comparacao', 'comparar', 'criterios de escolha', 'melhor para'],
+  aplicacao: ['passo a passo', 'como usar', 'como solicitar', 'como fazer', 'como conseguir', 'no curriculo', 'horas complementares'],
+  expansao: ['beneficios', 'oportunidades', 'da direito', 'pode abrir', 'outros usos', 'alem de'],
+};
+
+function inferredAssociations(guide: Guide): TrailGuideAssociation[] {
+  const text = markdownSignals(guide);
+  const scores = TRAIL_STAGES.map(({ value }) => ({
+    stage: value,
+    score: STAGE_FORMAT_SIGNALS[value].reduce((score, signal) => score + (text.includes(signal) ? 1 : 0), 0),
+  })).filter((item) => item.score > 0).sort((a, b) => b.score - a.score);
+  if (scores.length === 0) return [];
+  const primary = scores[0];
+  const secondary = scores.slice(1, 3).filter((item) => item.score >= Math.max(1, primary.score - 1));
+  return [
+    { guide, stage: primary.stage, role: 'primary', coverage: 'complete', justification: 'A estrutura e a entrega principal da página correspondem a esta intenção.' },
+    ...secondary.map((item): TrailGuideAssociation => ({
+      guide,
+      stage: item.stage,
+      role: 'secondary',
+      coverage: 'partial',
+      justification: 'A página também responde parcialmente a esta intenção em seus subtítulos e orientações.',
+    })),
+  ];
+}
+
+function curatedCourseAssociations(guide: Guide): TrailGuideAssociation[] | null {
+  const slug = normalize(guide.slug);
+  const association = (stage: TrailStage, role: TrailAssociationRole, coverage: TrailCoverageLevel, justification: string): TrailGuideAssociation => ({
+    guide, stage, role, coverage, justification,
+  });
+  if (slug.includes('plataformas-com-cursos-gratuitos-e-certificado-melhores-opcoes')) {
+    return [association('exploracao', 'primary', 'complete', 'Apresenta alternativas e explica para quem cada plataforma serve.')];
+  }
+  if (slug.includes('como-escolher-cursos-online-com-certificado-que-realmente-valem-a-pena')) {
+    return [
+      association('decisao', 'primary', 'complete', 'Compara critérios e orienta a escolha do melhor curso para o objetivo do leitor.'),
+      association('validacao', 'secondary', 'complete', 'Também cobre confiança, riscos, carga horária, validade e informações do certificado.'),
+    ];
+  }
+  if (slug.includes('como-usar-certificados-de-cursos-online-no-curriculo-e-faculdade')) {
+    return [association('aplicacao', 'primary', 'complete', 'Ensina como aplicar o certificado no currículo e na faculdade.')];
+  }
+  if (slug.includes('como-conseguir-horas-complementares-com-cursos-online')) {
+    return [association('aplicacao', 'primary', 'complete', 'Ensina como usar cursos online para cumprir horas complementares.')];
+  }
+  if (slug.includes('cursos-gratuitos-podem-abrir-novas-oportunidades')) {
+    return [association('expansao', 'primary', 'complete', 'Apresenta benefícios e novas oportunidades decorrentes dos cursos gratuitos.')];
+  }
+  if (slug.includes('cursos-gratuitos-dao-direito-a-carteira-de-estudante')) {
+    return [association('expansao', 'secondary', 'partial', 'Responde a uma possibilidade específica relacionada aos benefícios dos cursos gratuitos.')];
+  }
+  return null;
+}
+
+export function getGuideTrailAssociations(guide: Guide, subject?: string): TrailGuideAssociation[] {
+  const inputs = flowInputsOf(guide);
+  const guideSubject = getGuideTrailSubject(guide);
+  const requestedSubject = subject ? canonicalSubject(subject) : guideSubject;
+  if (!requestedSubject) return [];
+
+  if (normalize(requestedSubject) === normalize('Cursos gratuitos')) {
+    const curated = curatedCourseAssociations(guide);
+    if (curated) return curated;
+  }
+
+  if (!guideSubject || normalize(guideSubject) !== normalize(requestedSubject)) return [];
+  const stored = inputs.tipo ?? inputs.trailStage ?? inputs.stage;
+  const storedSecondary = inputs.etapasSecundarias ?? inputs.secondaryStages;
+  const secondaryStages = Array.isArray(storedSecondary) ? storedSecondary.filter(isTrailStage).slice(0, 2) : [];
+  if (isTrailStage(stored)) {
+    const justification = typeof inputs.justificativaCobertura === 'string' && inputs.justificativaCobertura.trim()
+      ? inputs.justificativaCobertura.trim()
+      : 'Etapa principal definida no fluxo editorial.';
+    return [
+      { guide, stage: stored, role: 'primary', coverage: 'complete', justification },
+      ...secondaryStages.map((stage): TrailGuideAssociation => ({
+        guide,
+        stage,
+        role: 'secondary',
+        coverage: 'partial',
+        justification: 'Etapa secundária definida no fluxo editorial.',
+      })),
+    ];
+  }
+
+  return inferredAssociations(guide);
 }
 
 export function getTrailSubjects(guides: Guide[]) {
@@ -156,14 +270,14 @@ export function getTrailSubjects(guides: Guide[]) {
   return Array.from(subjects.values()).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 
-function emptyStages(): Record<TrailStage, { status: TrailStageStatus; guides: Guide[] }> {
+function emptyStages(): TrailSubjectCoverage['stages'] {
   return TRAIL_STAGES.reduce((acc, stage) => {
-    acc[stage.value] = { status: 'missing', guides: [] };
+    acc[stage.value] = { status: 'missing', guides: [], associations: [] };
     return acc;
-  }, {} as Record<TrailStage, { status: TrailStageStatus; guides: Guide[] }>);
+  }, {} as TrailSubjectCoverage['stages']);
 }
 
-function pickNextStage(stages: Record<TrailStage, { status: TrailStageStatus; guides: Guide[] }>) {
+function pickNextStage(stages: TrailSubjectCoverage['stages']) {
   return TRAIL_PRODUCTION_PRIORITY.find((stage) => stages[stage].status === 'missing') ?? null;
 }
 
@@ -198,8 +312,8 @@ function recommendationTitle(subject: string, stage: TrailStage) {
   return titles[stage];
 }
 
-function reasonFor(subject: string, stage: TrailStage, stages: Record<TrailStage, { status: TrailStageStatus; guides: Guide[] }>) {
-  const covered = TRAIL_STAGES.filter((item) => stages[item.value].status !== 'missing').map((item) => item.label);
+function reasonFor(subject: string, stage: TrailStage, stages: TrailSubjectCoverage['stages']) {
+  const covered = TRAIL_STAGES.filter((item) => stages[item.value].status === 'published').map((item) => item.label);
   const missingLabel = TRAIL_STAGES.find((item) => item.value === stage)?.label ?? stage;
 
   if (covered.length === 0) {
@@ -209,7 +323,7 @@ function reasonFor(subject: string, stage: TrailStage, stages: Record<TrailStage
   return `Já existe cobertura em ${covered.join(', ')}, mas falta uma página de ${missingLabel}. Essa peça completa melhor a evolução do usuário dentro do assunto antes de avançar para etapas menos urgentes.`;
 }
 
-function recommendedLinks(stages: Record<TrailStage, { status: TrailStageStatus; guides: Guide[] }>, stage: TrailStage) {
+function recommendedLinks(stages: TrailSubjectCoverage['stages'], stage: TrailStage) {
   const preferredByStage: Record<TrailStage, TrailStage[]> = {
     busca: ['exploracao', 'validacao', 'aplicacao'],
     exploracao: ['busca', 'validacao', 'decisao'],
@@ -226,7 +340,7 @@ function recommendedLinks(stages: Record<TrailStage, { status: TrailStageStatus;
     .map((guide) => ({ label: guide.title, url: `/guias/${guide.slug}` }));
 }
 
-export function buildTrailRecommendation(subject: string, stage: TrailStage, stages: Record<TrailStage, { status: TrailStageStatus; guides: Guide[] }>): TrailRecommendation {
+export function buildTrailRecommendation(subject: string, stage: TrailStage, stages: TrailSubjectCoverage['stages']): TrailRecommendation {
   const links = recommendedLinks(stages, stage);
   const title = recommendationTitle(subject, stage);
   const keyword = title
@@ -264,19 +378,22 @@ export function buildTrailCoverage(
   const normalizedSubject = normalize(subject);
 
   guides.forEach((guide) => {
-    const guideSubject = getGuideTrailSubject(guide);
-    const guideStage = getGuideTrailStage(guide);
-    if (!guideSubject || !guideStage || normalize(guideSubject) !== normalizedSubject) return;
-
-    stages[guideStage].guides.push(guide);
+    const associations = getGuideTrailAssociations(guide, subject);
+    associations.forEach((association) => {
+      const bucket = stages[association.stage];
+      bucket.associations.push(association);
+      if (!bucket.guides.some((item) => item.id === guide.id)) bucket.guides.push(guide);
+    });
   });
 
   TRAIL_STAGES.forEach(({ value }) => {
-    const guidesForStage = stages[value].guides;
-    if (guidesForStage.some((guide) => guide.is_published)) {
+    const associations = stages[value].associations;
+    if (associations.some((item) => item.guide.is_published && item.coverage === 'complete')) {
       stages[value].status = 'published';
-    } else if (guidesForStage.length > 0) {
+    } else if (associations.some((item) => !item.guide.is_published)) {
       stages[value].status = 'draft';
+    } else if (associations.some((item) => item.guide.is_published && item.coverage === 'partial')) {
+      stages[value].status = 'partial';
     }
   });
 
@@ -284,13 +401,16 @@ export function buildTrailCoverage(
     .filter((item) => normalize(item.subject) === normalizedSubject)
     .forEach((item) => {
       const current = stages[item.stage].status;
-      if (item.status === 'published' || current === 'missing') {
+      if (item.status === 'published' || (item.status === 'draft' && current !== 'published') || current === 'missing') {
         stages[item.stage].status = item.status;
       }
     });
 
-  const coveredCount = TRAIL_STAGES.filter(({ value }) => stages[value].status !== 'missing').length;
-  const integrity = Math.round((coveredCount / TRAIL_STAGES.length) * 100);
+  const coveredCount = TRAIL_STAGES.filter(({ value }) => stages[value].status === 'published').length;
+  const partialCount = TRAIL_STAGES.filter(({ value }) => stages[value].status === 'partial').length;
+  const draftCount = TRAIL_STAGES.filter(({ value }) => stages[value].status === 'draft').length;
+  const missingCount = TRAIL_STAGES.filter(({ value }) => stages[value].status === 'missing').length;
+  const integrity = Math.round(((coveredCount + partialCount * 0.5) / TRAIL_STAGES.length) * 100);
   const missingStages = TRAIL_STAGES.map((stage) => stage.value).filter((stage) => stages[stage].status === 'missing');
   const nextStage = pickNextStage(stages);
 
@@ -298,6 +418,9 @@ export function buildTrailCoverage(
     subject,
     stages,
     coveredCount,
+    partialCount,
+    draftCount,
+    missingCount,
     integrity,
     missingStages,
     nextStage,

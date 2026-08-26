@@ -55,6 +55,7 @@ export default function GuideFlow() {
   const [linkedGuideId, setLinkedGuideId] = useState<string | null>(null);
   const [linkedToolId, setLinkedToolId] = useState<string | null>(null);
   const [currentInputs, setCurrentInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
+  const [flowPrefill, setFlowPrefill] = useState<GuideFlowInputs | null>(null);
 
   const currentAuthor = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Moderador';
 
@@ -62,6 +63,7 @@ export default function GuideFlow() {
   useEffect(() => {
     const guideId = searchParams?.get('guide') ?? null;
     if (!guideId) return;
+    setFlowPrefill(null);
 
     (async () => {
       const { data, error } = await supabase
@@ -134,6 +136,7 @@ export default function GuideFlow() {
   useEffect(() => {
     const toolId = searchParams?.get('tool') ?? null;
     if (!toolId) return;
+    setFlowPrefill(null);
 
     (async () => {
       const { data, error } = await supabase
@@ -184,6 +187,34 @@ export default function GuideFlow() {
       });
       toast({ title: 'Ferramenta carregada', description: `"${tool.name}" aberta no fluxo.` });
     })();
+  }, [searchParams, applyTargetDefaults]);
+
+  // Prefill a new guide from the editorial map or question journey.
+  useEffect(() => {
+    if (searchParams?.get('guide') || searchParams?.get('tool')) return;
+    const subject = searchParams?.get('subject')?.trim();
+    const stage = searchParams?.get('stage')?.trim();
+    const title = searchParams?.get('title')?.trim();
+    if (!subject || !stage || !title) return;
+
+    setLinkedGuideId(null);
+    setLinkedToolId(null);
+    setGuideData(null);
+    const prefilledInputs: GuideFlowInputs = {
+      ...DEFAULT_GUIDE_FLOW_INPUTS,
+      targetType: 'guide',
+      assuntoPrincipal: subject,
+      tema: title,
+      tipo: stage,
+      palavraChave: searchParams.get('keyword')?.trim() || title,
+      intencao: searchParams.get('intent')?.trim() || DEFAULT_GUIDE_FLOW_INPUTS.intencao,
+      categoria: searchParams.get('category')?.trim() || DEFAULT_GUIDE_FLOW_INPUTS.categoria,
+      categoriaPublica: searchParams.get('publicCategory')?.trim() || DEFAULT_GUIDE_FLOW_INPUTS.categoriaPublica,
+      contextoAdicional: searchParams.get('context')?.trim() || DEFAULT_GUIDE_FLOW_INPUTS.contextoAdicional,
+    };
+    setCurrentInputs(prefilledInputs);
+    setFlowPrefill(prefilledInputs);
+    applyTargetDefaults('guide');
   }, [searchParams, applyTargetDefaults]);
 
   const handleInputsChange = useCallback((inputs: GuideFlowInputs) => {
@@ -585,6 +616,7 @@ export default function GuideFlow() {
 
       <FlowCanvas
         guideData={guideData}
+        prefillInputs={flowPrefill}
         isGenerating={isGenerating}
         onGenerate={handleGenerate}
         onGuideDataChange={setGuideData}

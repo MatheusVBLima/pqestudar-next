@@ -284,6 +284,7 @@ function nodeToEditorData(nodeId: string, nodeType: string, nodeData: Record<str
 
 interface FlowCanvasProps {
   guideData: GeneratedGuideData | null;
+  prefillInputs?: GuideFlowInputs | null;
   isGenerating: boolean;
   onGenerate: (inputs: GuideFlowInputs) => void;
   onGuideDataChange: (data: GeneratedGuideData) => void;
@@ -294,7 +295,7 @@ interface FlowCanvasProps {
   onUpdateImagePrompt?: (position: string, newPrompt: string) => void;
 }
 
-export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataChange, sources, onInputsChange, onTargetTypeChange, onRegenerateImage, onUpdateImagePrompt }: FlowCanvasProps) {
+export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate, onGuideDataChange, sources, onInputsChange, onTargetTypeChange, onRegenerateImage, onUpdateImagePrompt }: FlowCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const initialLayoutAppliedRef = useRef(false);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -305,6 +306,12 @@ export function FlowCanvas({ guideData, isGenerating, onGenerate, onGuideDataCha
   const [flowTargetType, setFlowTargetType] = useState<GuideFlowInputs['targetType']>('guide');
   const [trailStageSelection, setTrailStageSelection] = useState<TrailStageSelection | null>(null);
   const [trailGuidesPosition, setTrailGuidesPosition] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (!prefillInputs) return;
+    setFlowTargetType(prefillInputs.targetType);
+    setInputPatch({ id: Date.now(), patch: prefillInputs });
+  }, [prefillInputs]);
 
   const structureNames = useMemo(
     () => sources.activeStructureEntries.map(e => e.source_path ?? e.title),
