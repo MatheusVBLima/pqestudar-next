@@ -398,7 +398,10 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
   };
 
   return (
-    <div className="bg-card border-2 border-primary/40 rounded-[1.2rem] shadow-card w-[400px] overflow-visible">
+    <div
+      className="bg-card border-2 border-primary/40 rounded-[1.2rem] shadow-card w-[400px] overflow-visible"
+      onKeyDown={(event) => event.stopPropagation()}
+    >
       <Handle
         id="sources"
         type="target"

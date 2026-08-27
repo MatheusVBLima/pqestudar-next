@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -115,7 +115,11 @@ export function NodeEditorSheet({ open, onClose, data, guideData, onSave }: Prop
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-lg overflow-y-auto"
+        onKeyDown={(event) => event.stopPropagation()}
+      >
         <SheetHeader className="pb-4">
           <div className="flex items-center gap-2">
             <Icon className="h-4 w-4 text-primary" />
@@ -330,23 +334,27 @@ function ContentEditor({ local, update, sectionIndex }: {
   update: <K extends keyof GeneratedGuideData>(key: K, value: GeneratedGuideData[K]) => void;
   sectionIndex?: number;
 }) {
-  // Parse sections from markdown
-  const sections = parseSections(local.content_markdown);
   const idx = sectionIndex ?? 0;
-  const section = sections[idx];
-
-  const [sectionContent, setSectionContent] = useState(section?.content ?? '');
+  const baseSectionsRef = useRef(parseSections(local.content_markdown));
+  const [sectionContent, setSectionContent] = useState(baseSectionsRef.current[idx]?.content ?? '');
 
   useEffect(() => {
-    const s = parseSections(local.content_markdown);
-    setSectionContent(s[idx]?.content ?? '');
-  }, [local.content_markdown, idx]);
+    const sections = parseSections(local.content_markdown);
+    baseSectionsRef.current = sections;
+    setSectionContent(sections[idx]?.content ?? '');
+    // A troca de seção deve carregar outro bloco. Alterações no próprio Markdown
+    // não podem ressincronizar o textarea a cada tecla, pois isso move o cursor.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx]);
 
   const handleContentChange = (newContent: string) => {
     setSectionContent(newContent);
-    // Replace just this section in the full markdown
-    const allSections = parseSections(local.content_markdown);
-    allSections[idx] = { ...allSections[idx], content: newContent };
+    const allSections = baseSectionsRef.current.map((section) => ({ ...section }));
+    if (!allSections[idx]) {
+      allSections[idx] = { title: `Seção ${idx + 1}`, content: newContent };
+    } else {
+      allSections[idx].content = newContent;
+    }
     const rebuilt = allSections.map(s => s.content).join('\n\n');
     update('content_markdown', rebuilt);
   };
