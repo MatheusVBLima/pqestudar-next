@@ -48,11 +48,14 @@ const TRAIL_SUBJECT_RULES = [
 const TRAIL_STAGE_RULES = [
   ["busca", ["como conseguir", "como encontrar", "o que é", "o que são", "para que serve"]],
   ["exploracao", ["melhores", "sites", "plataformas", "opções", "opcoes", "onde encontrar"]],
-  ["decisao", ["como escolher", "vale mais", "melhor para começar", "comparar"]],
   ["validacao", ["é aceito", "e aceito", "vale para", "funciona", "é confiável", "e confiavel"]],
-  ["expansao", ["ajudar no currículo", "ajudar no curriculo", "benefícios", "beneficios", "fortalecer", "usar para"]],
+  ["decisao", ["como escolher", "vale mais", "melhor para começar", "comparar"]],
   ["aplicacao", ["como colocar", "como baixar", "passo a passo", "como usar", "como fazer"]],
+  ["expansao", ["ajudar no currículo", "ajudar no curriculo", "benefícios", "beneficios", "fortalecer", "usar para"]],
 ] as const;
+
+type TrailStage = typeof TRAIL_STAGE_RULES[number][0];
+type TrailAssociation = { stage: TrailStage; coverage: "complete" | "partial" };
 
 function trailInput(flowData: unknown, keys: string[]) {
   if (!flowData || typeof flowData !== "object" || Array.isArray(flowData)) return "";
@@ -65,16 +68,51 @@ function trailInput(flowData: unknown, keys: string[]) {
   return "";
 }
 
-function classifyTrailGuide(guide: Record<string, unknown>) {
+function trailInputList(flowData: unknown, keys: string[]) {
+  if (!flowData || typeof flowData !== "object" || Array.isArray(flowData)) return [];
+  const inputs = (flowData as Record<string, unknown>).inputs;
+  if (!inputs || typeof inputs !== "object" || Array.isArray(inputs)) return [];
+  for (const key of keys) {
+    const value = (inputs as Record<string, unknown>)[key];
+    if (Array.isArray(value)) {
+      return value.filter((item): item is TrailStage =>
+        typeof item === "string" && TRAIL_STAGE_RULES.some(([stage]) => stage === item)
+      ).slice(0, 2);
+    }
+  }
+  return [];
+}
+
+function classifyTrailGuide(guide: Record<string, unknown>): { subject: string; associations: TrailAssociation[] } {
   const subjectHaystack = `${guide.title ?? ""} ${guide.short_description ?? ""} ${guide.category ?? ""} ${guide.public_category ?? ""}`.toLocaleLowerCase("pt-BR");
-  const stageHaystack = `${guide.title ?? ""} ${guide.short_description ?? ""}`.toLocaleLowerCase("pt-BR");
+  const stageHaystack = `${guide.title ?? ""} ${guide.short_description ?? ""} ${guide.content_markdown ?? ""}`.toLocaleLowerCase("pt-BR");
   const subject = trailInput(guide.flow_data, ["assuntoPrincipal", "trailSubject", "editorialSubject", "subject"])
     || TRAIL_SUBJECT_RULES.find(([, terms]) => terms.some((term) => subjectHaystack.includes(term)))?.[0]
     || "";
-  const stage = trailInput(guide.flow_data, ["tipo", "trailStage", "stage"])
-    || TRAIL_STAGE_RULES.find(([, terms]) => terms.some((term) => stageHaystack.includes(term)))?.[0]
-    || "";
-  return { subject, stage };
+  const slug = String(guide.slug ?? "").toLocaleLowerCase("pt-BR");
+  if (subject === "Cursos gratuitos" || slug.includes("cursos-gratuitos") || slug.includes("cursos-online")) {
+    if (slug.includes("plataformas-com-cursos-gratuitos-e-certificado-melhores-opcoes")) return { subject: "Cursos gratuitos", associations: [{ stage: "exploracao", coverage: "complete" }] };
+    if (slug.includes("como-escolher-cursos-online-com-certificado-que-realmente-valem-a-pena")) return { subject: "Cursos gratuitos", associations: [{ stage: "decisao", coverage: "complete" }, { stage: "validacao", coverage: "complete" }] };
+    if (slug.includes("como-usar-certificados-de-cursos-online-no-curriculo-e-faculdade") || slug.includes("como-conseguir-horas-complementares-com-cursos-online")) return { subject: "Cursos gratuitos", associations: [{ stage: "aplicacao", coverage: "complete" }] };
+    if (slug.includes("cursos-gratuitos-podem-abrir-novas-oportunidades")) return { subject: "Cursos gratuitos", associations: [{ stage: "expansao", coverage: "complete" }] };
+    if (slug.includes("cursos-gratuitos-dao-direito-a-carteira-de-estudante")) return { subject: "Cursos gratuitos", associations: [{ stage: "expansao", coverage: "partial" }] };
+  }
+
+  const storedStage = trailInput(guide.flow_data, ["tipo", "trailStage", "stage"]);
+  const validStage = TRAIL_STAGE_RULES.some(([value]) => value === storedStage) ? storedStage as TrailStage : undefined;
+  if (validStage) {
+    const secondaryStages = trailInputList(guide.flow_data, ["etapasSecundarias", "secondaryStages"])
+      .filter((stage) => stage !== validStage);
+    return {
+      subject,
+      associations: [
+        { stage: validStage, coverage: "complete" },
+        ...secondaryStages.map((stage): TrailAssociation => ({ stage, coverage: "partial" })),
+      ],
+    };
+  }
+  const inferred = TRAIL_STAGE_RULES.find(([, terms]) => terms.some((term) => stageHaystack.includes(term)))?.[0];
+  return { subject, associations: inferred ? [{ stage: inferred, coverage: "complete" }] : [] };
 }
 
 function stripHtml(html: string) {
@@ -307,17 +345,20 @@ serve(async (req) => {
     if (action === "trail-coverage") {
       const { data: guides, error } = await supabase
         .from("guides")
-        .select("title, short_description, category, public_category, flow_data, is_published");
+        .select("slug, title, short_description, content_markdown, category, public_category, flow_data, is_published");
       if (error) return jsonResponse({ error: error.message }, 500);
 
-      const aggregate = new Map<string, { subject: string; stage: string; status: "published" | "draft" }>();
+      const aggregate = new Map<string, { subject: string; stage: string; status: "published" | "partial" | "draft" }>();
       for (const guide of guides ?? []) {
-        const { subject, stage } = classifyTrailGuide(guide as Record<string, unknown>);
-        if (!subject || !TRAIL_STAGE_RULES.some(([value]) => value === stage)) continue;
-        const key = `${subject}\u0000${stage}`;
-        const status = guide.is_published ? "published" : "draft";
-        const current = aggregate.get(key);
-        if (!current || status === "published") aggregate.set(key, { subject, stage, status });
+        const { subject, associations } = classifyTrailGuide(guide as Record<string, unknown>);
+        if (!subject) continue;
+        for (const association of associations) {
+          const key = `${subject}\u0000${association.stage}`;
+          const status = !guide.is_published ? "draft" : association.coverage === "partial" ? "partial" : "published";
+          const current = aggregate.get(key);
+          const priority = { partial: 1, draft: 2, published: 3 } as const;
+          if (!current || priority[status] > priority[current.status]) aggregate.set(key, { subject, stage: association.stage, status });
+        }
       }
       return jsonResponse(Array.from(aggregate.values()));
     }

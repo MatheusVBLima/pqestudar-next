@@ -406,6 +406,7 @@ export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate,
     stageLabel: string;
     statusLabel: string;
     guides: Guide[];
+    associations: TrailStageSelection['associations'];
   }) => {
     setTrailStageSelection((current) => {
       const isSameStage = current?.subject === selection.subject && current.stage === selection.stage;
@@ -435,6 +436,7 @@ export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate,
           cover_image_url: guide.cover_image_url,
           is_published: guide.is_published,
         })),
+        associations: selection.associations,
       };
     });
   }, [nodes]);

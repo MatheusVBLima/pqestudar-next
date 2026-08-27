@@ -300,9 +300,12 @@ function publicCategoryFor(subject: string) {
 }
 
 function recommendationTitle(subject: string, stage: TrailStage) {
+  if (normalize(subject) === normalize('Cursos gratuitos') && stage === 'busca') {
+    return 'O que são cursos gratuitos online e como funcionam';
+  }
   const lower = subject.toLowerCase();
   const titles: Record<TrailStage, string> = {
-    busca: `Como entender ${lower} sem complicação`,
+    busca: `${subject}: o que é e como funciona`,
     exploracao: `Melhores caminhos para ${lower}: opções para começar`,
     decisao: `Como escolher ${lower} sem perder tempo`,
     validacao: `${subject}: o que vale a pena conferir antes de agir`,
@@ -310,6 +313,30 @@ function recommendationTitle(subject: string, stage: TrailStage) {
     aplicacao: `Como usar ${lower} na prática: passo a passo`,
   };
   return titles[stage];
+}
+
+export function trailQuestionFor(subject: string, stage: TrailStage) {
+  if (normalize(subject) === normalize('Cursos gratuitos')) {
+    const courseQuestions: Record<TrailStage, string> = {
+      busca: 'O que são cursos gratuitos online e como funcionam?',
+      exploracao: 'Onde encontrar cursos gratuitos online confiáveis?',
+      validacao: 'Como verificar se o curso e o certificado são confiáveis?',
+      decisao: 'Como escolher o melhor curso para meu objetivo?',
+      aplicacao: 'Como usar o certificado depois de concluir o curso?',
+      expansao: 'Que outros benefícios e oportunidades os cursos gratuitos podem oferecer?',
+    };
+    return courseQuestions[stage];
+  }
+
+  const questions: Record<TrailStage, string> = {
+    busca: `${subject}: o que é e como funciona?`,
+    exploracao: `Onde encontrar opções confiáveis sobre ${subject.toLowerCase()}?`,
+    validacao: `${subject}: como verificar confiança, riscos e limitações?`,
+    decisao: `Como escolher a melhor opção relacionada a ${subject.toLowerCase()}?`,
+    aplicacao: `Como aplicar ${subject.toLowerCase()} na prática?`,
+    expansao: `Que outros benefícios e oportunidades existem em ${subject.toLowerCase()}?`,
+  };
+  return questions[stage];
 }
 
 function reasonFor(subject: string, stage: TrailStage, stages: TrailSubjectCoverage['stages']) {

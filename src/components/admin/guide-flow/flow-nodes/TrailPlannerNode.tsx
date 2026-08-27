@@ -17,6 +17,7 @@ import {
   TRAIL_STAGES,
   type TrailStage,
   type TrailStageStatus,
+  type TrailGuideAssociation,
 } from '@/lib/guide-trail-planner';
 import type { GuideFlowInputs } from '../GuideFlowForm';
 import type { Guide } from '@/hooks/useGuides';
@@ -30,17 +31,20 @@ interface TrailPlannerNodeData {
     status: TrailStageStatus;
     statusLabel: string;
     guides: Guide[];
+    associations: TrailGuideAssociation[];
   }) => void;
 }
 
 const STATUS_LABEL: Record<TrailStageStatus, string> = {
   published: 'Publicado',
+  partial: 'Cobertura parcial',
   draft: 'Em produção',
-  missing: 'Faltando',
+  missing: 'Lacuna',
 };
 
 const STATUS_CLASS: Record<TrailStageStatus, string> = {
   published: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-500',
+  partial: 'border-sky-500/30 bg-sky-500/10 text-sky-500',
   draft: 'border-amber-500/30 bg-amber-500/10 text-amber-500',
   missing: 'border-border bg-muted/40 text-muted-foreground',
 };
@@ -287,6 +291,7 @@ function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
                   status,
                   statusLabel: STATUS_LABEL[status],
                   guides: stageCoverage.guides,
+                  associations: stageCoverage.associations,
                 })}
                 className={cn(
                   "nodrag nopan rounded-md border px-2 py-1 text-left transition-colors hover:ring-1 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/60",
@@ -303,10 +308,7 @@ function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
         <div className="rounded-md border border-border/60 bg-background/60 px-2 py-1.5">
           <p className="text-[10px] font-semibold">Integridade: {coverage.integrity}%</p>
           <p className="text-[9px] text-muted-foreground">
-            {coverage.coveredCount} de 6 etapas
-            {coverage.missingStages.length > 0
-              ? ` · faltando ${coverage.missingStages.map((stage) => TRAIL_STAGES.find((item) => item.value === stage)?.label).join(', ')}`
-              : ' · trilha completa'}
+            {coverage.coveredCount} cobertas · {coverage.partialCount} parciais · {coverage.draftCount} em produção · {coverage.missingCount} lacunas
           </p>
         </div>
 

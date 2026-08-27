@@ -3,6 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import { BookOpen, ExternalLink, Route } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import type { TrailGuideAssociation } from '@/lib/guide-trail-planner';
 
 export interface TrailGuidesNodeGuide {
   id: string;
@@ -20,6 +21,7 @@ export interface TrailGuidesNodeData {
   stageLabel: string;
   statusLabel: string;
   guides: TrailGuidesNodeGuide[];
+  associations?: TrailGuideAssociation[];
 }
 
 function TrailGuidesNodeComponent({ data }: { data: TrailGuidesNodeData }) {
@@ -42,7 +44,7 @@ function TrailGuidesNodeComponent({ data }: { data: TrailGuidesNodeData }) {
 
       <div className="space-y-2 p-3">
         <div>
-          <p className="text-[11px] font-semibold text-foreground">Guias contados nesta etapa</p>
+          <p className="text-[11px] font-semibold text-foreground">Cobertura desta etapa</p>
           <p className="text-[10px] text-muted-foreground">
             {data.guides.length > 0
               ? `${data.guides.length} guia${data.guides.length === 1 ? '' : 's'} vinculado${data.guides.length === 1 ? '' : 's'}`
@@ -53,6 +55,7 @@ function TrailGuidesNodeComponent({ data }: { data: TrailGuidesNodeData }) {
         {data.guides.length > 0 ? (
           <div className="nodrag nopan max-h-72 space-y-1.5 overflow-y-auto pr-1">
             {data.guides.map((guide) => {
+              const association = data.associations?.find((item) => item.guide.id === guide.id);
               const href = guide.slug ? `/guias/${guide.slug}?preview=1` : undefined;
               const category = guide.public_category || guide.category || (guide.is_published ? 'Publicado' : 'Em produção');
               const item = (
@@ -67,6 +70,14 @@ function TrailGuidesNodeComponent({ data }: { data: TrailGuidesNodeData }) {
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-2 text-[11px] font-semibold leading-snug text-foreground">{guide.title}</p>
                     <p className="mt-0.5 truncate text-[9px] text-muted-foreground">{category}</p>
+                    {association && (
+                      <>
+                        <p className="mt-1 text-[9px] font-medium text-primary">
+                          {association.role === 'primary' ? 'Principal' : 'Secundária'} · {association.coverage === 'complete' ? 'completa' : 'parcial'}
+                        </p>
+                        <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-muted-foreground">{association.justification}</p>
+                      </>
+                    )}
                   </div>
                   {href && <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />}
                 </>

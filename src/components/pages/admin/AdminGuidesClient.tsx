@@ -32,8 +32,10 @@ import {
   buildTrailRecommendation,
   getGuideTrailStage,
   getGuideTrailSubject,
+  trailQuestionFor,
   TRAIL_STAGES,
   type TrailStage,
+  type TrailStageStatus,
   type TrailSubjectCoverage,
 } from "@/lib/guide-trail-planner";
 import { cn } from "@/lib/utils";
@@ -287,7 +289,9 @@ export default function AdminGuidesClient() {
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold">{item.subject}</p>
                           <p className="mt-0.5 text-xs text-muted-foreground">
-                            {item.coverage ? `${item.coverage.coveredCount} de 6 etapas` : "sem etapa clara"}
+                            {item.coverage
+                              ? `${item.coverage.coveredCount} cobertas · ${item.coverage.partialCount} parciais · ${item.coverage.draftCount} em produção · ${item.coverage.missingCount} lacunas`
+                              : "sem etapa clara"}
                           </p>
                         </div>
                         <span className="rounded-full bg-background px-2 py-0.5 text-xs font-semibold shadow-sm">
@@ -302,10 +306,11 @@ export default function AdminGuidesClient() {
                             return (
                               <span
                                 key={stage.value}
-                                title={`${stage.label}: ${status === "missing" ? "faltando" : status === "published" ? "publicado" : "rascunho"}`}
+                                title={`${stage.label}: ${status ? statusMeta(status).label : "sem classificação"}`}
                                 className={cn(
                                   "h-2 rounded-full",
                                   status === "published" && "bg-emerald-500",
+                                  status === "partial" && "bg-sky-500",
                                   status === "draft" && "bg-amber-500",
                                   status === "missing" && "bg-muted",
                                 )}
@@ -617,9 +622,10 @@ function creationUrl(coverage: TrailSubjectCoverage, stage: TrailStage) {
   return `/admin/fluxo-guias?${params.toString()}`;
 }
 
-function statusMeta(status: "published" | "draft" | "missing") {
+function statusMeta(status: TrailStageStatus) {
   if (status === "published") return { label: "Publicado", dot: "bg-emerald-500", badge: "border-emerald-500/25 bg-emerald-500/10 text-emerald-600" };
-  if (status === "draft") return { label: "Rascunho", dot: "bg-amber-500", badge: "border-amber-500/25 bg-amber-500/10 text-amber-600" };
+  if (status === "partial") return { label: "Cobertura parcial", dot: "bg-sky-500", badge: "border-sky-500/25 bg-sky-500/10 text-sky-600" };
+  if (status === "draft") return { label: "Em produção", dot: "bg-amber-500", badge: "border-amber-500/25 bg-amber-500/10 text-amber-600" };
   return { label: "Lacuna", dot: "bg-muted-foreground/35", badge: "border-border bg-muted/45 text-muted-foreground" };
 }
 
@@ -636,7 +642,7 @@ function TopicMap({ coverage }: { coverage: TrailSubjectCoverage }) {
           eyebrow={hubGuide ? "Página central encontrada" : "Página central sugerida"}
           title={hubTitle}
           status={coverage.stages.busca.status}
-          href={hubGuide ? `/admin/fluxo-guias?guide=${hubGuide.id}` : creationUrl(coverage, "busca")}
+          href={hubGuide ? `/admin/fluxo-guias?guide=${hubGuide.id}` : coverage.stages.busca.status === "missing" ? creationUrl(coverage, "busca") : undefined}
         />
         <div className="mx-auto h-8 w-px bg-border" />
         <div className="relative pt-8">
@@ -653,7 +659,7 @@ function TopicMap({ coverage }: { coverage: TrailSubjectCoverage }) {
                     eyebrow={stage.label}
                     title={guide?.title ?? recommendation.title}
                     status={item.status}
-                    href={guide ? `/admin/fluxo-guias?guide=${guide.id}` : creationUrl(coverage, stage.value)}
+                    href={guide ? `/admin/fluxo-guias?guide=${guide.id}` : item.status === "missing" ? creationUrl(coverage, stage.value) : undefined}
                     compact
                   />
                   {item.guides.length > 1 && (
@@ -680,7 +686,7 @@ function MapNode({
 }: {
   eyebrow: string;
   title: string;
-  status?: "published" | "draft" | "missing";
+  status?: TrailStageStatus;
   href?: string;
   tone?: "primary";
   compact?: boolean;
@@ -711,13 +717,13 @@ function Connector({ vertical }: { vertical?: boolean }) {
   return vertical ? <div className="mx-auto h-8 w-px bg-border" /> : null;
 }
 
-const QUESTION_COPY: Record<TrailStage, { question: (subject: string) => string; answer: string }> = {
-  busca: { question: (subject) => `O que é ${subject.toLowerCase()} e por onde começo?`, answer: "Dê uma resposta direta, defina o assunto e mostre o primeiro passo." },
-  exploracao: { question: (subject) => `Onde encontro as melhores opções de ${subject.toLowerCase()}?`, answer: "Organize alternativas confiáveis e explique para quem cada caminho serve." },
-  decisao: { question: (subject) => `Como escolher ${subject.toLowerCase()} sem perder tempo?`, answer: "Apresente critérios objetivos, comparações e uma forma simples de decidir." },
-  validacao: { question: (subject) => `Como saber se ${subject.toLowerCase()} é confiável e vale a pena?`, answer: "Reduza o risco com sinais de confiança, limites, custos e pontos de atenção." },
-  expansao: { question: (subject) => `Que outros benefícios ${subject.toLowerCase()} pode oferecer?`, answer: "Mostre usos complementares e oportunidades que o leitor talvez ainda não conheça." },
-  aplicacao: { question: (subject) => `Como começar com ${subject.toLowerCase()} agora?`, answer: "Entregue um passo a passo executável, com requisitos e próxima ação clara." },
+const QUESTION_COPY: Record<TrailStage, { answer: string }> = {
+  busca: { answer: "Dê uma resposta direta, defina o assunto e mostre o primeiro passo." },
+  exploracao: { answer: "Organize alternativas confiáveis e explique para quem cada caminho serve." },
+  validacao: { answer: "Reduza o risco com sinais de confiança, limites, custos e pontos de atenção." },
+  decisao: { answer: "Apresente critérios objetivos, comparações e uma forma simples de decidir." },
+  aplicacao: { answer: "Entregue um passo a passo executável, com requisitos e próxima ação clara." },
+  expansao: { answer: "Mostre usos complementares e oportunidades que o leitor talvez ainda não conheça." },
 };
 
 function QuestionsMap({ coverage }: { coverage: TrailSubjectCoverage }) {
@@ -736,23 +742,23 @@ function QuestionsMap({ coverage }: { coverage: TrailSubjectCoverage }) {
               <article className="relative rounded-[var(--admin-radius)] border border-border/70 bg-background p-4 shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className={cn("relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl", item.status === "missing" ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary")}>
-                    {item.status === "published" ? <CheckCircle2 className="h-5 w-5" /> : item.status === "draft" ? <PenLine className="h-5 w-5" /> : <MessageCircleQuestion className="h-5 w-5" />}
+                    {item.status === "published" ? <CheckCircle2 className="h-5 w-5" /> : item.status === "missing" ? <MessageCircleQuestion className="h-5 w-5" /> : <PenLine className="h-5 w-5" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <Badge variant="outline" className={cn("text-[10px]", meta.badge)}>{meta.label}</Badge>
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{stage.label}</span>
                     </div>
-                    <h3 className="mt-2 text-sm font-semibold">{copy.question(coverage.subject)}</h3>
+                    <h3 className="mt-2 text-sm font-semibold">{trailQuestionFor(coverage.subject, stage.value)}</h3>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{copy.answer}</p>
                     {guide && <p className="mt-3 line-clamp-1 text-[11px] text-muted-foreground">Conteúdo associado: <strong className="text-foreground">{guide.title}</strong></p>}
                   </div>
-                  <Button asChild size="sm" variant={item.status === "missing" ? "default" : "outline"} className="shrink-0">
+                  {(guide || item.status === "missing") && <Button asChild size="sm" variant={item.status === "missing" ? "default" : "outline"} className="shrink-0">
                     <Link href={guide ? `/admin/fluxo-guias?guide=${guide.id}` : creationUrl(coverage, stage.value)}>
                       {item.status === "missing" ? <Plus className="h-3.5 w-3.5" /> : <PenLine className="h-3.5 w-3.5" />}
                       {item.status === "missing" ? "Criar" : "Abrir"}
                     </Link>
-                  </Button>
+                  </Button>}
                 </div>
               </article>
             </div>
@@ -768,14 +774,16 @@ function QuestionsMap({ coverage }: { coverage: TrailSubjectCoverage }) {
         {coverage.recommendation ? (
           <div className="mt-5 border-t border-primary/15 pt-4">
             <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Próxima resposta prioritária</p>
-            <p className="mt-2 text-sm font-semibold">{QUESTION_COPY[coverage.recommendation.stage].question(coverage.subject)}</p>
+            <p className="mt-2 text-sm font-semibold">{trailQuestionFor(coverage.subject, coverage.recommendation.stage)}</p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{coverage.recommendation.reason}</p>
             <Button asChild size="sm" className="mt-4 w-full"><Link href={creationUrl(coverage, coverage.recommendation.stage)}>Criar resposta no fluxo<ArrowRight className="h-4 w-4" /></Link></Button>
           </div>
         ) : (
           <p className="mt-5 rounded-xl bg-emerald-500/10 p-3 text-xs text-emerald-600">Todas as etapas estão cobertas. Revise desempenho e atualize os conteúdos com menor resultado.</p>
         )}
-        <p className="mt-4 text-[10px] text-muted-foreground">{missing} lacuna(s) identificada(s). Rascunhos são contados como cobertura, mas continuam fora do público.</p>
+        <p className="mt-4 text-[10px] leading-relaxed text-muted-foreground">
+          {coverage.coveredCount} cobertas · {coverage.partialCount} parciais · {coverage.draftCount} em produção · {missing} lacunas. Somente lacunas geram sugestão de criação.
+        </p>
       </aside>
     </div>
   );
@@ -784,7 +792,7 @@ function QuestionsMap({ coverage }: { coverage: TrailSubjectCoverage }) {
 function MapLegend() {
   return (
     <div className="mt-8 flex flex-wrap justify-center gap-4 text-[11px] text-muted-foreground">
-      {(["published", "draft", "missing"] as const).map((status) => {
+      {(["published", "partial", "draft", "missing"] as const).map((status) => {
         const meta = statusMeta(status);
         return <span key={status} className="inline-flex items-center gap-1.5"><span className={cn("h-2 w-2 rounded-full", meta.dot)} />{meta.label}</span>;
       })}
