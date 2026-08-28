@@ -367,7 +367,7 @@ function ContentEditor({ local, update, sectionIndex }: {
         <Badge variant="secondary" className="text-[10px]">{wordCount} palavras</Badge>
         <Badge variant="outline" className="text-[10px]">Seção {(sectionIndex ?? 0) + 1}</Badge>
       </div>
-      <MarkdownEditor value={sectionContent} onChange={handleContentChange} />
+      <MarkdownEditor visual showWordCount={false} value={sectionContent} onChange={handleContentChange} />
     </div>
   );
 }

@@ -639,8 +639,8 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
 
           <TabsContent value="content" className="space-y-4 mt-4">
             <div>
-              <Label>Conteúdo (Markdown)</Label>
-              <MarkdownEditor value={contentMarkdown} onChange={setContentMarkdown} placeholder="## Seção&#10;&#10;Conteúdo do guia em Markdown..." rows={16} />
+              <Label>Conteúdo do guia</Label>
+              <MarkdownEditor visual value={contentMarkdown} onChange={setContentMarkdown} placeholder="Comece a escrever ou cole seu conteúdo aqui..." rows={16} />
             </div>
           </TabsContent>
 

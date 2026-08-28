@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
-import { X, ZoomIn, ZoomOut } from "lucide-react";
+import { Check, Copy, X, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,6 +27,41 @@ const SANITIZE_SCHEMA = {
     td: [...(defaultSchema.attributes?.td ?? []), "align"],
   },
 };
+
+function nodeText(node: React.ReactNode): string {
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(nodeText).join("");
+  if (node && typeof node === "object" && "props" in node) {
+    return nodeText((node as React.ReactElement<{ children?: React.ReactNode }>).props.children);
+  }
+  return "";
+}
+
+function CopyableCodeBlock({ children }: { children: React.ReactNode }) {
+  const [copied, setCopied] = useState(false);
+  const content = nodeText(children).replace(/\n$/, "");
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(content);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  };
+
+  return (
+    <div className="group relative my-6 overflow-hidden rounded-[1.2rem] border border-primary/20 bg-[#17131a] shadow-sm">
+      <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.035] px-4 py-2.5">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">Copiar conteúdo</span>
+        <Button type="button" size="sm" variant="ghost" onClick={() => void copy()} className="h-8 rounded-lg px-2.5 text-xs text-white/75 hover:bg-primary/15 hover:text-primary" aria-label="Copiar bloco">
+          {copied ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Copy className="mr-1.5 h-3.5 w-3.5" />}
+          {copied ? "Copiado" : "Copiar"}
+        </Button>
+      </div>
+      <pre className="m-0 overflow-x-auto whitespace-pre-wrap break-words bg-transparent p-4 text-sm leading-6 text-white/90 [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit">
+        {children}
+      </pre>
+    </div>
+  );
+}
 
 const COMPONENT_MAP_DEFAULT: Components = {
   h1: ({ children, ...props }) => (
@@ -72,11 +107,7 @@ const COMPONENT_MAP_DEFAULT: Components = {
       {children}
     </blockquote>
   ),
-  pre: ({ children, ...props }) => (
-    <pre className="bg-muted rounded-md p-4 overflow-x-auto my-4" {...props}>
-      {children}
-    </pre>
-  ),
+  pre: ({ children }) => <CopyableCodeBlock>{children}</CopyableCodeBlock>,
   code: ({ children, ...props }) => (
     <code className="bg-muted px-1.5 py-0.5 rounded text-sm" {...props}>
       {children}
