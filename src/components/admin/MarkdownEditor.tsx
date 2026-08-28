@@ -221,6 +221,7 @@ export default function MarkdownEditor({
   const latestValueRef = useRef(value);
   const [slashQuery, setSlashQuery] = useState<string | null>(null);
   const [slashSelection, setSlashSelection] = useState(0);
+  const slashItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   latestValueRef.current = value;
   
   const wordCount = countMarkdownWords(value);
@@ -464,6 +465,11 @@ export default function MarkdownEditor({
     `${command.label} ${command.hint} ${command.id}`.toLocaleLowerCase("pt-BR").includes(normalizedSlashQuery),
   );
 
+  useEffect(() => {
+    if (slashQuery === null) return;
+    slashItemRefs.current[slashSelection]?.scrollIntoView({ block: "nearest" });
+  }, [slashQuery, slashSelection]);
+
   const clearSlashBlock = () => {
     const editor = visualEditorRef.current;
     const selection = window.getSelection();
@@ -669,6 +675,7 @@ export default function MarkdownEditor({
                     return (
                       <button
                         key={command.id}
+                        ref={(element) => { slashItemRefs.current[index] = element; }}
                         type="button"
                         onMouseDown={(event) => {
                           event.preventDefault();
