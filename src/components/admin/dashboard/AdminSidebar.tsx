@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, BarChart3, Wrench, BookOpen, Search, FileText, Mail,
   Crown, Users, Ticket, ChevronDown, Settings2, UserCog,
-  Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Moon, Sun, Sparkles, Share2, Bookmark, LogOut, Home, MessageSquareText, GraduationCap,
+  Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Sparkles, Share2, Bookmark, LogOut, Home, MessageSquareText, GraduationCap,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -17,6 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils';
 import { useNavConfig } from '@/hooks/useNavConfig';
 import { useTheme } from '@/hooks/useTheme';
+import { ThemeSelector } from '@/components/layout/theme-selector';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -64,7 +65,7 @@ export function AdminSidebar() {
   const isPremiumActive = pathname.startsWith('/admin/premium');
   const isConcursosActive = pathname.startsWith('/admin/concursos');
   const { logos } = useNavConfig();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark } = useTheme();
   const { user, signOut } = useAuth();
 
   const groupClass = "px-0 py-0.5";
@@ -647,16 +648,7 @@ export function AdminSidebar() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            className="h-9 w-9 rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8"
-            aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
-            title={isDark ? 'Modo claro' : 'Modo escuro'}
-          >
-            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
+          <ThemeSelector className="text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8" />
 
           <Button
             variant="ghost"

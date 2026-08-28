@@ -14,15 +14,15 @@ import {
   HelpCircle,
   LockKeyhole,
   MessageCircle,
-  Moon,
   ShieldCheck,
   QrCode,
   Sparkles,
   Star,
-  Sun,
   TimerReset,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/hooks/useTheme";
+import { ThemeSelector } from "@/components/layout/theme-selector";
 
 export interface SalesTestimonial {
   quote: string;
@@ -69,8 +69,6 @@ export interface SalesPageConfig {
 }
 
 type SalesThemeMode = "dark" | "light";
-
-const SALES_THEME_STORAGE_KEY = "pqestudar:sales-page:theme";
 
 const salesThemeVars: Record<SalesThemeMode, CSSProperties> = {
   dark: {
@@ -433,38 +431,14 @@ function FaqList({ faqs }: { faqs: SalesFaq[] }) {
 
 export function ProductSalesPage({ config }: { config: SalesPageConfig }) {
   const valueStack = useMemo(() => config.offerItems.slice(0, 6), [config.offerItems]);
-  const [themeMode, setThemeMode] = useState<SalesThemeMode>("dark");
-
-  useEffect(() => {
-    const storedTheme = window.localStorage.getItem(SALES_THEME_STORAGE_KEY);
-
-    if (storedTheme === "light" || storedTheme === "dark") {
-      setThemeMode(storedTheme);
-    }
-  }, []);
-
-  const toggleThemeMode = () => {
-    setThemeMode((current) => {
-      const next = current === "dark" ? "light" : "dark";
-      window.localStorage.setItem(SALES_THEME_STORAGE_KEY, next);
-      return next;
-    });
-  };
+  const { resolvedTheme: themeMode } = useTheme();
 
   return (
     <main
       className="min-h-screen bg-[var(--sales-bg)] pb-28 text-[var(--sales-text)] transition-colors duration-300 lg:pb-0"
       style={salesThemeVars[themeMode]}
     >
-      <button
-        type="button"
-        onClick={toggleThemeMode}
-        className="fixed right-4 top-4 z-50 inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[var(--sales-border)] bg-[var(--sales-surface)] px-3 text-xs font-black text-[var(--sales-text)] shadow-[0_12px_30px_rgba(0,0,0,0.16)] backdrop-blur transition hover:-translate-y-0.5 hover:border-fuchsia-300/35 hover:bg-[var(--sales-panel-hover)] sm:right-6 sm:top-6"
-        aria-label={themeMode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
-      >
-        {themeMode === "dark" ? <Sun className="h-4 w-4 text-yellow-300" /> : <Moon className="h-4 w-4 text-fuchsia-400" />}
-        <span className="hidden sm:inline">{themeMode === "dark" ? "Modo claro" : "Modo escuro"}</span>
-      </button>
+      <ThemeSelector className="fixed right-4 top-4 z-50 h-10 w-10 border border-[var(--sales-border)] bg-[var(--sales-surface)] text-[var(--sales-text)] shadow-[0_12px_30px_rgba(0,0,0,0.16)] backdrop-blur hover:border-fuchsia-300/35 hover:bg-[var(--sales-panel-hover)] sm:right-6 sm:top-6" />
 
       <section className="mx-auto grid w-full max-w-6xl gap-7 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_350px] lg:items-start">
         <div className="space-y-5">

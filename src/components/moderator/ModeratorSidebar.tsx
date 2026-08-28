@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, Home, LogIn, LogOut, Moon, Sparkles, Sun } from "lucide-react";
+import { BookOpen, Home, LogIn, LogOut, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useNavConfig } from "@/hooks/useNavConfig";
 import { useTheme } from "@/hooks/useTheme";
+import { ThemeSelector } from "@/components/layout/theme-selector";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -40,7 +41,7 @@ export function ModeratorSidebar() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { logos } = useNavConfig();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark } = useTheme();
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Moderador";
   const initials = displayName
@@ -120,9 +121,7 @@ export function ModeratorSidebar() {
             <Button variant="ghost" size="icon" onClick={() => router.push("/login?from=/moderador")} aria-label="Entrar"><LogIn className="h-4 w-4" /></Button>
           )}
 
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-9 w-9 rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent/80" aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"} title={isDark ? "Modo claro" : "Modo escuro"}>
-            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
+          <ThemeSelector className="text-sidebar-foreground/70 hover:bg-sidebar-accent/80" />
           <Button variant="ghost" size="icon" asChild className="h-9 w-9 rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent/80" aria-label="Voltar ao site" title="Voltar ao site">
             <Link href="/"><Home className="h-4 w-4" /></Link>
           </Button>

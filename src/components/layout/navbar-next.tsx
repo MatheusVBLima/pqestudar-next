@@ -12,10 +12,8 @@ import {
   IdCard,
   LogOut,
   Menu,
-  Moon,
   ScrollText,
   ShoppingBag,
-  Sun,
   User,
   Vote,
   Wrench,
@@ -30,7 +28,7 @@ import { useNavConfig, type NavItem } from "@/hooks/useNavConfig";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
-import { useTheme } from "@/hooks/useTheme";
+import { ThemeSelector } from "@/components/layout/theme-selector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -86,7 +84,6 @@ export function Navbar() {
   const { user, signOut, loading } = useAuth();
   const { isAdmin, isModerator } = useUserRoles();
   const { isActive } = useSubscription();
-  const { isDark, toggleTheme } = useTheme();
   const { items: navItems, logos, loading: navLoading } = useNavConfig();
   const navbarCta = navItems.find((item) => item.icon === NAVBAR_CTA_ICON) ?? FALLBACK_CTA;
   const menuItems = navItems.filter((item) => item.icon !== NAVBAR_CTA_ICON);
@@ -312,15 +309,7 @@ export function Navbar() {
               </Suspense>
             )}
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-              className="h-9 w-9 p-0 rounded-[1.2rem]"
-              aria-label={isDark ? "Ativar tema claro" : "Ativar tema escuro"}
-            >
-              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
+            <ThemeSelector className="rounded-[1.2rem]" />
 
             {!loading && (
               <>
@@ -412,15 +401,7 @@ export function Navbar() {
           </div>
 
           <div className="md:hidden flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-              className="h-9 w-9 p-0"
-              aria-label={isDark ? "Ativar tema claro" : "Ativar tema escuro"}
-            >
-              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
+            <ThemeSelector />
             <ManagementModeToggle />
             {user && (
               <Suspense fallback={null}>
