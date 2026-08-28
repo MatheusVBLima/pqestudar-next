@@ -470,6 +470,19 @@ export default function ProdutosNext() {
     let finalImageUrl: string | null = form.image_url.trim() || null;
 
     if (form.imageFile) {
+      if (rolesLoading || !isAdmin) {
+        toast({ title: "Upload não autorizado", description: "Somente administradores podem enviar imagens de exclusivos.", variant: "destructive" });
+        return;
+      }
+      const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
+      if (!allowedImageTypes.has(form.imageFile.type)) {
+        toast({ title: "Arquivo inválido", description: "Selecione uma imagem JPG, PNG, WebP, GIF ou AVIF.", variant: "destructive" });
+        return;
+      }
+      if (form.imageFile.size > 10 * 1024 * 1024) {
+        toast({ title: "Imagem muito grande", description: "O tamanho máximo permitido é 10 MB.", variant: "destructive" });
+        return;
+      }
       const productId = editingProduct?.id || "new";
       const ext = form.imageFile.name.split(".").pop() || "png";
       const path = `${productId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
