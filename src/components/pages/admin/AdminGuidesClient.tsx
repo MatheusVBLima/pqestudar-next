@@ -9,6 +9,7 @@ import {
   BookOpenCheck,
   CheckCircle2,
   CircleDashed,
+  Eye,
   ExternalLink,
   FileText,
   GitBranch,
@@ -26,6 +27,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type Guide, useGuides } from "@/hooks/useGuides";
+import { useAuth } from "@/hooks/useAuth";
+import { useModeratorTrailCoverage } from "@/hooks/useModeratorTrailCoverage";
 import {
   buildAllTrailCoverages,
   buildTrailCoverage,
@@ -74,11 +77,60 @@ function statusLabel(guide: Guide) {
   return "Rascunho";
 }
 
-export default function AdminGuidesClient() {
+export default function AdminGuidesClient({ panel = "admin" }: { panel?: "admin" | "moderator" }) {
   const [query, setQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState(ALL_SUBJECTS);
   const [view, setView] = useState<GuideView>("journey");
-  const { data: guides = [], isLoading } = useGuides(true);
+  const { user, loading: authLoading } = useAuth();
+  const { data: visibleGuides = [], isLoading: guidesLoading } = useGuides(true);
+  const { data: privateCoverage = [], isLoading: coverageLoading } = useModeratorTrailCoverage(panel === "moderator");
+  const flowBase = panel === "moderator" ? "/moderador/fluxos" : "/admin/fluxo-guias";
+  const guides = useMemo(() => {
+    if (panel !== "moderator") return visibleGuides;
+    const publishedGuides = visibleGuides.filter((guide) => guide.is_published);
+    const visibleKeys = new Set(
+      publishedGuides.map((guide) => {
+        const subject = getGuideTrailSubject(guide);
+        const stage = getGuideTrailStage(guide);
+        return subject && stage ? `${normalize(subject)}:${stage}` : null;
+      }).filter(Boolean),
+    );
+    const anonymousDrafts = privateCoverage
+      .filter((item) => item.status === "draft" && !visibleKeys.has(`${normalize(item.subject)}:${item.stage}`))
+      .map((item) => ({
+        id: `coverage:${item.subject}:${item.stage}`,
+        internal_code: "PRIVATE_COVERAGE",
+        title: "Conteúdo em produção",
+        slug: "",
+        category: item.subject,
+        public_category: "Cobertura editorial",
+        short_description: "Outro autor já está trabalhando nesta etapa.",
+        content_markdown: "",
+        seo_title: "",
+        seo_description: "",
+        cta_top_label: null,
+        cta_top_url: null,
+        cta_middle_label: null,
+        cta_middle_url: null,
+        cta_final_label: null,
+        cta_final_url: null,
+        cta_top_text: null,
+        cta_middle_text: null,
+        cta_final_text: null,
+        internal_links: [],
+        is_published: false,
+        is_featured: false,
+        sort_order: 9999,
+        author_name: "",
+        created_by: null,
+        cover_image_url: null,
+        flow_data: { inputs: { assuntoPrincipal: item.subject, tipo: item.stage } },
+        created_at: "",
+        updated_at: "",
+      }) as Guide);
+    return [...publishedGuides, ...anonymousDrafts];
+  }, [panel, privateCoverage, visibleGuides]);
+  const isLoading = guidesLoading || authLoading || (panel === "moderator" && coverageLoading);
 
   const filteredGuides = useMemo(() => {
     const term = normalize(query);
@@ -176,14 +228,14 @@ export default function AdminGuidesClient() {
             <Layers3 className="h-5 w-5" />
             <span className="text-xs font-bold uppercase tracking-[0.16em]">Mapa editorial</span>
           </div>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">Guias</h1>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">{panel === "moderator" ? "Planejamento editorial" : "Guias"}</h1>
           <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
             Visualize o acervo por tema e etapa da jornada: busca, exploração, decisão, validação, expansão e aplicação.
           </p>
         </div>
 
         <Button asChild className="w-full xl:w-auto">
-          <Link href="/admin/fluxo-guias">
+          <Link href={flowBase}>
             <Sparkles className="h-4 w-4" />
             Criar no fluxo
           </Link>
@@ -335,7 +387,7 @@ export default function AdminGuidesClient() {
                   {visibleCoverage.recommendation.reason}
                 </p>
                 <Button asChild size="sm" className="mt-4 w-full">
-                  <Link href="/admin/fluxo-guias">
+                  <Link href={flowBase}>
                     Abrir fluxo
                     <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -393,7 +445,7 @@ export default function AdminGuidesClient() {
                         {items.length === 0 ? (
                           <EmptyStage />
                         ) : (
-                          items.map((guide) => <GuideCard key={guide.id} guide={guide} />)
+                          items.map((guide) => <GuideCard key={guide.id} guide={guide} flowBase={flowBase} panel={panel} currentUserId={user?.id} />)
                         )}
                       </div>
                     </div>
@@ -402,8 +454,8 @@ export default function AdminGuidesClient() {
               </div>
             </div>}
 
-            {view === "map" && visibleCoverage ? <TopicMap coverage={visibleCoverage} /> : null}
-            {view === "questions" && visibleCoverage ? <QuestionsMap coverage={visibleCoverage} /> : null}
+            {view === "map" && visibleCoverage ? <TopicMap coverage={visibleCoverage} flowBase={flowBase} panel={panel} currentUserId={user?.id} /> : null}
+            {view === "questions" && visibleCoverage ? <QuestionsMap coverage={visibleCoverage} flowBase={flowBase} panel={panel} currentUserId={user?.id} /> : null}
 
             {view === "journey" && uncategorizedGuides.length > 0 && (
               <div className="border-t border-border/60 p-4">
@@ -414,7 +466,7 @@ export default function AdminGuidesClient() {
                 </div>
                 <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                   {uncategorizedGuides.map((guide) => (
-                    <GuideCard key={guide.id} guide={guide} compact />
+                    <GuideCard key={guide.id} guide={guide} compact flowBase={flowBase} panel={panel} currentUserId={user?.id} />
                   ))}
                 </div>
               </div>
@@ -469,9 +521,13 @@ function SubjectButton({
   );
 }
 
-function GuideCard({ guide, compact = false }: { guide: Guide; compact?: boolean }) {
+function GuideCard({ guide, compact = false, flowBase, panel, currentUserId }: { guide: Guide; compact?: boolean; flowBase: string; panel: "admin" | "moderator"; currentUserId?: string }) {
+  if (guide.id.startsWith("coverage:")) {
+    return <article className="rounded-lg border border-dashed border-amber-500/25 bg-amber-500/5 p-3"><Badge variant="outline" className="border-amber-500/25 bg-amber-500/10 text-amber-700">Em produção</Badge><p className="mt-3 text-sm font-semibold">Etapa já reservada</p><p className="mt-1 text-xs text-muted-foreground">Outro autor está trabalhando neste conteúdo. O rascunho permanece privado.</p></article>;
+  }
   const subject = subjectOf(guide);
   const hasLinks = Array.isArray(guide.internal_links) && guide.internal_links.length > 0;
+  const readOnly = panel === "moderator" && guide.created_by !== currentUserId;
 
   return (
     <article className="rounded-lg border border-border/60 bg-background p-3 shadow-sm transition-colors hover:border-primary/25">
@@ -522,9 +578,9 @@ function GuideCard({ guide, compact = false }: { guide: Guide; compact?: boolean
 
       <div className="mt-3 flex items-center gap-1.5">
         <Button asChild size="sm" variant="outline" className="h-8 flex-1 px-2 text-xs">
-          <Link href={`/admin/fluxo-guias?guide=${guide.id}`}>
-            <PenLine className="h-3.5 w-3.5" />
-            Fluxo
+          <Link href={existingGuideUrl(guide, flowBase, panel, currentUserId)}>
+            {readOnly ? <Eye className="h-3.5 w-3.5" /> : <PenLine className="h-3.5 w-3.5" />}
+            {readOnly ? "Visualizar" : "Fluxo"}
           </Link>
         </Button>
         {guide.slug && (
@@ -607,7 +663,7 @@ function primaryGuide(guides: Guide[]) {
   return guides.find((guide) => guide.is_published) ?? guides[0] ?? null;
 }
 
-function creationUrl(coverage: TrailSubjectCoverage, stage: TrailStage) {
+function creationUrl(coverage: TrailSubjectCoverage, stage: TrailStage, flowBase: string) {
   const recommendation = buildTrailRecommendation(coverage.subject, stage, coverage.stages);
   const params = new URLSearchParams({
     subject: recommendation.subject,
@@ -619,7 +675,13 @@ function creationUrl(coverage: TrailSubjectCoverage, stage: TrailStage) {
     publicCategory: recommendation.publicCategory,
     context: recommendation.context,
   });
-  return `/admin/fluxo-guias?${params.toString()}`;
+  return `${flowBase}?${params.toString()}`;
+}
+
+function existingGuideUrl(guide: Guide, flowBase: string, panel: "admin" | "moderator", currentUserId?: string) {
+  const params = new URLSearchParams({ guide: guide.id });
+  if (panel === "moderator" && guide.created_by !== currentUserId) params.set("mode", "reader");
+  return `${flowBase}?${params.toString()}`;
 }
 
 function statusMeta(status: TrailStageStatus) {
@@ -629,7 +691,7 @@ function statusMeta(status: TrailStageStatus) {
   return { label: "Lacuna", dot: "bg-muted-foreground/35", badge: "border-border bg-muted/45 text-muted-foreground" };
 }
 
-function TopicMap({ coverage }: { coverage: TrailSubjectCoverage }) {
+function TopicMap({ coverage, flowBase, panel, currentUserId }: { coverage: TrailSubjectCoverage; flowBase: string; panel: "admin" | "moderator"; currentUserId?: string }) {
   const hubGuide = primaryGuide(coverage.stages.busca.guides);
   const hubTitle = hubGuide?.title ?? `Guia completo sobre ${coverage.subject.toLowerCase()}`;
 
@@ -642,7 +704,7 @@ function TopicMap({ coverage }: { coverage: TrailSubjectCoverage }) {
           eyebrow={hubGuide ? "Página central encontrada" : "Página central sugerida"}
           title={hubTitle}
           status={coverage.stages.busca.status}
-          href={hubGuide ? `/admin/fluxo-guias?guide=${hubGuide.id}` : coverage.stages.busca.status === "missing" ? creationUrl(coverage, "busca") : undefined}
+          href={hubGuide && !hubGuide.id.startsWith("coverage:") ? existingGuideUrl(hubGuide, flowBase, panel, currentUserId) : coverage.stages.busca.status === "missing" ? creationUrl(coverage, "busca", flowBase) : undefined}
         />
         <div className="mx-auto h-8 w-px bg-border" />
         <div className="relative pt-8">
@@ -659,7 +721,7 @@ function TopicMap({ coverage }: { coverage: TrailSubjectCoverage }) {
                     eyebrow={stage.label}
                     title={guide?.title ?? recommendation.title}
                     status={item.status}
-                    href={guide ? `/admin/fluxo-guias?guide=${guide.id}` : item.status === "missing" ? creationUrl(coverage, stage.value) : undefined}
+                    href={guide && !guide.id.startsWith("coverage:") ? existingGuideUrl(guide, flowBase, panel, currentUserId) : item.status === "missing" ? creationUrl(coverage, stage.value, flowBase) : undefined}
                     compact
                   />
                   {item.guides.length > 1 && (
@@ -705,7 +767,7 @@ function MapNode({
       <p className={cn("mt-2 font-semibold leading-snug", compact ? "line-clamp-4 text-xs" : "text-sm")}>{title}</p>
       {href && (
         <span className="mt-auto pt-3 text-[10px] font-semibold text-primary">
-          {status === "missing" ? "Criar conteúdo →" : "Abrir no fluxo →"}
+          {status === "missing" ? "Criar conteúdo →" : href.includes("mode=reader") ? "Visualizar fluxo →" : "Abrir no fluxo →"}
         </span>
       )}
     </div>
@@ -726,7 +788,7 @@ const QUESTION_COPY: Record<TrailStage, { answer: string }> = {
   expansao: { answer: "Mostre usos complementares e oportunidades que o leitor talvez ainda não conheça." },
 };
 
-function QuestionsMap({ coverage }: { coverage: TrailSubjectCoverage }) {
+function QuestionsMap({ coverage, flowBase, panel, currentUserId }: { coverage: TrailSubjectCoverage; flowBase: string; panel: "admin" | "moderator"; currentUserId?: string }) {
   const missing = coverage.missingStages.length;
   return (
     <div className="grid gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:p-8">
@@ -753,10 +815,10 @@ function QuestionsMap({ coverage }: { coverage: TrailSubjectCoverage }) {
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{copy.answer}</p>
                     {guide && <p className="mt-3 line-clamp-1 text-[11px] text-muted-foreground">Conteúdo associado: <strong className="text-foreground">{guide.title}</strong></p>}
                   </div>
-                  {(guide || item.status === "missing") && <Button asChild size="sm" variant={item.status === "missing" ? "default" : "outline"} className="shrink-0">
-                    <Link href={guide ? `/admin/fluxo-guias?guide=${guide.id}` : creationUrl(coverage, stage.value)}>
-                      {item.status === "missing" ? <Plus className="h-3.5 w-3.5" /> : <PenLine className="h-3.5 w-3.5" />}
-                      {item.status === "missing" ? "Criar" : "Abrir"}
+                  {((guide && !guide.id.startsWith("coverage:")) || item.status === "missing") && <Button asChild size="sm" variant={item.status === "missing" ? "default" : "outline"} className="shrink-0">
+                    <Link href={guide && !guide.id.startsWith("coverage:") ? existingGuideUrl(guide, flowBase, panel, currentUserId) : creationUrl(coverage, stage.value, flowBase)}>
+                      {item.status === "missing" ? <Plus className="h-3.5 w-3.5" /> : panel === "moderator" && guide?.created_by !== currentUserId ? <Eye className="h-3.5 w-3.5" /> : <PenLine className="h-3.5 w-3.5" />}
+                      {item.status === "missing" ? "Criar" : panel === "moderator" && guide?.created_by !== currentUserId ? "Visualizar" : "Abrir"}
                     </Link>
                   </Button>}
                 </div>
@@ -776,7 +838,7 @@ function QuestionsMap({ coverage }: { coverage: TrailSubjectCoverage }) {
             <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Próxima resposta prioritária</p>
             <p className="mt-2 text-sm font-semibold">{trailQuestionFor(coverage.subject, coverage.recommendation.stage)}</p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{coverage.recommendation.reason}</p>
-            <Button asChild size="sm" className="mt-4 w-full"><Link href={creationUrl(coverage, coverage.recommendation.stage)}>Criar resposta no fluxo<ArrowRight className="h-4 w-4" /></Link></Button>
+            <Button asChild size="sm" className="mt-4 w-full"><Link href={creationUrl(coverage, coverage.recommendation.stage, flowBase)}>Criar resposta no fluxo<ArrowRight className="h-4 w-4" /></Link></Button>
           </div>
         ) : (
           <p className="mt-5 rounded-xl bg-emerald-500/10 p-3 text-xs text-emerald-600">Todas as etapas estão cobertas. Revise desempenho e atualize os conteúdos com menor resultado.</p>

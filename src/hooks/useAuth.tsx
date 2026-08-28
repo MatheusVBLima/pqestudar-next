@@ -16,11 +16,24 @@ interface AuthContextType {
   signIn: (email: string, password: string) => AuthActionResult
   signUp: (email: string, password: string) => AuthActionResult
   signInWithGoogle: () => AuthActionResult
+  switchGoogleAccount: () => AuthActionResult
   signOut: () => Promise<void>
   resetPassword: (email: string) => AuthActionResult
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const ACCOUNT_SWITCH_RETURN_PATH_KEY = 'pqe:account-switch-return-path'
+
+function restoreAccountSwitchPath() {
+  const returnPath = window.sessionStorage.getItem(ACCOUNT_SWITCH_RETURN_PATH_KEY)
+  if (!returnPath) return
+
+  window.sessionStorage.removeItem(ACCOUNT_SWITCH_RETURN_PATH_KEY)
+  if (!returnPath.startsWith('/') || returnPath.startsWith('//')) return
+
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+  if (currentPath !== returnPath) window.location.replace(returnPath)
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -32,14 +45,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(initialSession)
       setUser(initialSession?.user ?? null)
       setLoading(false)
+      if (initialSession) restoreAccountSwitchPath()
     })
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession)
       setUser(nextSession?.user ?? null)
       setLoading(false)
+      if (event === 'SIGNED_IN' && nextSession) restoreAccountSwitchPath()
     })
 
     return () => subscription.unsubscribe()
@@ -119,6 +134,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const switchGoogleAccount = async (): AuthActionResult => {
+    try {
+      const returnPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+      window.sessionStorage.setItem(ACCOUNT_SWITCH_RETURN_PATH_KEY, returnPath)
+
+      const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' })
+      if (signOutError) {
+        window.sessionStorage.removeItem(ACCOUNT_SWITCH_RETURN_PATH_KEY)
+        return { error: { message: signOutError.message } }
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account',
+          },
+        },
+      })
+
+      if (error) window.sessionStorage.removeItem(ACCOUNT_SWITCH_RETURN_PATH_KEY)
+      return { error }
+    } catch (error: unknown) {
+      window.sessionStorage.removeItem(ACCOUNT_SWITCH_RETURN_PATH_KEY)
+      console.error('Erro ao trocar conta Google:', error)
+      return { error: { message: getErrorMessage(error) } }
+    }
+  }
+
   const resetPassword = async (email: string): AuthActionResult => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -146,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signUp,
     signInWithGoogle,
+    switchGoogleAccount,
     signOut,
     resetPassword,
   }

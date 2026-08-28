@@ -12,6 +12,7 @@ import {
   IdCard,
   LogOut,
   Menu,
+  RotateCcw,
   ScrollText,
   ShoppingBag,
   User,
@@ -81,7 +82,7 @@ function getIcon(name: string | null): LucideIcon | null {
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname() ?? "/";
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, switchGoogleAccount, loading } = useAuth();
   const { isAdmin, isModerator } = useUserRoles();
   const { isActive } = useSubscription();
   const { items: navItems, logos, loading: navLoading } = useNavConfig();
@@ -144,6 +145,11 @@ export function Navbar() {
     await signOut();
     toast.success("Logout realizado com sucesso!");
     handleNavigation("/");
+  };
+
+  const handleSwitchAccount = async () => {
+    const { error } = await switchGoogleAccount();
+    if (error) toast.error(`Não foi possível mudar de conta: ${error.message}`);
   };
 
   const getUserInitials = () => {
@@ -387,6 +393,9 @@ export function Navbar() {
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSwitchAccount} className="cursor-pointer">
+                        <RotateCcw className="h-4 w-4 mr-2" />Mudar de conta
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={handleSignOut}
                         className="text-destructive focus:text-destructive cursor-pointer"
@@ -539,6 +548,9 @@ export function Navbar() {
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleSwitchAccount} className="cursor-pointer">
+                          <RotateCcw className="h-4 w-4 mr-2" />Mudar de conta
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={handleSignOut}
                           className="text-destructive focus:text-destructive cursor-pointer"

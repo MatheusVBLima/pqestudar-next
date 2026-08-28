@@ -21,6 +21,7 @@ const routeTitles: Record<string, string> = {
   '/admin/fluxo-guias/biblioteca': 'Biblioteca',
   '/admin/premium/usuarios': 'Usuários & Assinaturas',
   '/admin/menu': 'Navegação',
+  '/admin/reengajamento': 'Reengajamento',
   '/admin/premium/tokens': 'Tokens de Resgate',
   '/admin/premium/importar-beneficios': 'Importar Benefícios',
 };

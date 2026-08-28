@@ -293,9 +293,11 @@ interface FlowCanvasProps {
   onTargetTypeChange?: (targetType: GuideFlowInputs['targetType']) => void;
   onRegenerateImage?: (prompt: string, position: string) => void;
   onUpdateImagePrompt?: (position: string, newPrompt: string) => void;
+  readOnly?: boolean;
+  editorialSummary?: React.ReactNode;
 }
 
-export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate, onGuideDataChange, sources, onInputsChange, onTargetTypeChange, onRegenerateImage, onUpdateImagePrompt }: FlowCanvasProps) {
+export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate, onGuideDataChange, sources, onInputsChange, onTargetTypeChange, onRegenerateImage, onUpdateImagePrompt, readOnly = false, editorialSummary }: FlowCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const initialLayoutAppliedRef = useRef(false);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -326,8 +328,9 @@ export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate,
   );
 
   const handleEditImagePrompt = useCallback((position: string) => {
+    if (readOnly) return;
     setImageEditorPosition(position);
-  }, []);
+  }, [readOnly]);
 
   const initial = useMemo(() => {
     if (!guideData || !guideData.title) {
@@ -378,13 +381,13 @@ export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate,
   }, [setEdges]);
 
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    if (!guideData) return;
+    if (!guideData || readOnly) return;
     const mapped = nodeToEditorData(node.id, node.type ?? '', node.data);
     if (mapped) {
       setEditorData(mapped);
       setEditorOpen(true);
     }
-  }, [guideData]);
+  }, [guideData, readOnly]);
 
   const handleEditorSave = useCallback((updated: GeneratedGuideData) => {
     onGuideDataChange(updated);
@@ -608,7 +611,7 @@ export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate,
       className={
         isFullscreen
           ? "fixed inset-0 z-[100] h-screen w-screen overflow-hidden bg-background"
-          : "w-full h-[calc(100vh-216px)] min-h-[520px] rounded-[var(--admin-radius)] overflow-hidden border border-border/50 bg-background/50"
+          : "relative min-h-0 w-full flex-1 rounded-[var(--admin-radius)] overflow-hidden border border-border/50 bg-background/50"
       }
     >
       <ReactFlow
@@ -616,8 +619,10 @@ export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate,
         edges={visibleEdges}
         onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onConnect={readOnly ? undefined : onConnect}
         onNodeClick={handleNodeClick}
+        nodesConnectable={!readOnly}
+        edgesReconnectable={!readOnly}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.2 }}
@@ -650,7 +655,9 @@ export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate,
         />
       </ReactFlow>
 
-      {guideData && (
+      {editorialSummary}
+
+      {guideData && !readOnly && (
         <NodeEditorSheet
           open={editorOpen}
           onClose={() => setEditorOpen(false)}
@@ -660,7 +667,7 @@ export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate,
         />
       )}
 
-      {guideData && imageEditorPosition && (() => {
+      {guideData && !readOnly && imageEditorPosition && (() => {
         const allImages = [
           ...(guideData.image_prompts ?? []),
           ...(guideData.generated_images ?? []),

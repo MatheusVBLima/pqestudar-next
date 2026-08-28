@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, BarChart3, Wrench, BookOpen, Search, FileText, Mail,
   Crown, Users, Ticket, ChevronDown, Settings2, UserCog,
-  Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Sparkles, Share2, Bookmark, LogOut, Home, MessageSquareText, GraduationCap,
+  Database, ClipboardCheck, Shield, Bot, History, Menu as MenuIcon, Sparkles, Share2, Bookmark, LogOut, Home, MessageSquareText, GraduationCap, RotateCcw,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -66,7 +66,7 @@ export function AdminSidebar() {
   const isConcursosActive = pathname.startsWith('/admin/concursos');
   const { logos } = useNavConfig();
   const { isDark } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user, signOut, switchGoogleAccount } = useAuth();
 
   const groupClass = "px-0 py-0.5";
   const sectionLabelClass = "px-3 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-sidebar-foreground/40 group-data-[collapsible=icon]:sr-only";
@@ -145,6 +145,11 @@ export function AdminSidebar() {
     await signOut();
     toast.success('Logout realizado com sucesso!');
     router.push('/');
+  };
+
+  const handleSwitchAccount = async () => {
+    const { error } = await switchGoogleAccount();
+    if (error) toast.error(`Não foi possível mudar de conta: ${error.message}`);
   };
 
   return (
@@ -449,6 +454,27 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Reengajamento */}
+        <SidebarGroup className={groupClass}>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/admin/reengajamento'}
+                  data-hover-label="Reengajamento"
+                  className={itemClass(pathname === '/admin/reengajamento')}
+                >
+                  <Link href="/admin/reengajamento">
+                    <RotateCcw className="h-4 w-4" />
+                    <span>Reengajamento</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <SectionLabel>Site</SectionLabel>
         {/* Page Settings */}
         <SidebarGroup className={groupClass}>
@@ -641,6 +667,10 @@ export function AdminSidebar() {
                 Salvos
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSwitchAccount} className="cursor-pointer">
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Mudar de conta
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sair

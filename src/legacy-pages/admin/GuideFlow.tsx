@@ -16,7 +16,7 @@ import { updateToolAction } from '@/app/actions/tools';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json, Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { toast } from '@/hooks/use-toast';
-import { Save, Send, RotateCcw } from 'lucide-react';
+import { Eye, Save, Send, RotateCcw } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-message';
 import { PUBLIC_SUPABASE_URL } from '@/lib/runtime-env';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,7 +43,7 @@ export default function GuideFlow() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const isModeratorPanel = pathname.startsWith('/moderador');
   const { createGuide, updateGuide } = useGuidesMutations();
   const sources = useGuideFlowSources();
@@ -56,6 +56,7 @@ export default function GuideFlow() {
   const [linkedToolId, setLinkedToolId] = useState<string | null>(null);
   const [currentInputs, setCurrentInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
   const [flowPrefill, setFlowPrefill] = useState<GuideFlowInputs | null>(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
   const currentAuthor = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Moderador';
 
@@ -63,6 +64,7 @@ export default function GuideFlow() {
   useEffect(() => {
     const guideId = searchParams?.get('guide') ?? null;
     if (!guideId) return;
+    if (authLoading || (isModeratorPanel && !user)) return;
     setFlowPrefill(null);
 
     (async () => {
@@ -73,11 +75,23 @@ export default function GuideFlow() {
         .single();
 
       if (error || !data) {
-        toast({ title: 'Guia não encontrado', variant: 'destructive' });
+        toast({
+          title: isModeratorPanel ? 'Conteúdo indisponível' : 'Guia não encontrado',
+          description: isModeratorPanel ? 'O rascunho não está publicado ou pertence a outro autor.' : undefined,
+          variant: 'destructive',
+        });
+        if (isModeratorPanel) router.replace('/moderador/guias');
         return;
       }
 
       const guide = data as unknown as GuideRow;
+      const isOwner = Boolean(user?.id && guide.created_by === user.id);
+      if (isModeratorPanel && !guide.is_published && !isOwner) {
+        toast({ title: 'Rascunho restrito', description: 'Moderadores não podem consultar rascunhos de outros autores.', variant: 'destructive' });
+        router.replace('/moderador/guias');
+        return;
+      }
+      setIsReadOnly(isModeratorPanel && guide.is_published && !isOwner);
       setLinkedGuideId(guide.id);
 
       if (guide.flow_data) {
@@ -130,7 +144,7 @@ export default function GuideFlow() {
         toast({ title: 'Guia carregado', description: `"${guide.title}" aberto no fluxo (sem estado de fluxo prévio).` });
       }
     })();
-  }, [searchParams]);
+  }, [authLoading, isModeratorPanel, router, searchParams, user]);
 
   // Load tool from URL param ?tool=ID
   useEffect(() => {
@@ -456,6 +470,10 @@ export default function GuideFlow() {
 
   const handleSave = async (publish: boolean) => {
     if (!guideData) return;
+    if (isReadOnly) {
+      toast({ title: 'Modo leitor', description: 'Este fluxo pertence a outro autor e não pode ser alterado.', variant: 'destructive' });
+      return;
+    }
     const isToolFlow = currentInputs.targetType === 'tool';
     if (isModeratorPanel && isToolFlow) {
       toast({ title: 'Acesso restrito', description: 'Moderadores podem criar e editar somente guias.', variant: 'destructive' });
@@ -576,7 +594,7 @@ export default function GuideFlow() {
         title: publish ? 'Guia publicado!' : 'Rascunho salvo!',
         description: `"${guideData.title}" foi ${publish ? 'publicado' : 'salvo como rascunho'}.`,
       });
-      router.push(isModeratorPanel ? '/moderador/guias' : '/guias');
+      router.push(isModeratorPanel ? '/moderador/gerenciar-guias' : '/guias');
     } catch (err: unknown) {
       toast({ title: 'Erro ao salvar', description: getErrorMessage(err), variant: 'destructive' });
     } finally {
@@ -585,20 +603,22 @@ export default function GuideFlow() {
   };
 
   const handleReset = () => {
+    if (isReadOnly) return;
     setGuideData(null);
     setLinkedGuideId(null);
     setLinkedToolId(null);
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+      <div className="flex shrink-0 items-center justify-between">
         <PageHeader
           title="Fluxos"
-          description="Criação assistida de guias e páginas de ferramentas com base na Biblioteca de Conhecimento."
+          description={isReadOnly ? "Visualização do processo editorial publicado. Nenhuma alteração será permitida." : "Criação assistida de guias e páginas de ferramentas com base na Biblioteca de Conhecimento."}
         />
         <div className="flex items-center gap-2">
-          {guideData && (
+          {isReadOnly && <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"><Eye className="h-3.5 w-3.5" />Modo leitor</span>}
+          {guideData && !isReadOnly && (
             <>
               <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1.5 rounded-[var(--admin-radius)]">
                 <RotateCcw className="h-3.5 w-3.5" /> Recomeçar
@@ -625,16 +645,18 @@ export default function GuideFlow() {
         onTargetTypeChange={handleTargetTypeChange}
         onRegenerateImage={handleRegenerateImage}
         onUpdateImagePrompt={handleUpdateImagePrompt}
-      />
-
-      <EditorialSummaryPanel
-        tipo={currentInputs.tipo}
-        categoria={currentInputs.categoria}
-        intencao={currentInputs.intencao}
-        activeStructureCount={sources.activeStructureEntries.length}
-        totalStructureCount={sources.structureEntries.length}
-        activeLibraryNames={sources.activeLibraryEntries.map(e => e.title)}
-        selectionMode={sources.selectionMode}
+        readOnly={isReadOnly}
+        editorialSummary={(
+          <EditorialSummaryPanel
+            tipo={currentInputs.tipo}
+            categoria={currentInputs.categoria}
+            intencao={currentInputs.intencao}
+            activeStructureCount={sources.activeStructureEntries.length}
+            totalStructureCount={sources.structureEntries.length}
+            activeLibraryNames={sources.activeLibraryEntries.map(e => e.title)}
+            selectionMode={sources.selectionMode}
+          />
+        )}
       />
     </div>
   );

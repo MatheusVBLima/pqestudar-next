@@ -59,7 +59,7 @@ export function EditorialSummaryPanel({
   return (
     <TooltipProvider>
       <div className={cn(
-        "fixed right-0 top-1/2 -translate-y-1/2 z-40 transition-transform duration-300 ease-in-out",
+        "absolute right-0 top-1/2 -translate-y-1/2 z-40 transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
         {/* Toggle tab */}

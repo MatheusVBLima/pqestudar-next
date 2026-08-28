@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, Home, LogIn, LogOut, Sparkles } from "lucide-react";
+import { BookOpen, FilePenLine, Home, LogIn, LogOut, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -32,14 +32,15 @@ import { ThemeSelector } from "@/components/layout/theme-selector";
 import { cn } from "@/lib/utils";
 
 const items = [
-  { title: "Guias", href: "/moderador/guias", icon: BookOpen },
+  { title: "Planejamento editorial", href: "/moderador/guias", icon: BookOpen, exact: true },
+  { title: "Gerenciar guias", href: "/moderador/gerenciar-guias", icon: FilePenLine },
   { title: "Fluxos", href: "/moderador/fluxos", icon: Sparkles },
 ];
 
 export function ModeratorSidebar() {
   const pathname = usePathname() ?? "";
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, signOut, switchGoogleAccount } = useAuth();
   const { logos } = useNavConfig();
   const { isDark } = useTheme();
 
@@ -55,6 +56,11 @@ export function ModeratorSidebar() {
     await signOut();
     toast.success("Logout realizado com sucesso!");
     router.replace("/");
+  };
+
+  const handleSwitchAccount = async () => {
+    const { error } = await switchGoogleAccount();
+    if (error) toast.error(`Não foi possível mudar de conta: ${error.message}`);
   };
 
   const itemClass = (active: boolean) => cn(
@@ -82,7 +88,7 @@ export function ModeratorSidebar() {
           Conteúdo
         </p>
         {items.map((item) => {
-          const active = pathname.startsWith(item.href);
+          const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
           return (
             <SidebarGroup key={item.href} className="px-0 py-0.5">
               <SidebarGroupContent>
@@ -114,6 +120,7 @@ export function ModeratorSidebar() {
               <DropdownMenuContent align="end" side="right" sideOffset={8} className="w-56">
                 <div className="min-w-0 p-2"><p className="truncate text-sm font-medium">{displayName}</p><p className="truncate text-xs text-muted-foreground">{user.email}</p></div>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSwitchAccount} className="cursor-pointer"><RotateCcw className="mr-2 h-4 w-4" />Mudar de conta</DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive"><LogOut className="mr-2 h-4 w-4" />Sair</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
