@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, Search } from "lucide-react";
+import { BookOpen, Search, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { renderHighlightedTitle } from "@/lib/highlight-title";
 
@@ -57,8 +57,8 @@ export function FinalCtaSectionNext() {
               </Link>
               <Link href="/concursos">
                 <Button size="lg" variant="outline" className="gap-2 rounded-[1.2rem] w-full sm:w-auto">
+                  <Trophy className="h-4 w-4" />
                   Ver Concursos
-                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/guias">

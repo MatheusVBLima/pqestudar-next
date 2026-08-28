@@ -40,6 +40,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ManagementModeToggle } from "@/components/management/ManagementModeToggle";
 import { SITE_URL } from "@/lib/site";
+import { PREMIUM_COURSES_PUBLIC_FLAG, useSiteFeatureFlag } from "@/hooks/useSiteFeatureFlag";
 
 const NotificationDropdown = lazy(() =>
   import("@/components/ui/notification-dropdown").then((m) => ({
@@ -86,8 +87,26 @@ export function Navbar() {
   const { isAdmin, isModerator } = useUserRoles();
   const { isActive } = useSubscription();
   const { items: navItems, logos, loading: navLoading } = useNavConfig();
+  const { enabled: publicCoursesEnabled, loading: publicCoursesLoading } = useSiteFeatureFlag(PREMIUM_COURSES_PUBLIC_FLAG);
   const navbarCta = navItems.find((item) => item.icon === NAVBAR_CTA_ICON) ?? FALLBACK_CTA;
-  const menuItems = navItems.filter((item) => item.icon !== NAVBAR_CTA_ICON);
+  const configuredMenuItems = navItems.filter((item) => item.icon !== NAVBAR_CTA_ICON);
+  const publicCoursesItem: NavItem = {
+    id: "premium-courses-public",
+    label: "Cursos",
+    href: "/premium/cursos",
+    icon: "book-open",
+    order_index: 35,
+    is_active: true,
+    is_external: false,
+    open_in_new_tab: false,
+    show_icon_desktop: true,
+    show_icon_tablet: true,
+    show_icon_mobile: true,
+    is_new: false,
+  };
+  const menuItems = publicCoursesEnabled && !configuredMenuItems.some((item) => item.href === "/premium/cursos")
+    ? [...configuredMenuItems, publicCoursesItem].sort((a, b) => a.order_index - b.order_index)
+    : configuredMenuItems;
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDiscoveryMenuLocked, setIsDiscoveryMenuLocked] = useState(false);
@@ -226,7 +245,7 @@ export function Navbar() {
             </button>
 
             <div className="hidden md:flex items-center gap-1">
-              {navLoading ? (
+              {navLoading || publicCoursesLoading ? (
                 <>
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Skeleton key={i} className="h-8 w-20 rounded-[1.2rem]" />
@@ -435,7 +454,7 @@ export function Navbar() {
                 <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Menu
                 </div>
-                {navLoading ? (
+                {navLoading || publicCoursesLoading ? (
                   <div className="p-2 space-y-2">
                     {Array.from({ length: 4 }).map((_, i) => (
                       <Skeleton key={i} className="h-8 w-full rounded-md" />

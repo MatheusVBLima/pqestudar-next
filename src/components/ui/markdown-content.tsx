@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
-import { Check, Copy, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Check, Copy, Play, X, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,11 +18,13 @@ import { cn } from "@/lib/utils";
 
 const SANITIZE_SCHEMA = {
   ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames ?? []), "mark", "iframe"],
   attributes: {
     ...defaultSchema.attributes,
     "*": [...(defaultSchema.attributes?.["*"] ?? []), "className"],
     a: [...(defaultSchema.attributes?.a ?? []), "target", "rel"],
     img: [...(defaultSchema.attributes?.img ?? []), "loading", "decoding"],
+    iframe: ["src", "title", "loading", "allow", "allowFullScreen", "frameBorder", "referrerPolicy", "className"],
     th: [...(defaultSchema.attributes?.th ?? []), "align"],
     td: [...(defaultSchema.attributes?.td ?? []), "align"],
   },
@@ -63,19 +65,45 @@ function CopyableCodeBlock({ children }: { children: React.ReactNode }) {
   );
 }
 
+function YoutubeEmbed({ src, title }: { src: string; title: string }) {
+  const [playing, setPlaying] = useState(false);
+  const id = src.match(/\/embed\/([A-Za-z0-9_-]+)/)?.[1] ?? "";
+
+  if (playing) {
+    return (
+      <iframe
+        src={`${src}?autoplay=1`}
+        title={title}
+        className="h-full w-full"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+      />
+    );
+  }
+
+  return (
+    <button type="button" onClick={() => setPlaying(true)} className="group relative block h-full w-full overflow-hidden bg-black" aria-label={`Reproduzir: ${title}`}>
+      <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" className="h-full w-full object-cover opacity-85 transition group-hover:opacity-70" />
+      <span className="absolute inset-0 flex items-center justify-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-transform group-hover:scale-105"><Play className="ml-1 h-6 w-6 fill-current" /></span>
+      </span>
+    </button>
+  );
+}
+
 const COMPONENT_MAP_DEFAULT: Components = {
   h1: ({ children, ...props }) => (
-    <h2 className="text-xl font-semibold mt-6 mb-3" {...props}>
+    <h2 className="text-xl font-bold mt-6 mb-3" {...props}>
       {children}
     </h2>
   ),
   h2: ({ children, ...props }) => (
-    <h2 className="text-xl font-semibold mt-6 mb-3" {...props}>
+    <h2 className="text-xl font-bold mt-6 mb-3" {...props}>
       {children}
     </h2>
   ),
   h3: ({ children, ...props }) => (
-    <h3 className="text-lg font-medium mt-4 mb-2" {...props}>
+    <h3 className="text-lg font-bold mt-4 mb-2" {...props}>
       {children}
     </h3>
   ),
@@ -84,8 +112,8 @@ const COMPONENT_MAP_DEFAULT: Components = {
       {children}
     </p>
   ),
-  ul: ({ children, ...props }) => (
-    <ul className="list-disc pl-6 mb-4" {...props}>
+  ul: ({ children, className, ...props }) => (
+    <ul className={cn("mb-4", className?.includes("contains-task-list") ? "list-none space-y-2 pl-0" : "list-disc pl-6", className)} {...props}>
       {children}
     </ul>
   ),
@@ -94,8 +122,8 @@ const COMPONENT_MAP_DEFAULT: Components = {
       {children}
     </ol>
   ),
-  li: ({ children, ...props }) => (
-    <li className="mb-1" {...props}>
+  li: ({ children, className, ...props }) => (
+    <li className={cn("mb-1", className?.includes("task-list-item") && "flex items-start gap-2 [&_input]:mt-1.5 [&_input]:h-4 [&_input]:w-4 [&_input]:shrink-0 [&_input]:accent-primary", className)} {...props}>
       {children}
     </li>
   ),
@@ -112,6 +140,11 @@ const COMPONENT_MAP_DEFAULT: Components = {
     <code className="bg-muted px-1.5 py-0.5 rounded text-sm" {...props}>
       {children}
     </code>
+  ),
+  mark: ({ children, className, ...props }) => (
+    <mark className={cn("rounded px-1 text-foreground", className || "bg-primary/20")} {...props}>
+      {children}
+    </mark>
   ),
   hr: ({ ...props }) => <hr className="my-6 border-border" {...props} />,
   a: ({ children, href, ...props }) => (
@@ -134,6 +167,11 @@ const COMPONENT_MAP_DEFAULT: Components = {
       {...props}
     />
   ),
+  iframe: ({ src, title }) => {
+    const url = typeof src === "string" ? src : "";
+    if (!/^https:\/\/www\.youtube-nocookie\.com\/embed\/[A-Za-z0-9_-]+$/.test(url)) return null;
+    return <YoutubeEmbed src={url} title={title || "Vídeo do YouTube"} />;
+  },
   table: ({ children, ...props }) => (
     <div className="concursos-table-wrap overflow-x-auto -mx-1 px-1 my-4">
       <table className="concursos-table w-full border-collapse text-sm" {...props}>
@@ -165,8 +203,8 @@ const COMPONENT_MAP_PROSE: Components = {
       {children}
     </p>
   ),
-  ul: ({ children, ...props }) => (
-    <ul className="list-disc pl-5 mb-2" {...props}>
+  ul: ({ children, className, ...props }) => (
+    <ul className={cn("mb-2", className?.includes("contains-task-list") ? "list-none space-y-2 pl-0" : "list-disc pl-5", className)} {...props}>
       {children}
     </ul>
   ),

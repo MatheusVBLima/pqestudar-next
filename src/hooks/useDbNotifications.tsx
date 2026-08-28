@@ -76,6 +76,18 @@ export const useDbNotifications = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) return;
+      const { error } = await supabase
+        .from('user_notifications')
+        .delete()
+        .eq('user_id', user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+
   const notifications = query.data ?? [];
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -85,5 +97,6 @@ export const useDbNotifications = () => {
     loading: query.isLoading,
     markRead: markReadMutation.mutate,
     markAllRead: markAllReadMutation.mutate,
+    clearAll: clearAllMutation.mutate,
   };
 };

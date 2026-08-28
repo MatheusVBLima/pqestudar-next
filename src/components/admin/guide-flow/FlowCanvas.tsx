@@ -171,6 +171,7 @@ export function buildGeneratedLayout(data: GeneratedGuideData, structureNames: s
   const sections: { title: string; content: string }[] = [];
   let currentTitle = '';
   let currentLines: string[] = [];
+  let insideCodeFence = false;
 
   const flush = () => {
     const text = currentLines.join('\n').trim();
@@ -179,7 +180,8 @@ export function buildGeneratedLayout(data: GeneratedGuideData, structureNames: s
   };
 
   for (const line of lines) {
-    if (/^## /.test(line)) {
+    if (/^\s*(```|~~~)/.test(line)) insideCodeFence = !insideCodeFence;
+    if (!insideCodeFence && /^## /.test(line)) {
       flush();
       currentTitle = line.replace(/^##\s*\*?\*?/, '').replace(/\*?\*?\s*$/, '').trim();
       currentLines.push(line);

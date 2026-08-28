@@ -117,10 +117,10 @@ export function NodeEditorSheet({ open, onClose, data, guideData, onSave }: Prop
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-lg overflow-y-auto"
+        className="flex h-full w-full flex-col overflow-hidden sm:max-w-lg"
         onKeyDown={(event) => event.stopPropagation()}
       >
-        <SheetHeader className="pb-4">
+        <SheetHeader className="shrink-0 pb-4">
           <div className="flex items-center gap-2">
             <Icon className="h-4 w-4 text-primary" />
             <SheetTitle className="text-base">{data.label}</SheetTitle>
@@ -130,7 +130,7 @@ export function NodeEditorSheet({ open, onClose, data, guideData, onSave }: Prop
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-5 pb-20">
+        <div className="-mr-6 min-h-0 flex-1 space-y-5 overflow-y-auto pb-4 pr-6">
           {data.nodeType === 'meta' && <MetaEditor local={local} update={update} slugStatus={slugStatus} />}
           {data.nodeType === 'seo' && <SeoEditor local={local} update={update} />}
           {data.nodeType === 'content' && <ContentEditor local={local} update={update} sectionIndex={data.sectionIndex} />}
@@ -138,7 +138,7 @@ export function NodeEditorSheet({ open, onClose, data, guideData, onSave }: Prop
           {data.nodeType === 'links' && <LinksEditor local={local} update={update} />}
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t flex items-center justify-between gap-3">
+        <div className="-mx-6 flex shrink-0 items-center justify-between gap-3 border-t bg-background px-6 pb-2 pt-4">
           {slugStatus === 'conflict' && data.nodeType === 'meta' && (
             <div className="flex items-center gap-1.5 text-xs text-destructive">
               <AlertTriangle className="h-3.5 w-3.5" />
@@ -481,6 +481,7 @@ function parseSections(markdown: string): Array<{ title: string; content: string
   const lines = markdown.split('\n');
   const sections: Array<{ title: string; content: string }> = [];
   let currentLines: string[] = [];
+  let insideCodeFence = false;
   let currentTitle = 'Introdução';
 
   const flush = () => {
@@ -490,7 +491,8 @@ function parseSections(markdown: string): Array<{ title: string; content: string
   };
 
   for (const line of lines) {
-    if (/^## /.test(line)) {
+    if (/^\s*(```|~~~)/.test(line)) insideCodeFence = !insideCodeFence;
+    if (!insideCodeFence && /^## /.test(line)) {
       flush();
       currentTitle = line.replace(/^##\s*\*?\*?/, '').replace(/\*?\*?\s*$/, '').trim();
       currentLines.push(line);

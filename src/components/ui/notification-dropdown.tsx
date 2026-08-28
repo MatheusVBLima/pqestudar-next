@@ -97,7 +97,7 @@ export const NotificationDropdown = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useIsMobile();
   const { notifications, unreadCount: localUnread, markAsRead, markAllAsRead, removeNotification, clearAllNotifications } = useNotifications();
-  const { notifications: dbNotifs, unreadCount: dbUnread, markRead: dbMarkRead, markAllRead: dbMarkAllRead } = useDbNotifications();
+  const { notifications: dbNotifs, unreadCount: dbUnread, markRead: dbMarkRead, markAllRead: dbMarkAllRead, clearAll: dbClearAll } = useDbNotifications();
 
   const totalUnread = localUnread + dbUnread;
   const hasNotifications = notifications.length > 0 || dbNotifs.length > 0;
@@ -105,6 +105,11 @@ export const NotificationDropdown = () => {
   const handleMarkAllRead = () => {
     markAllAsRead();
     dbMarkAllRead();
+  };
+
+  const handleClearAll = () => {
+    clearAllNotifications();
+    dbClearAll();
   };
 
   const panelContent = (
@@ -119,7 +124,7 @@ export const NotificationDropdown = () => {
           <Button variant="ghost" size="sm" onClick={handleMarkAllRead} className="h-7 px-2 text-xs" disabled={totalUnread === 0}>
             <CheckCheck className="h-3 w-3 mr-1" /> Marcar todas como lidas
           </Button>
-          <Button variant="ghost" size="sm" onClick={clearAllNotifications} className="h-7 px-2 text-xs text-destructive hover:text-destructive">
+          <Button variant="ghost" size="sm" onClick={handleClearAll} className="h-7 px-2 text-xs text-destructive hover:text-destructive">
             <Trash2 className="h-3 w-3 mr-1" /> Limpar tudo
           </Button>
         </div>

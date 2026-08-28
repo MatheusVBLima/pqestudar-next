@@ -23,8 +23,7 @@ function ContentNodeComponent({ data }: { data: ContentNodeData }) {
   const wordCount = content?.split(/\s+/).filter(Boolean).length ?? 0;
   const preview = content
     ?.replace(/^##?\s*\*?\*?.*\*?\*?\s*\n?/, '')
-    .trim()
-    .slice(0, 150);
+    .trim();
 
   return (
     <div className={`bg-card border border-${color}-500/30 rounded-[1.2rem] shadow-card w-[320px] overflow-hidden cursor-pointer hover:shadow-lg hover:border-${color}-500/50 transition-all`}>
@@ -40,7 +39,7 @@ function ContentNodeComponent({ data }: { data: ContentNodeData }) {
       </div>
 
       <div className="p-3 space-y-1.5 text-xs">
-        <p className="text-muted-foreground leading-relaxed line-clamp-4">{preview}...</p>
+        <p className="nodrag nowheel max-h-44 overflow-y-auto whitespace-pre-wrap pr-1 text-muted-foreground leading-relaxed">{preview}</p>
         <div className="flex justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/50">
           <span>{wordCount} palavras</span>
           <span>{content?.split('\n').filter((l: string) => /^###? /.test(l)).length ?? 0} headings</span>

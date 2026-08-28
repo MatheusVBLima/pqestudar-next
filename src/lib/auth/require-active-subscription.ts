@@ -1,9 +1,10 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClientWithAuth } from "@/lib/supabase-server";
+import { arePremiumCoursesPublic } from "@/lib/site-feature-flags";
 
 export interface ActiveSubscriptionGuardResult {
-  userId: string;
+  userId: string | null;
   isAdmin: boolean;
   /** Active subscription row if user has one, null for admins without subscription. */
   subscription: {
@@ -32,13 +33,19 @@ function requiredTierForPath(pathname: string): "basic" | "premium" {
 export async function requireActiveSubscription(
   pathname: string,
 ): Promise<ActiveSubscriptionGuardResult> {
+  const isCoursesPath = pathname === "/premium/cursos" || pathname.startsWith("/premium/cursos/");
+
+  if (isCoursesPath && await arePremiumCoursesPublic()) {
+    return { userId: null, isAdmin: false, subscription: null };
+  }
+
   const supabase = await createServerSupabaseClientWithAuth();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(`/login?from=${encodeURIComponent(pathname)}`);
+    redirect(isCoursesPath ? "/pqestudar-premium" : `/login?from=${encodeURIComponent(pathname)}`);
   }
 
   const [{ data: isAdmin }, { data: sub }] = await Promise.all([
@@ -56,7 +63,7 @@ export async function requireActiveSubscription(
   const hasRequiredTier = requiredTierForPath(pathname) === "basic" || planTier === "premium";
 
   if (!isAdmin && !isActive) {
-    redirect("/premium/upgrade");
+    redirect(isCoursesPath ? "/pqestudar-premium" : "/premium/upgrade");
   }
 
   if (!isAdmin && pathname === "/premium" && (planTier === "basic" || planTier === "founder")) {
@@ -64,7 +71,7 @@ export async function requireActiveSubscription(
   }
 
   if (!isAdmin && isActive && !hasRequiredTier) {
-    redirect("/premium/upgrade");
+    redirect(isCoursesPath ? "/pqestudar-premium" : "/premium/upgrade");
   }
 
   return {

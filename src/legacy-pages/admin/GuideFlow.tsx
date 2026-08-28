@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/admin/dashboard/PageHeader';
@@ -57,14 +57,24 @@ export default function GuideFlow() {
   const [currentInputs, setCurrentInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
   const [flowPrefill, setFlowPrefill] = useState<GuideFlowInputs | null>(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const restoredGuideKeyRef = useRef<string | null>(null);
+  const restoredToolIdRef = useRef<string | null>(null);
+
+  const guideId = searchParams?.get('guide') ?? null;
+  const toolId = searchParams?.get('tool') ?? null;
 
   const currentAuthor = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Moderador';
 
   // Load guide from URL param ?guide=ID
   useEffect(() => {
-    const guideId = searchParams?.get('guide') ?? null;
-    if (!guideId) return;
+    if (!guideId) {
+      restoredGuideKeyRef.current = null;
+      return;
+    }
     if (authLoading || (isModeratorPanel && !user)) return;
+    const restoreKey = `${guideId}:${user?.id ?? 'anonymous'}`;
+    if (restoredGuideKeyRef.current === restoreKey) return;
+    restoredGuideKeyRef.current = restoreKey;
     setFlowPrefill(null);
 
     (async () => {
@@ -75,6 +85,7 @@ export default function GuideFlow() {
         .single();
 
       if (error || !data) {
+        restoredGuideKeyRef.current = null;
         toast({
           title: isModeratorPanel ? 'Conteúdo indisponível' : 'Guia não encontrado',
           description: isModeratorPanel ? 'O rascunho não está publicado ou pertence a outro autor.' : undefined,
@@ -144,12 +155,16 @@ export default function GuideFlow() {
         toast({ title: 'Guia carregado', description: `"${guide.title}" aberto no fluxo (sem estado de fluxo prévio).` });
       }
     })();
-  }, [authLoading, isModeratorPanel, router, searchParams, user]);
+  }, [authLoading, guideId, isModeratorPanel, router, user?.id]);
 
   // Load tool from URL param ?tool=ID
   useEffect(() => {
-    const toolId = searchParams?.get('tool') ?? null;
-    if (!toolId) return;
+    if (!toolId) {
+      restoredToolIdRef.current = null;
+      return;
+    }
+    if (restoredToolIdRef.current === toolId) return;
+    restoredToolIdRef.current = toolId;
     setFlowPrefill(null);
 
     (async () => {
@@ -160,6 +175,7 @@ export default function GuideFlow() {
         .single();
 
       if (error || !data) {
+        restoredToolIdRef.current = null;
         toast({ title: 'Ferramenta não encontrada', variant: 'destructive' });
         return;
       }
@@ -201,7 +217,7 @@ export default function GuideFlow() {
       });
       toast({ title: 'Ferramenta carregada', description: `"${tool.name}" aberta no fluxo.` });
     })();
-  }, [searchParams, applyTargetDefaults]);
+  }, [toolId, applyTargetDefaults]);
 
   // Prefill a new guide from the editorial map or question journey.
   useEffect(() => {
@@ -436,9 +452,11 @@ export default function GuideFlow() {
     const lines = data.content_markdown.split('\n');
     const sections: { startLine: number; endLine: number }[] = [];
     let currentStart = -1;
+    let insideCodeFence = false;
 
     for (let i = 0; i < lines.length; i++) {
-      if (/^##\s/.test(lines[i])) {
+      if (/^\s*(```|~~~)/.test(lines[i])) insideCodeFence = !insideCodeFence;
+      if (!insideCodeFence && /^##\s/.test(lines[i])) {
         if (currentStart >= 0) {
           sections.push({ startLine: currentStart, endLine: i - 1 });
         }

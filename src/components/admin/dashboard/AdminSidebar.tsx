@@ -49,6 +49,7 @@ const concursosItems = [
 ];
 
 const premiumItems = [
+  { title: 'Visão geral', href: '/admin/premium', icon: LayoutDashboard },
   { title: 'Usuários & Assinaturas', href: '/admin/premium/usuarios', icon: Users },
   { title: 'Tokens de Resgate', href: '/admin/premium/tokens', icon: Ticket },
   { title: 'Importar Benefícios', href: '/admin/premium/importar-beneficios', icon: FileText },
