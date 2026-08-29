@@ -1,10 +1,9 @@
 "use client";
 
-import Link from 'next/link';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Crown, Users, Ticket, ArrowRight, FileText, BookOpen, Globe2, LockKeyhole } from 'lucide-react';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Crown, BookOpen, Globe2, LockKeyhole } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { PREMIUM_COURSES_PUBLIC_FLAG, useSiteFeatureFlag } from '@/hooks/useSiteFeatureFlag';
@@ -38,30 +37,6 @@ const AdminPremiumDashboard = () => {
     }
     setSaving(false);
   };
-
-  const menuItems = [
-    {
-      title: 'Usuários & Assinaturas',
-      description: 'Gerenciar assinantes',
-      icon: Users,
-      href: '/admin/premium/usuarios',
-      count: null,
-    },
-    {
-      title: 'Tokens de Resgate',
-      description: 'Criar e gerenciar tokens',
-      icon: Ticket,
-      href: '/admin/premium/tokens',
-      count: null,
-    },
-    {
-      title: 'Importar Benefícios',
-      description: 'Extrair benefícios de um PDF',
-      icon: FileText,
-      href: '/admin/premium/importar-beneficios',
-      count: null,
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -103,26 +78,6 @@ const AdminPremiumDashboard = () => {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {menuItems.map((item) => (
-          <Link key={item.href} href={item.href}>
-            <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-lg bg-muted">
-                    <item.icon className="h-5 w-5" />
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardTitle className="text-lg mb-1">{item.title}</CardTitle>
-                <CardDescription>{item.description}</CardDescription>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
     </div>
   );
 };
