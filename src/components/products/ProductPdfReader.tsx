@@ -41,24 +41,24 @@ export function ProductPdfReader({ title, viewerUrl, downloadUrl }: ProductPdfRe
       )}
       aria-label={`Leitor de PDF: ${title}`}
     >
-      <header className="flex shrink-0 flex-col gap-4 border-b p-5 sm:flex-row sm:items-center sm:justify-between">
+      <header className="flex shrink-0 flex-col gap-4 border-b p-3 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Leitor PqEstudar</p>
-          <h1 className="mt-1 truncate text-xl font-bold md:text-2xl">{title}</h1>
+          <h1 className="mt-1 line-clamp-2 text-xl font-bold sm:truncate md:text-2xl">{title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Leia na plataforma ou baixe para consultar quando quiser.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
           <button
             type="button"
-            className="inline-flex h-10 items-center gap-2 rounded-[1.2rem] border px-4 text-sm font-medium hover:bg-accent"
+            className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-[1.2rem] border px-3 text-sm font-medium hover:bg-accent sm:px-4"
             onClick={() => setExpanded((current) => !current)}
             aria-pressed={expanded}
           >
             {expanded ? <Minimize2 className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
-            {expanded ? "Sair da tela cheia" : "Tela cheia"}
+            {expanded ? "Reduzir" : "Tela cheia"}
           </button>
           <a
-            className="inline-flex h-10 items-center gap-2 rounded-[1.2rem] bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            className="inline-flex h-10 min-w-0 items-center justify-center gap-2 rounded-[1.2rem] bg-primary px-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 sm:px-4"
             href={downloadUrl}
             target="_blank"
             rel="noreferrer"
@@ -81,7 +81,7 @@ export function ProductPdfReader({ title, viewerUrl, downloadUrl }: ProductPdfRe
       </div>
 
       {!expanded && (
-        <footer className="flex items-center justify-between gap-4 border-t px-5 py-4 text-sm text-muted-foreground">
+        <footer className="flex flex-col items-start gap-2 border-t px-4 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5">
           <span>Continue explorando os conteúdos do PqEstudar após a leitura.</span>
           <a href="/exclusivos" className="inline-flex shrink-0 items-center gap-1 font-medium text-primary hover:underline">
             Ver mais exclusivos <ExternalLink className="h-3.5 w-3.5" />

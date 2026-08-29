@@ -164,9 +164,9 @@ export default function PremiumCursosNext() {
   };
 
   const renderCardContent = (course: PremiumItem) => (
-    <Card className="flex flex-col h-full rounded-[1.2rem] border border-border bg-card shadow-card cursor-pointer transition-all hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5">
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-3">
+    <Card className="flex h-full min-w-0 max-w-full flex-col overflow-hidden rounded-[1.2rem] border border-border bg-card shadow-card cursor-pointer transition-all hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5">
+      <CardHeader className="min-w-0 p-4 pb-3 sm:p-6 sm:pb-3">
+        <div className="flex min-w-0 items-start gap-3">
           {course.logo_url ? (
             <img src={course.logo_url} alt={course.title} className="h-12 w-12 rounded-lg object-cover" />
           ) : (
@@ -175,16 +175,18 @@ export default function PremiumCursosNext() {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
+            <CardTitle className="line-clamp-2 break-words text-lg leading-snug group-hover:text-primary transition-colors [overflow-wrap:anywhere]">
               {course.title}
             </CardTitle>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col">
+      <CardContent className="flex min-w-0 flex-1 flex-col p-4 pt-0 sm:p-6 sm:pt-0">
         {course.description_short && (
-          <CardDescription className="line-clamp-3 mb-4">{course.description_short}</CardDescription>
+          <CardDescription className="mb-4 line-clamp-3 break-words [overflow-wrap:anywhere]">
+            {course.description_short}
+          </CardDescription>
         )}
 
         {course.tags && course.tags.length > 0 && (
@@ -200,8 +202,8 @@ export default function PremiumCursosNext() {
           </div>
         )}
 
-        <div className="flex gap-2 mt-auto">
-          <Button size="sm" className="flex-1 pointer-events-none" tabIndex={-1}>
+        <div className="mt-auto flex min-w-0 gap-2">
+          <Button size="sm" className="min-w-0 flex-1 pointer-events-none" tabIndex={-1}>
             Ver detalhes
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
@@ -232,7 +234,7 @@ export default function PremiumCursosNext() {
         description={ps.headerDescription || "Uma seleção criteriosa de cursos para você estudar o que realmente importa."}
       />
 
-      <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+      <main className="mx-auto w-full min-w-0 max-w-[1504px] overflow-x-hidden px-4 py-10 sm:px-6 md:py-14 lg:px-8">
         <ManagementToolbar
           createLabel="Novo curso"
           onCreate={openCreate}
@@ -243,7 +245,7 @@ export default function PremiumCursosNext() {
         </div>
 
         {loading ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <Skeleton key={i} className="h-64 rounded-[1.2rem]" />
             ))}
@@ -251,8 +253,8 @@ export default function PremiumCursosNext() {
         ) : (
           <>
             {!isManagementMode && (
-              <div className="mb-8 space-y-4">
-                <div className="relative max-w-lg">
+              <div className="min-w-0 max-w-full mb-8 space-y-4">
+                <div className="relative w-full max-w-lg">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar cursos..."
@@ -263,7 +265,7 @@ export default function PremiumCursosNext() {
                 </div>
 
                 {allTags.length > 0 && (
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 max-w-full items-center gap-3">
                     <nav
                       aria-label="Filtrar por tag"
                       className="flex-1 min-w-0 -mx-1 overflow-x-auto scrollbar-none overscroll-x-contain"
@@ -324,7 +326,7 @@ export default function PremiumCursosNext() {
             ) : isManagementMode ? (
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filteredCourses.map((course) => (
                       <ManageableCard
                         key={course.id}
@@ -343,13 +345,13 @@ export default function PremiumCursosNext() {
                 </SortableContext>
               </DndContext>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredCourses.map((course) => (
                   <Link
                     key={course.id}
                     href={`/premium/cursos/${course.slug}`}
                     aria-label={`Ver detalhes de ${course.title}`}
-                    className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-[1.2rem]"
+                    className="group block min-w-0 max-w-full rounded-[1.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     {renderCardContent(course)}
                   </Link>

@@ -40,7 +40,7 @@ export default async function ProductRedirectPage({ params }: ProductRedirectPag
   const document = getProductDocumentUrls(product.cta_url);
   if (document) {
     return (
-      <main className="mx-auto w-[90vw] max-w-[90vw] py-8">
+      <main className="mx-auto w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] py-4 sm:w-[90vw] sm:max-w-[90vw] sm:py-8">
         <ProductPdfReader
           title={product.title}
           viewerUrl={document.viewerUrl}
