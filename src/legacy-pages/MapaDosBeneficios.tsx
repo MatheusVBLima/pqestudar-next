@@ -3,7 +3,7 @@
 import { devLog } from '@/lib/dev-log';
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, CheckCircle, X, FileText, Users, Award, Gift, Check, Shield, Clock, Volume2 } from "lucide-react";
+import { Flame, CheckCircle, X, FileText, Users, Award, Gift, Check, Shield, Clock, Volume2, GraduationCap, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1170,7 +1170,7 @@ const TestimonialsSection = () => <section className="py-10 md:py-24 px-4 sm:px-
 const AboutAuthorSection = () => <section className="py-10 md:py-24 px-4 sm:px-6" style={{
   background: `hsl(${BRAND_TOKENS.background})`
 }}>
-    <div className="container max-w-4xl mx-auto px-0">
+    <div className="container max-w-5xl mx-auto px-0">
       <motion.h2 initial={{
       opacity: 0,
       y: 20
@@ -1201,8 +1201,8 @@ const AboutAuthorSection = () => <section className="py-10 md:py-24 px-4 sm:px-6
       ease
     }}>
         <BrandCard highlight>
-          <CardContent className="p-4 sm:p-6 md:p-10">
-            <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 md:gap-8 items-center">
+          <CardContent className="p-5 sm:p-7 md:p-10">
+            <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-7 md:gap-10 items-start">
               <div className="text-center">
                 <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-full mx-auto mb-4 overflow-hidden" style={{
                 boxShadow: `0 0 0 4px hsl(${BRAND_TOKENS.primary})`,
@@ -1212,7 +1212,7 @@ const AboutAuthorSection = () => <section className="py-10 md:py-24 px-4 sm:px-6
                 </div>
               </div>
 
-              <div className="text-center md:text-left">
+              <div className="min-w-0 text-center md:text-left">
                 <h3 className="text-xl sm:text-2xl font-bold mb-1" style={{
                 color: `hsl(${BRAND_TOKENS.foreground})`
               }}>
@@ -1221,18 +1221,52 @@ const AboutAuthorSection = () => <section className="py-10 md:py-24 px-4 sm:px-6
                 <p className="font-medium mb-3 sm:mb-4 text-sm sm:text-base" style={{
                 color: `hsl(${BRAND_TOKENS.primary})`
               }}>
-                  Criador do Mapa dos Benefícios
+                  Criador do PqEstudar e do Mapa dos Benefícios
                 </p>
-                <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm leading-relaxed" style={{
+                <div className="space-y-2 sm:space-y-3 text-sm sm:text-base leading-relaxed" style={{
                 color: `hsl(${BRAND_TOKENS.mutedForeground})`
               }}>
                   <p>
-                    Matheus Dias produz conteúdos sobre tecnologia, benefícios e oportunidades digitais de forma simples e acessível.
+                    Formado em Análise e Desenvolvimento de Sistemas e influenciador digital desde 2022, Matheus simplifica processos e transforma oportunidades que passam despercebidas em conteúdos úteis e acessíveis.
                   </p>
                   <p>
-                    O Mapa dos Benefícios nasceu para organizar informações úteis e facilitar a busca por programas, serviços e direitos.
+                    Criou o Mapa dos Benefícios para ajudar pessoas a descobrirem direitos, programas e vantagens financiados também pelos impostos que pagam, mas que muitas vezes não sabem que podem acessar.
                   </p>
                 </div>
+
+                <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border px-4 py-3 text-left" style={{ borderColor: `hsl(${BRAND_TOKENS.border})`, background: `hsl(${BRAND_TOKENS.muted})` }}>
+                    <Users className="mb-2 h-5 w-5" style={{ color: `hsl(${BRAND_TOKENS.primary})` }} />
+                    <strong className="block text-lg" style={{ color: `hsl(${BRAND_TOKENS.foreground})` }}>+620 mil</strong>
+                    <span className="text-xs" style={{ color: `hsl(${BRAND_TOKENS.mutedForeground})` }}>seguidores somados</span>
+                  </div>
+                  <div className="rounded-xl border px-4 py-3 text-left" style={{ borderColor: `hsl(${BRAND_TOKENS.border})`, background: `hsl(${BRAND_TOKENS.muted})` }}>
+                    <Lightbulb className="mb-2 h-5 w-5" style={{ color: `hsl(${BRAND_TOKENS.primary})` }} />
+                    <strong className="block text-lg" style={{ color: `hsl(${BRAND_TOKENS.foreground})` }}>Desde 2022</strong>
+                    <span className="text-xs" style={{ color: `hsl(${BRAND_TOKENS.mutedForeground})` }}>criando conteúdo</span>
+                  </div>
+                  <div className="rounded-xl border px-4 py-3 text-left" style={{ borderColor: `hsl(${BRAND_TOKENS.border})`, background: `hsl(${BRAND_TOKENS.muted})` }}>
+                    <GraduationCap className="mb-2 h-5 w-5" style={{ color: `hsl(${BRAND_TOKENS.primary})` }} />
+                    <strong className="block text-lg" style={{ color: `hsl(${BRAND_TOKENS.foreground})` }}>Formação em ADS</strong>
+                    <span className="text-xs" style={{ color: `hsl(${BRAND_TOKENS.mutedForeground})` }}>tecnologia e sistemas</span>
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-xl border p-4 text-left" style={{ borderColor: `hsl(${BRAND_TOKENS.primary} / 0.25)`, background: `hsl(${BRAND_TOKENS.primary} / 0.05)` }}>
+                  <div className="flex items-start gap-3">
+                    <Award className="mt-0.5 h-5 w-5 shrink-0" style={{ color: `hsl(${BRAND_TOKENS.primary})` }} />
+                    <div>
+                      <strong className="block text-sm" style={{ color: `hsl(${BRAND_TOKENS.foreground})` }}>Reconhecimento na educação</strong>
+                      <p className="mt-1 text-xs sm:text-sm leading-relaxed" style={{ color: `hsl(${BRAND_TOKENS.mutedForeground})` }}>
+                        Foi convidado pelo Ministério da Educação para participar do Dia Mundial do Livro e acompanhar a criação do MEC Livros, ao lado de outros influenciadores.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="mt-4 text-left text-xs leading-relaxed" style={{ color: `hsl(${BRAND_TOKENS.mutedForeground})` }}>
+                  Os conteúdos são pesquisados em diferentes fontes e passam por conferência cruzada, com apoio de inteligência artificial na verificação das informações.
+                </p>
               </div>
             </div>
           </CardContent>
@@ -1245,7 +1279,7 @@ const AboutAuthorSection = () => <section className="py-10 md:py-24 px-4 sm:px-6
 const FAQSection = () => <section className="py-10 md:py-24 px-4 sm:px-6" style={{
   background: `hsl(${BRAND_TOKENS.muted})`
 }}>
-    <div className="container max-w-3xl mx-auto px-0">
+    <div className="container max-w-5xl mx-auto px-0">
       <motion.h2 initial={{
       opacity: 0,
       y: 20
@@ -1302,7 +1336,7 @@ const FAQSection = () => <section className="py-10 md:py-24 px-4 sm:px-6" style=
 const GuaranteeFinalSection = () => <section className="py-12 md:py-20 px-4 sm:px-6 overflow-x-hidden" style={{
   background: `hsl(${BRAND_TOKENS.background})`
 }}>
-    <div className="container max-w-6xl mx-auto">
+    <div className="container max-w-5xl mx-auto px-0">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center lg:items-center">
         {/* Left Column - Guarantee */}
         <motion.div initial={{
