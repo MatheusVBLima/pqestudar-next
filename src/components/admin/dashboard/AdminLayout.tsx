@@ -87,7 +87,9 @@ function AdminLayoutShell({ children, lockViewport = false }: AdminLayoutProps &
                 title="Abrir menu admin"
               />
             </div>
-            <main className={lockViewport ? "min-h-0 flex-1 overflow-hidden p-6" : "flex-1 overflow-auto p-6"}>{children}</main>
+            <main className={lockViewport ? "min-h-0 flex-1 overflow-hidden p-6" : "flex-1 overflow-auto p-6"}>
+              {lockViewport ? children : <div className="mx-auto w-full max-w-[1600px]">{children}</div>}
+            </main>
           </div>
         </div>
       </div>

@@ -142,6 +142,12 @@ All colors MUST be HSL.
     overflow-x: hidden; /* Prevent horizontal scroll */
   }
 
+  /* Radix bloqueia o scroll ao abrir dialogs e adiciona uma compensação lateral.
+     Como o gutter já é reservado no html, a compensação duplicada causava layout shift. */
+  body[data-scroll-locked] {
+    margin-right: 0 !important;
+  }
+
   html {
     min-height: 100%;
     scroll-behavior: smooth;

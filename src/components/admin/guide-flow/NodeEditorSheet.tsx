@@ -15,13 +15,7 @@ import {
   CheckCircle, Loader2, Plus, Trash2, Save, Cog, Eye,
 } from 'lucide-react';
 import type { GeneratedGuideData } from './GuideFlowPreview';
-import { useQuery } from '@tanstack/react-query';
-
-const KNOWN_AUTHORS = [
-  'Equipe PqEstudar',
-  'Matheus Dias',
-  'Marília Brasileiro',
-];
+import { useGuideAuthors } from '@/hooks/useGuideAuthors';
 
 type EditorNodeType = 'meta' | 'seo' | 'content' | 'cta' | 'links';
 
@@ -167,21 +161,9 @@ function MetaEditor({ local, update, slugStatus }: {
   update: <K extends keyof GeneratedGuideData>(key: K, value: GeneratedGuideData[K]) => void;
   slugStatus: 'idle' | 'checking' | 'ok' | 'conflict';
 }) {
-  const { data: moderatorAuthors = [] } = useQuery({
-    queryKey: ['moderator-authors'],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('moderator_authors');
-      if (error) throw error;
-      return data ?? [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-  const authorOptions = Array.from(new Set([
-    ...KNOWN_AUTHORS,
-    ...moderatorAuthors.map((author) => author.display_name),
-  ]));
+  const { authors } = useGuideAuthors();
   const [customAuthor, setCustomAuthor] = useState(
-    !KNOWN_AUTHORS.includes(local.author_name)
+    !authors.some((author) => author.name === local.author_name)
   );
 
   return (
@@ -270,8 +252,13 @@ function MetaEditor({ local, update, slugStatus }: {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {authorOptions.map(a => (
-                <SelectItem key={a} value={a}>{a}</SelectItem>
+              {authors.map(author => (
+                <SelectItem key={`${author.userId ?? 'default'}-${author.name}`} value={author.name}>
+                  <span className="flex min-w-0 flex-col text-left">
+                    <span>{author.name}</span>
+                    {author.email && <span className="truncate text-[10px] text-muted-foreground">{author.email}</span>}
+                  </span>
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

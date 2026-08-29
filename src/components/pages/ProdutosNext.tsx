@@ -34,12 +34,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Eye, Pencil, Trash2, EyeOff, Upload, Link as LinkIcon, X } from "lucide-react";
+import { Eye, Pencil, Trash2, EyeOff, Upload, Link as LinkIcon, X, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/error-message";
 import { revalidateProductsAction } from "@/app/actions/revalidate";
 import type { Json } from "@/integrations/supabase/types";
 import { parseProductSalesPage } from "@/lib/product-sales-page";
+import { slugifyProductTitle } from "@/lib/product-slug";
 
 interface Product {
   id: string;
@@ -65,6 +66,7 @@ type ProductFormData = {
   sort_order: string;
   imageFile: File | null;
   imageTab: "upload" | "url";
+  documentFile: File | null;
   priceLabel: string;
   oldPriceLabel: string;
   ctaLabel: string;
@@ -79,6 +81,7 @@ const EMPTY_FORM: ProductFormData = {
   sort_order: "0",
   imageFile: null,
   imageTab: "url",
+  documentFile: null,
   priceLabel: "",
   oldPriceLabel: "",
   ctaLabel: "Quero acessar",
@@ -253,7 +256,7 @@ function ProductModal({
     setLocalPreview(null);
   };
 
-  const valid = form.title.trim() && form.description.trim() && form.category.trim() && form.cta_url.trim();
+  const valid = form.title.trim() && form.description.trim() && form.category.trim() && (form.cta_url.trim() || form.documentFile);
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -353,8 +356,22 @@ function ProductModal({
             <Input id="prod-cat" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} />
           </div>
           <div>
-            <Label htmlFor="prod-cta">URL do CTA *</Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="prod-cta">Destino do conteúdo *</Label>
+              <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[1.2rem] border px-3 text-xs font-medium transition-colors hover:bg-accent">
+                <FileText className="h-3.5 w-3.5" /> Enviar PDF
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  className="hidden"
+                  onChange={(event) => setForm((current) => ({ ...current, documentFile: event.target.files?.[0] ?? null }))}
+                />
+              </label>
+            </div>
             <Input id="prod-cta" value={form.cta_url} onChange={(e) => setForm((f) => ({ ...f, cta_url: e.target.value }))} />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {form.documentFile ? `PDF selecionado: ${form.documentFile.name}` : "Cole uma URL ou envie um PDF para leitura dentro do PqEstudar."}
+            </p>
           </div>
           <div>
             <Label htmlFor="prod-order">Ordem</Label>
@@ -441,7 +458,7 @@ export default function ProdutosNext() {
 
   const handleSaibaMais = (product: Product) => {
     if (!product.cta_url || product.cta_url === "#") return;
-    const navigate = () => window.location.assign(product.cta_url);
+    const navigate = () => window.location.assign(`/exclusivos/${slugifyProductTitle(product.title)}`);
 
     if (!rolesLoading && !isAdmin) {
       clickMutation.mutate(product.id, { onSettled: navigate });
@@ -468,6 +485,7 @@ export default function ProdutosNext() {
 
   const handleSave = async (form: ProductFormData) => {
     let finalImageUrl: string | null = form.image_url.trim() || null;
+    let finalCtaUrl = form.cta_url.trim();
 
     if (form.imageFile) {
       if (rolesLoading || !isAdmin) {
@@ -501,11 +519,35 @@ export default function ProdutosNext() {
       finalImageUrl = urlData.publicUrl;
     }
 
+    if (form.documentFile) {
+      if (rolesLoading || !isAdmin) {
+        toast({ title: "Upload não autorizado", description: "Somente administradores podem enviar PDFs de exclusivos.", variant: "destructive" });
+        return;
+      }
+      if (form.documentFile.type !== "application/pdf") {
+        toast({ title: "Arquivo inválido", description: "Selecione um documento PDF.", variant: "destructive" });
+        return;
+      }
+      if (form.documentFile.size > 50 * 1024 * 1024) {
+        toast({ title: "PDF muito grande", description: "O tamanho máximo permitido é 50 MB.", variant: "destructive" });
+        return;
+      }
+      const productId = editingProduct?.id || "new";
+      const safeName = form.documentFile.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "-");
+      const path = `${productId}/${Date.now()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage.from("exclusive-documents").upload(path, form.documentFile, { upsert: false });
+      if (uploadError) {
+        toast({ title: "Upload do PDF falhou", description: uploadError.message, variant: "destructive" });
+        return;
+      }
+      finalCtaUrl = supabase.storage.from("exclusive-documents").getPublicUrl(path).data.publicUrl;
+    }
+
     const payload: Record<string, unknown> = {
       title: form.title.trim(),
       description: form.description.trim(),
       category: form.category.trim(),
-      cta_url: form.cta_url.trim(),
+      cta_url: finalCtaUrl,
       image_url: finalImageUrl,
       sort_order: parseInt(form.sort_order, 10) || 0,
       sales_page: {
@@ -598,6 +640,7 @@ export default function ProdutosNext() {
         sort_order: String(editingProduct.sort_order),
         imageFile: null,
         imageTab: editingProduct.image_url ? "url" : "upload",
+        documentFile: null,
         priceLabel: salesPage.priceLabel ?? "",
         oldPriceLabel: salesPage.oldPriceLabel ?? "",
         ctaLabel: salesPage.ctaLabel ?? "Quero acessar",

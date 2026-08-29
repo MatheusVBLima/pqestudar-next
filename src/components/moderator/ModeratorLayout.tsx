@@ -32,7 +32,9 @@ export function ModeratorLayout({ children }: { children: React.ReactNode }) {
                 <div><p className="text-sm font-semibold">Moderador</p><p className="text-xs text-muted-foreground">Planejamento, guias e fluxos</p></div>
                 <SidebarTrigger className="h-10 w-10 rounded-xl border bg-background shadow-sm" aria-label="Abrir menu do moderador" />
               </div>
-              <main className={lockViewport ? "min-h-0 flex-1 overflow-hidden p-6" : "flex-1 overflow-auto p-6"}>{children}</main>
+              <main className={lockViewport ? "min-h-0 flex-1 overflow-hidden p-6" : "flex-1 overflow-auto p-6"}>
+                {lockViewport ? children : <div className="mx-auto w-full max-w-[1600px]">{children}</div>}
+              </main>
             </div>
           </div>
         </div>

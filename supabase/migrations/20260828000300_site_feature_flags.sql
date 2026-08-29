@@ -8,6 +8,9 @@ CREATE TABLE IF NOT EXISTS public.site_feature_flags (
 
 ALTER TABLE public.site_feature_flags ENABLE ROW LEVEL SECURITY;
 
+GRANT SELECT ON TABLE public.site_feature_flags TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON TABLE public.site_feature_flags TO authenticated;
+
 DROP POLICY IF EXISTS "site_feature_flags_public_read" ON public.site_feature_flags;
 CREATE POLICY "site_feature_flags_public_read"
   ON public.site_feature_flags
@@ -49,3 +52,7 @@ CREATE POLICY "premium_courses_campaign_public_read"
         AND flag.enabled = true
     )
   );
+
+-- Atualiza o cache do PostgREST imediatamente quando o SQL for aplicado
+-- pelo editor em um projeto que ja esta online.
+NOTIFY pgrst, 'reload schema';

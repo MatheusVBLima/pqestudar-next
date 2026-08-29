@@ -18,15 +18,22 @@ const AdminPremiumDashboard = () => {
   const handleCoursesAccessChange = async (enabled: boolean) => {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('site_feature_flags')
       .update({ enabled, updated_at: new Date().toISOString(), updated_by: user?.id ?? null })
-      .eq('key', PREMIUM_COURSES_PUBLIC_FLAG);
+      .eq('key', PREMIUM_COURSES_PUBLIC_FLAG)
+      .select('enabled')
+      .maybeSingle();
 
     if (error) {
       toast.error(`Não foi possível alterar o acesso: ${error.message}`);
+    } else if (!data) {
+      toast.error('Não foi possível alterar o acesso: a configuração dos Cursos não existe no banco.');
     } else {
-      await queryClient.invalidateQueries({ queryKey: ['site-feature-flag', PREMIUM_COURSES_PUBLIC_FLAG] });
+      queryClient.setQueryData(
+        ['site-feature-flag', PREMIUM_COURSES_PUBLIC_FLAG],
+        data.enabled === true,
+      );
       toast.success(enabled ? 'Cursos liberados para todos.' : 'Cursos restritos novamente ao Premium.');
     }
     setSaving(false);

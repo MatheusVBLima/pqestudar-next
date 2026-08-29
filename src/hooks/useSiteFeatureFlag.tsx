@@ -15,8 +15,11 @@ export function useSiteFeatureFlag(key: string) {
       if (error) throw error;
       return data?.enabled === true;
     },
-    staleTime: 60_000,
-    refetchOnWindowFocus: true,
+    // Feature flags only change through the admin controls. Keep the resolved
+    // value while the user changes tabs instead of reloading the navbar.
+    staleTime: 10 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   return {
@@ -25,4 +28,3 @@ export function useSiteFeatureFlag(key: string) {
     error: query.error,
   };
 }
-

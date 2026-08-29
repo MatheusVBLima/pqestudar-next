@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import type { Json } from "@/integrations/supabase/types";
 import { parseProductSalesPage } from "@/lib/product-sales-page";
+import { slugifyProductTitle } from "@/lib/product-slug";
 
 interface Product {
   id: string;
@@ -169,7 +170,7 @@ export function HomeProductsSectionNext() {
   const handleSaibaMais = (product: Product) => {
     if (!product.cta_url || product.cta_url === "#") return;
     clickMutation.mutate(product.id, {
-      onSettled: () => window.location.assign(product.cta_url),
+      onSettled: () => window.location.assign(`/exclusivos/${slugifyProductTitle(product.title)}`),
     });
   };
 

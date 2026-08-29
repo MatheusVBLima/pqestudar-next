@@ -89,7 +89,11 @@ export function Navbar() {
   const { items: navItems, logos, loading: navLoading } = useNavConfig();
   const { enabled: publicCoursesEnabled, loading: publicCoursesLoading } = useSiteFeatureFlag(PREMIUM_COURSES_PUBLIC_FLAG);
   const navbarCta = navItems.find((item) => item.icon === NAVBAR_CTA_ICON) ?? FALLBACK_CTA;
-  const configuredMenuItems = navItems.filter((item) => item.icon !== NAVBAR_CTA_ICON);
+  const configuredMenuItems = navItems.filter(
+    (item) =>
+      item.icon !== NAVBAR_CTA_ICON &&
+      (item.href !== "/premium/cursos" || publicCoursesEnabled),
+  );
   const publicCoursesItem: NavItem = {
     id: "premium-courses-public",
     label: "Cursos",

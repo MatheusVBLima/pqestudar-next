@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import MarkdownEditor, { htmlToMarkdown } from "@/components/admin/MarkdownEditor";
 import { Guide } from "@/hooks/useGuides";
@@ -19,6 +20,8 @@ import { useGuidePublicCategories } from "@/hooks/useGuidePublicCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/error-message";
+import { useGuideAuthors } from "@/hooks/useGuideAuthors";
+import { useAuth } from "@/hooks/useAuth";
 
 interface GuideModalProps {
   open: boolean;
@@ -240,6 +243,8 @@ function InternalCodeField({ code }: { code?: string }) {
 export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useAuth();
+  const { authors, isLoading: authorsLoading } = useGuideAuthors();
   const { data: publicCategoriesRows } = useGuidePublicCategories();
   const publicCategoryNames = (publicCategoriesRows ?? []).map((c) => c.name);
   const [title, setTitle] = useState("");
@@ -265,6 +270,7 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
   const [sortOrder, setSortOrder] = useState(0);
   const [internalLinks, setInternalLinks] = useState<InternalLink[]>([]);
   const [authorName, setAuthorName] = useState("");
+  const [customAuthor, setCustomAuthor] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [coverMode, setCoverMode] = useState<'upload' | 'url'>('upload');
   const [coverUrlInput, setCoverUrlInput] = useState("");
@@ -299,6 +305,7 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
       setIsFeatured(guide.is_featured);
       setSortOrder(guide.sort_order);
       setAuthorName(guide.author_name || "");
+      setCustomAuthor(!!guide.author_name && !authors.some((author) => author.name === guide.author_name));
       setCoverImageUrl(guide.cover_image_url || null);
       setCoverUrlInput(guide.cover_image_url || "");
       setCoverMode('upload');
@@ -319,12 +326,14 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
       setCtaMiddleLabel(""); setCtaMiddleUrl(""); setCtaMiddleText("");
       setCtaFinalLabel(""); setCtaFinalUrl(""); setCtaFinalText("");
       setIsPublished(false); setIsFeatured(false); setSortOrder(0);
-      setAuthorName("");
+      const currentAuthor = authors.find((author) => author.userId === user?.id);
+      setAuthorName(currentAuthor?.name || "Equipe PqEstudar");
+      setCustomAuthor(false);
       setCoverImageUrl(null); setCoverUrlInput(""); setCoverMode('upload');
       setInternalLinks([]);
     }
     setErrors({});
-  }, [guide, open]);
+  }, [guide, open, authors, user?.id]);
 
   useEffect(() => {
     if (!slugManual && title) setSlug(slugify(title));
@@ -412,7 +421,7 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{guide ? "Editar guia" : "Novo guia"}</DialogTitle>
         </DialogHeader>
@@ -561,18 +570,19 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
                 <Cog className="h-3.5 w-3.5 text-primary/70" />
                 Categoria Interna *
               </Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={category} onChange={e => {
-                const v = e.target.value;
+              <Select value={category} onValueChange={(v) => {
                 setCategory(v);
                 // sugere pública se vazia
                 if (!publicCategory) setPublicCategory(mapInternaToPublica(v));
               }}>
-                {CATEGORIAS.map(c => <option key={c.value} value={c.label}>{c.label}</option>)}
-                {/* fallback para valores legados que não estão na lista atual */}
-                {!CATEGORIAS.some(c => c.label === category) && category && (
-                  <option value={category}>{category} (legado)</option>
-                )}
-              </select>
+                <SelectTrigger><SelectValue placeholder="Editorial..." /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIAS.map(c => <SelectItem key={c.value} value={c.label}>{c.label}</SelectItem>)}
+                  {!CATEGORIAS.some(c => c.label === category) && category && (
+                    <SelectItem value={category}>{category} (legado)</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
               <p className="text-[10px] text-muted-foreground mt-1">Editorial · guia a IA · não exibida ao público.</p>
               {errors.category && <p className="text-xs text-destructive mt-1">{errors.category}</p>}
             </div>
@@ -581,17 +591,15 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
                 <Eye className="h-3.5 w-3.5 text-emerald-600" />
                 Categoria Pública *
               </Label>
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={publicCategory}
-                onChange={e => setPublicCategory(e.target.value)}
-              >
-                {publicCategoryNames.map(c => <option key={c} value={c}>{c}</option>)}
-                {/* fallback se a categoria atual não estiver mais ativa */}
-                {publicCategory && publicCategoryNames.length > 0 && !publicCategoryNames.includes(publicCategory) && (
-                  <option value={publicCategory}>{publicCategory} (legado)</option>
-                )}
-              </select>
+              <Select value={publicCategory} onValueChange={setPublicCategory}>
+                <SelectTrigger className="bg-background"><SelectValue placeholder="Badge no site..." /></SelectTrigger>
+                <SelectContent>
+                  {publicCategoryNames.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {publicCategory && publicCategoryNames.length > 0 && !publicCategoryNames.includes(publicCategory) && (
+                    <SelectItem value={publicCategory}>{publicCategory} (legado)</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
               <p className="text-[10px] text-muted-foreground">Apenas badge no site · NÃO influencia geração.</p>
               {errors.publicCategory && <p className="text-xs text-destructive mt-1">{errors.publicCategory}</p>}
             </div>
@@ -615,10 +623,33 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
               <Label>Ordem</Label>
               <Input type="number" value={sortOrder} onChange={e => setSortOrder(Number(e.target.value))} />
             </div>
-            <div>
-              <Label>Autor</Label>
-              <Input value={authorName} onChange={e => setAuthorName(e.target.value)} placeholder="Equipe PqEstudar" />
-              <p className="text-xs text-muted-foreground mt-1">Se vazio, será salvo como "Equipe PqEstudar"</p>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between gap-3">
+                <Label>Autor</Label>
+                <Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => setCustomAuthor((value) => !value)}>
+                  {customAuthor ? 'Escolher da lista' : 'Digitar manualmente'}
+                </Button>
+              </div>
+              {customAuthor ? (
+                <Input value={authorName} onChange={e => setAuthorName(e.target.value)} placeholder="Nome do autor" />
+              ) : (
+                <Select value={authorName} onValueChange={setAuthorName} disabled={authorsLoading}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={authorsLoading ? 'Carregando autores...' : 'Selecione o autor'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {authors.map(author => (
+                      <SelectItem key={`${author.userId ?? 'default'}-${author.name}`} value={author.name}>
+                        <span className="flex min-w-0 flex-col text-left">
+                          <span>{author.name}</span>
+                          {author.email && <span className="truncate text-[10px] text-muted-foreground">{author.email}</span>}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <p className="text-xs text-muted-foreground">Mesmas contas de moderador disponíveis no fluxo.</p>
             </div>
           </TabsContent>
 
