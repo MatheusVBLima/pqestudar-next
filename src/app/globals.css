@@ -569,6 +569,15 @@ All colors MUST be HSL.
     transform 170ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Submenus near the footer open upward so their last actions remain visible. */
+.admin-radius [data-collapsible="icon"] [data-slot="admin-sidebar"] .admin-sidebar-submenu-bottom .admin-sidebar-flyout {
+  top: auto;
+  bottom: 0;
+  max-height: min(70vh, 34rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .admin-radius [data-collapsible="icon"] [data-slot="admin-sidebar"] .admin-sidebar-submenu:hover .admin-sidebar-flyout,
 .admin-radius [data-collapsible="icon"] [data-slot="admin-sidebar"] .admin-sidebar-submenu:focus-within .admin-sidebar-flyout {
   opacity: 1;

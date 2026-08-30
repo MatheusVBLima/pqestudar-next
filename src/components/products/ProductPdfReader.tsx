@@ -1,17 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Expand, ExternalLink, Minimize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 
 interface ProductPdfReaderProps {
   title: string;
   viewerUrl: string;
   downloadUrl: string;
+  productId: string;
+  productSlug: string;
 }
 
-export function ProductPdfReader({ title, viewerUrl, downloadUrl }: ProductPdfReaderProps) {
+export function ProductPdfReader({ title, viewerUrl, downloadUrl, productId, productSlug }: ProductPdfReaderProps) {
   const [expanded, setExpanded] = useState(false);
+  const { track, analyticsReady } = useAnalyticsTracker();
+  const openedRef = useRef(false);
+
+  useEffect(() => {
+    if (!analyticsReady || openedRef.current) return;
+    openedRef.current = true;
+    void track({
+      event_name: "exclusive_detail_open",
+      entity_type: "product",
+      entity_id: productId,
+      meta: { product_slug: productSlug, product_title: title },
+      allowAnonymous: true,
+    });
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void track({
+        event_name: "exclusive_read_heartbeat",
+        entity_type: "product",
+        entity_id: productId,
+        meta: { product_slug: productSlug, read_seconds_increment: 15 },
+        allowAnonymous: true,
+      });
+    }, 15_000);
+
+    return () => window.clearInterval(interval);
+  }, [analyticsReady, productId, productSlug, title, track]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -62,6 +92,13 @@ export function ProductPdfReader({ title, viewerUrl, downloadUrl }: ProductPdfRe
             href={downloadUrl}
             target="_blank"
             rel="noreferrer"
+            onClick={() => void track({
+              event_name: "exclusive_download_click",
+              entity_type: "product",
+              entity_id: productId,
+              meta: { product_slug: productSlug, product_title: title },
+              allowAnonymous: true,
+            })}
           >
             <Download className="h-4 w-4" /> Baixar PDF
           </a>

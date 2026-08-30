@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, lazy, useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHero } from "@/components/layout/PageHero";
 import { useManagementMode } from "@/hooks/useManagementMode";
-import { X, Sparkles, Brain, Shield, GraduationCap, Wrench, Zap, Plus, ChevronLeft, ChevronRight, Star, Search } from "lucide-react";
+import { X, Sparkles, Brain, Shield, GraduationCap, Wrench, Zap, Plus, ChevronLeft, ChevronRight, Star, Search, MousePointerClick } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +49,10 @@ import {
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
+import { FEATURED_TOOLS_CLICK_BADGE_FLAG, useSiteFeatureFlag } from "@/hooks/useSiteFeatureFlag";
+import { toast } from "sonner";
 
 const FerramentasManagementGrid = lazy(() => import("@/legacy-pages/ferramentas/FerramentasManagementGrid"));
 
@@ -191,7 +196,15 @@ function PaginationControls({
 }
 
 
-function PublicToolCard({ tool }: {tool: Tool;}) {
+function PublicToolCard({
+  tool,
+  showClickBadge,
+  clickCount,
+}: {
+  tool: Tool;
+  showClickBadge: boolean;
+  clickCount: number;
+}) {
   const { track } = useAnalyticsTracker();
   const router = useRouter();
   const Icon = tool.tags[0] ? CATEGORY_ICONS[tool.tags[0]] || Sparkles : Sparkles;
@@ -246,6 +259,13 @@ function PublicToolCard({ tool }: {tool: Tool;}) {
                 <Badge className="text-xs bg-amber-400 text-amber-950 border-amber-500 hover:bg-amber-400 gap-1 shrink-0">
                   <Star className="w-3 h-3 fill-amber-950" aria-hidden="true" />
                   Destaque
+                </Badge>
+              )}
+              {featured && showClickBadge && (
+                <Badge variant="secondary" className="gap-1 text-xs tabular-nums shrink-0">
+                  <MousePointerClick className="h-3 w-3" aria-hidden="true" />
+                  {clickCount.toLocaleString("pt-BR")}
+                  <span className="sr-only"> cliques</span>
                 </Badge>
               )}
             </CardTitle>
@@ -487,6 +507,41 @@ export default function Ferramentas() {
   const [adminTab, setAdminTab] = useState<"published" | "drafts">("published");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const queryClient = useQueryClient();
+  const [updatingClickBadge, setUpdatingClickBadge] = useState(false);
+  const clickBadgeFlag = useSiteFeatureFlag(FEATURED_TOOLS_CLICK_BADGE_FLAG);
+
+  const { data: featuredClickCounts = {} } = useQuery({
+    queryKey: ["featured-tool-click-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("featured_tool_click_counts_public");
+      if (error) throw error;
+      return Object.fromEntries(
+        (data ?? []).map((row) => [row.tool_id, Number(row.click_count) || 0]),
+      ) as Record<string, number>;
+    },
+    enabled: clickBadgeFlag.enabled,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const handleClickBadgeToggle = async (enabled: boolean) => {
+    setUpdatingClickBadge(true);
+    const { error } = await supabase
+      .from("site_feature_flags")
+      .update({ enabled, updated_at: new Date().toISOString() })
+      .eq("key", FEATURED_TOOLS_CLICK_BADGE_FLAG);
+    setUpdatingClickBadge(false);
+
+    if (error) {
+      toast.error(`Não foi possível alterar o contador: ${error.message}`);
+      return;
+    }
+
+    queryClient.setQueryData(["site-feature-flag", FEATURED_TOOLS_CLICK_BADGE_FLAG], enabled);
+    if (enabled) queryClient.invalidateQueries({ queryKey: ["featured-tool-click-counts"] });
+    toast.success(enabled ? "Contador de cliques exibido nos destaques." : "Contador de cliques ocultado.");
+  };
 
   // Fetch tools from Supabase with pagination
   const toolsOptions: UseToolsOptions = {
@@ -792,6 +847,17 @@ export default function Ferramentas() {
                       Salvar ordem
                     </Button>
                 }
+
+                  <label className="flex items-center gap-2 rounded-[1.2rem] border border-border bg-background px-3 py-2 text-sm font-medium">
+                    <MousePointerClick className="h-4 w-4 text-primary" aria-hidden="true" />
+                    Cliques nos destaques
+                    <Switch
+                      checked={clickBadgeFlag.enabled}
+                      disabled={clickBadgeFlag.loading || updatingClickBadge}
+                      onCheckedChange={handleClickBadgeToggle}
+                      aria-label="Exibir quantidade de cliques nos destaques"
+                    />
+                  </label>
                 </motion.div>
               </div>
             </section>
@@ -1088,6 +1154,8 @@ export default function Ferramentas() {
                 >
                   <FerramentasManagementGrid
                     tools={sortedDisplayedTools}
+                    showClickBadge={clickBadgeFlag.enabled}
+                    clickCounts={featuredClickCounts}
                     onReorder={handleReorderDisplayedTools}
                     onEdit={handleEdit}
                     onToggleVisible={toggleVisible}
@@ -1101,7 +1169,12 @@ export default function Ferramentas() {
                 layout
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                   {sortedDisplayedTools.map((tool) =>
-                <PublicToolCard key={tool.id} tool={tool} />
+                <PublicToolCard
+                  key={tool.id}
+                  tool={tool}
+                  showClickBadge={clickBadgeFlag.enabled}
+                  clickCount={featuredClickCounts[tool.id] ?? 0}
+                />
                 )}
               </motion.div>
               }

@@ -4240,6 +4240,14 @@ export type Database = {
         Args: { product_id: string }
         Returns: undefined
       }
+      analytics_exclusives_dashboard_public: {
+        Args: { end_at?: string | null; start_at?: string | null }
+        Returns: Json
+      }
+      featured_tool_click_counts_public: {
+        Args: Record<PropertyKey, never>
+        Returns: { tool_id: string; click_count: number }[]
+      }
       insights_audit_history: {
         Args: { end_at?: string; p_audit_type: string; start_at?: string }
         Returns: {

@@ -41,6 +41,7 @@ import { revalidateProductsAction } from "@/app/actions/revalidate";
 import type { Json } from "@/integrations/supabase/types";
 import { parseProductSalesPage } from "@/lib/product-sales-page";
 import { slugifyProductTitle } from "@/lib/product-slug";
+import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 
 interface Product {
   id: string;
@@ -410,6 +411,7 @@ function ProductModal({
 export default function ProdutosNext() {
   const ps = usePageSettings("/exclusivos");
   const { isAdmin, loading: rolesLoading } = useUserRoles();
+  const { track } = useAnalyticsTracker();
   const queryClient = useQueryClient();
 
   const { isManagementMode: adminMode } = useManagementMode();
@@ -458,6 +460,13 @@ export default function ProdutosNext() {
 
   const handleSaibaMais = (product: Product) => {
     if (!product.cta_url || product.cta_url === "#") return;
+    void track({
+      event_name: "exclusive_card_open",
+      entity_type: "product",
+      entity_id: product.id,
+      meta: { product_title: product.title, product_category: product.category },
+      allowAnonymous: true,
+    });
     const navigate = () => window.location.assign(`/exclusivos/${slugifyProductTitle(product.title)}`);
 
     if (!rolesLoading && !isAdmin) {

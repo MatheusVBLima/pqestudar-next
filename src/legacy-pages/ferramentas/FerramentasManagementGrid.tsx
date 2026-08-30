@@ -10,6 +10,7 @@ import {
   Shield,
   Sparkles,
   Star,
+  MousePointerClick,
   Trash2,
   Wrench,
   Zap,
@@ -60,11 +61,15 @@ function SortableManagementToolCard({
   onEdit,
   onToggleVisible,
   onDelete,
+  showClickBadge,
+  clickCount,
 }: {
   tool: Tool;
   onEdit: (tool: Tool) => void;
   onToggleVisible: (id: string, isVisible: boolean) => void;
   onDelete: (tool: Tool) => void;
+  showClickBadge: boolean;
+  clickCount: number;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: tool.id });
 
@@ -140,6 +145,13 @@ function SortableManagementToolCard({
                   Destaque
                 </Badge>
               ) : null}
+              {featured && showClickBadge ? (
+                <Badge variant="secondary" className="gap-1 text-xs tabular-nums shrink-0">
+                  <MousePointerClick className="h-3 w-3" aria-hidden="true" />
+                  {clickCount.toLocaleString("pt-BR")}
+                  <span className="sr-only"> cliques</span>
+                </Badge>
+              ) : null}
               {!tool.is_visible ? <Badge variant="secondary" className="text-xs">Oculta</Badge> : null}
               {tool.is_featured && !featured ? <Badge variant="outline" className="text-xs text-muted-foreground shrink-0">Destaque inativo</Badge> : null}
             </CardTitle>
@@ -186,12 +198,16 @@ export default function FerramentasManagementGrid({
   onEdit,
   onToggleVisible,
   onDelete,
+  showClickBadge,
+  clickCounts,
 }: {
   tools: Tool[];
   onReorder: (nextTools: Tool[]) => void;
   onEdit: (tool: Tool) => void;
   onToggleVisible: (id: string, isVisible: boolean) => void;
   onDelete: (tool: Tool) => void;
+  showClickBadge: boolean;
+  clickCounts: Record<string, number>;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -234,6 +250,8 @@ export default function FerramentasManagementGrid({
               onEdit={onEdit}
               onToggleVisible={onToggleVisible}
               onDelete={onDelete}
+              showClickBadge={showClickBadge}
+              clickCount={clickCounts[tool.id] ?? 0}
             />
           ))}
         </motion.div>

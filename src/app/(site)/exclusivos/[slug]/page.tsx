@@ -45,6 +45,8 @@ export default async function ProductRedirectPage({ params }: ProductRedirectPag
           title={product.title}
           viewerUrl={document.viewerUrl}
           downloadUrl={document.downloadUrl}
+          productId={product.id}
+          productSlug={slug}
         />
       </main>
     );

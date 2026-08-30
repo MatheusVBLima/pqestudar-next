@@ -32,21 +32,25 @@ const benefits = [
     icon: Clapperboard,
     title: "Cinema",
     text: "Sessões e estreias nos cinemas participantes",
+    image: "/images/carteirinha/cinema-card.webp",
   },
   {
     icon: Music2,
     title: "Shows",
     text: "Apresentações, shows e festivais elegíveis",
+    image: "/images/carteirinha/shows-card.webp",
   },
   {
     icon: Palette,
     title: "Teatro",
     text: "Peças, musicais e eventos culturais elegíveis",
+    image: "/images/carteirinha/teatro-card.webp",
   },
   {
     icon: Volleyball,
     title: "Esportes",
     text: "Partidas e eventos esportivos participantes",
+    image: "/images/carteirinha/esportes-card.webp",
   },
 ];
 
@@ -206,19 +210,30 @@ export default function CarteirinhaLanding() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-10 lg:py-28">
+      <section className="mx-auto max-w-7xl bg-[#f7f4f8] px-5 py-20 shadow-[0_0_0_100vmax_#f7f4f8] [clip-path:inset(0_-100vmax)] sm:px-8 lg:px-10 lg:py-28 dark:bg-transparent dark:shadow-none">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Aproveite mais</p>
           <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Uma carteirinha, diferentes experiências</h2>
           <p className="mt-4 text-muted-foreground">A meia-entrada se aplica aos eventos e estabelecimentos elegíveis, conforme regras legais e validação do documento.</p>
         </div>
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {benefits.map(({ icon: Icon, title, text }) => (
-            <article key={title} className="rounded-[1.4rem] border border-border bg-card p-6 shadow-card transition hover:-translate-y-1 hover:border-primary/25 hover:bg-accent/20">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></div>
-              <h3 className="mt-5 text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">{title}</h3>
-              <p className="mt-2 text-3xl font-black tracking-tight text-primary">50% off<span className="align-top text-sm">*</span></p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
+          {benefits.map(({ icon: Icon, title, text, image }) => (
+            <article key={title} className="group relative isolate min-h-[286px] overflow-hidden rounded-[1.4rem] border border-white/10 bg-[#211d22] p-6 text-white shadow-card transition hover:-translate-y-1 hover:border-primary/45">
+              <Image
+                src={image}
+                alt=""
+                fill
+                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                className="-z-20 object-cover"
+              />
+              <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[linear-gradient(135deg,rgba(21,17,22,0.90)_0%,rgba(25,20,27,0.79)_56%,rgba(20,15,23,0.48)_100%)] dark:bg-[linear-gradient(135deg,rgba(21,17,22,0.96)_0%,rgba(25,20,27,0.87)_56%,rgba(20,15,23,0.58)_100%)]" />
+              <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-black/45 via-transparent to-primary/10" />
+              <div className="flex h-full flex-col">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-primary/20 text-fuchsia-300 backdrop-blur-sm"><Icon className="h-5 w-5" /></div>
+                <h3 className="mt-auto pt-10 text-xs font-black uppercase tracking-[0.12em] text-white/70">{title}</h3>
+                <p className="mt-2 text-3xl font-black tracking-tight text-fuchsia-300">50% off<span className="align-top text-sm">*</span></p>
+                <p className="mt-2 text-sm leading-6 text-white/75">{text}</p>
+              </div>
             </article>
           ))}
         </div>

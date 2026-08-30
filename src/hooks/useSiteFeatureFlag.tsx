@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const PREMIUM_COURSES_PUBLIC_FLAG = "premium_courses_public_access";
+export const FEATURED_TOOLS_CLICK_BADGE_FLAG = "featured_tools_click_badge";
 
 export function useSiteFeatureFlag(key: string) {
   const query = useQuery({

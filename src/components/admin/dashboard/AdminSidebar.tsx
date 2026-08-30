@@ -34,6 +34,7 @@ const insightsItems = [
   { title: 'Ferramentas', href: '/admin/insights/ferramentas', icon: Wrench },
   { title: 'Concursos', href: '/admin/insights/concursos', icon: BookOpen },
   { title: 'Guias', href: '/admin/insights/guias', icon: BookOpen },
+  { title: 'Exclusivos', href: '/admin/insights/exclusivos', icon: Sparkles },
   { title: 'Auditorias', href: '/admin/insights/auditorias', icon: Search },
   { title: 'Atividade', href: '/admin/insights/atividade-admin', icon: Shield },
 ];
@@ -585,7 +586,7 @@ export function AdminSidebar() {
 
         {/* Admin Premium */}
         <SidebarGroup>
-          <Collapsible defaultOpen={isPremiumActive} className="admin-sidebar-submenu">
+          <Collapsible defaultOpen={isPremiumActive} className="admin-sidebar-submenu admin-sidebar-submenu-bottom">
             <CollapsibleTrigger
               className={triggerClass(isPremiumActive)}
               data-hover-label="Admin Premium"
