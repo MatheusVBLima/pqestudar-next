@@ -42,11 +42,14 @@ export function useGuidesMutations() {
 
   const updateGuide = useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<"guides"> & { id: string }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("guides")
         .update(updates)
-        .eq("id", id);
+        .eq("id", id)
+        .select("id")
+        .single();
       if (error) throw error;
+      if (!data) throw new Error("O guia não foi alterado. Verifique sua permissão de edição.");
     },
     onSuccess: () => {
       invalidate();
@@ -59,11 +62,14 @@ export function useGuidesMutations() {
 
   const deleteGuide = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("guides")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .select("id")
+        .single();
       if (error) throw error;
+      if (!data) throw new Error("O guia não foi excluído. Verifique sua permissão de edição.");
     },
     onSuccess: () => {
       invalidate();
@@ -76,11 +82,14 @@ export function useGuidesMutations() {
 
   const togglePublished = useMutation({
     mutationFn: async ({ id, is_published }: { id: string; is_published: boolean }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("guides")
         .update({ is_published })
-        .eq("id", id);
+        .eq("id", id)
+        .select("id")
+        .single();
       if (error) throw error;
+      if (!data) throw new Error("O status do guia não foi alterado. Verifique sua permissão de edição.");
     },
     onSuccess: (_, vars) => {
       invalidate();
@@ -90,11 +99,14 @@ export function useGuidesMutations() {
 
   const toggleFeatured = useMutation({
     mutationFn: async ({ id, is_featured }: { id: string; is_featured: boolean }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("guides")
         .update({ is_featured })
-        .eq("id", id);
+        .eq("id", id)
+        .select("id")
+        .single();
       if (error) throw error;
+      if (!data) throw new Error("O destaque do guia não foi alterado. Verifique sua permissão de edição.");
     },
     onSuccess: (_, vars) => {
       invalidate();
