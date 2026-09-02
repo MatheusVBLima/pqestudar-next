@@ -118,15 +118,23 @@ serve(async (req) => {
     const { data: { user }, error: authErr } = await anonClient.auth.getUser();
     if (authErr || !user) return jsonResponse({ error: "Nao autenticado" }, 401);
 
+    const body = await req.json();
+    const isToolTarget = body.targetType === "tool";
+
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "admin");
+      .in("role", ["admin", "developer", "moderator"]);
 
     if (!roles || roles.length === 0) return jsonResponse({ error: "Acesso negado" }, 403);
 
-    const body = await req.json();
+    const roleNames = new Set(roles.map(({ role }) => role));
+    const canManageTools = roleNames.has("admin") || roleNames.has("developer");
+    if (isToolTarget && !canManageTools) {
+      return jsonResponse({ error: "Moderadores podem gerar somente guias" }, 403);
+    }
+
     const {
       tema,
       tipo,
@@ -142,11 +150,9 @@ serve(async (req) => {
       aiProvider,
       textModel,
       imageModel,
-      targetType,
     } = body;
 
     const selectedProvider = getAiProvider(aiProvider);
-    const isToolTarget = targetType === "tool";
     const shouldGenerateImages = !isToolTarget && visualMode !== "prompt_only";
 
     if (!tema || (!isToolTarget && !categoria)) {
