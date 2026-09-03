@@ -16,7 +16,12 @@ import {
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2, Pencil, Trash2, Plus, Megaphone, FileText, Link2, Undo2, Redo2 } from 'lucide-react';
+import {
+  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuLabel,
+  ContextMenuSeparator, ContextMenuSub, ContextMenuSubContent,
+  ContextMenuSubTrigger, ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 
 import { InputNode } from './flow-nodes/InputNode';
 import { MetaNode } from './flow-nodes/MetaNode';
@@ -226,7 +231,7 @@ export function buildGeneratedLayout(data: GeneratedGuideData, structureNames: s
   if (data.cta_top) addNode('cta_top', 'ctaNode', { ...data.cta_top, ctaType: 'Superior' }, ctaCol, ctaRow++);
   if (data.cta_middle) addNode('cta_middle', 'ctaNode', { ...data.cta_middle, ctaType: 'Intermediária' }, ctaCol, ctaRow++);
   if (data.cta_final) addNode('cta_final', 'ctaNode', { ...data.cta_final, ctaType: 'Final' }, ctaCol, ctaRow++);
-  if (data.internal_links.length > 0) addNode('links', 'linksNode', { links: data.internal_links }, ctaCol, ctaRow++);
+  addNode('links', 'linksNode', { links: data.internal_links }, ctaCol, ctaRow++);
 
   // Integrity panel
   const integrityCol = ctaCol + 1;
@@ -252,10 +257,9 @@ export function buildGeneratedLayout(data: GeneratedGuideData, structureNames: s
   if (data.cta_middle && sections.length > midSection) edges.push({ id: 'e-smid-ctamid', source: `section-${midSection}`, target: 'cta_middle', style: { stroke: 'hsl(var(--accent-foreground) / 0.3)' } });
   if (data.cta_final && sections.length > 0) edges.push({ id: 'e-slast-ctafinal', source: `section-${sections.length - 1}`, target: 'cta_final', style: { stroke: 'hsl(var(--accent-foreground) / 0.3)' } });
 
-  if (data.internal_links.length > 0) {
-    const lastCta = data.cta_final ? 'cta_final' : data.cta_middle ? 'cta_middle' : data.cta_top ? 'cta_top' : null;
-    if (lastCta) edges.push({ id: 'e-cta-links', source: lastCta, target: 'links', style: { stroke: 'hsl(var(--accent-foreground) / 0.3)' } });
-  }
+  const lastCta = data.cta_final ? 'cta_final' : data.cta_middle ? 'cta_middle' : data.cta_top ? 'cta_top' : null;
+  const linksSource = lastCta ?? (sections.length > 0 ? `section-${sections.length - 1}` : 'meta');
+  edges.push({ id: 'e-content-links', source: linksSource, target: 'links', style: { stroke: 'hsl(var(--accent-foreground) / 0.3)' } });
 
   edges.push({ id: 'e-meta-integrity', source: 'meta', target: 'integrity', animated: true, style: { stroke: 'hsl(var(--primary) / 0.2)', strokeDasharray: '5 5' } });
 
@@ -307,6 +311,10 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorData, setEditorData] = useState<EditorNodeData | null>(null);
   const [imageEditorPosition, setImageEditorPosition] = useState<string | null>(null);
+  const [contextNode, setContextNode] = useState<Node | null>(null);
+  const undoStackRef = useRef<GeneratedGuideData[]>([]);
+  const redoStackRef = useRef<GeneratedGuideData[]>([]);
+  const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [inputPatch, setInputPatch] = useState<{ id: number; patch: Partial<GuideFlowInputs> } | null>(null);
   const [flowTargetType, setFlowTargetType] = useState<GuideFlowInputs['targetType']>('guide');
@@ -393,9 +401,121 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
     }
   }, [guideData, readOnly]);
 
-  const handleEditorSave = useCallback((updated: GeneratedGuideData) => {
+  const syncHistoryState = useCallback(() => {
+    setHistoryState({ canUndo: undoStackRef.current.length > 0, canRedo: redoStackRef.current.length > 0 });
+  }, []);
+
+  const commitGuideData = useCallback((updated: GeneratedGuideData) => {
+    if (!guideData) return;
+    undoStackRef.current.push(guideData);
+    redoStackRef.current = [];
     onGuideDataChange(updated);
-  }, [onGuideDataChange]);
+    window.setTimeout(syncHistoryState, 0);
+  }, [guideData, onGuideDataChange, syncHistoryState]);
+
+  const undoGuideChange = useCallback(() => {
+    if (!guideData) return;
+    const previous = undoStackRef.current.pop();
+    if (!previous) return;
+    redoStackRef.current.push(guideData);
+    onGuideDataChange(previous);
+    syncHistoryState();
+  }, [guideData, onGuideDataChange, syncHistoryState]);
+
+  const redoGuideChange = useCallback(() => {
+    if (!guideData) return;
+    const next = redoStackRef.current.pop();
+    if (!next) return;
+    undoStackRef.current.push(guideData);
+    onGuideDataChange(next);
+    syncHistoryState();
+  }, [guideData, onGuideDataChange, syncHistoryState]);
+
+  useEffect(() => {
+    undoStackRef.current = [];
+    redoStackRef.current = [];
+    syncHistoryState();
+  }, [guideInternalCode, syncHistoryState]);
+
+  useEffect(() => {
+    const handleHistoryShortcut = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.matches('input, textarea, select, [contenteditable="true"]')) return;
+      const key = event.key.toLowerCase();
+      if (key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        undoGuideChange();
+      } else if (key === 'y' || (key === 'z' && event.shiftKey)) {
+        event.preventDefault();
+        redoGuideChange();
+      }
+    };
+    window.addEventListener('keydown', handleHistoryShortcut);
+    return () => window.removeEventListener('keydown', handleHistoryShortcut);
+  }, [redoGuideChange, undoGuideChange]);
+
+  const editContextNode = useCallback(() => {
+    if (!contextNode || !guideData || readOnly) return;
+    if (contextNode.type === 'imageNode' && typeof contextNode.data.position === 'string') {
+      setImageEditorPosition(contextNode.data.position);
+      return;
+    }
+    const mapped = nodeToEditorData(contextNode.id, contextNode.type ?? '', contextNode.data);
+    if (mapped) {
+      setEditorData(mapped);
+      setEditorOpen(true);
+    }
+  }, [contextNode, guideData, readOnly]);
+
+  const removeContextNode = useCallback(() => {
+    if (!contextNode || !guideData || readOnly) return;
+    if (contextNode.id === 'cta_top' || contextNode.id === 'cta_middle' || contextNode.id === 'cta_final') {
+      commitGuideData({ ...guideData, [contextNode.id]: null });
+      return;
+    }
+    if (contextNode.id === 'links') {
+      commitGuideData({ ...guideData, internal_links: [] });
+      return;
+    }
+    if (contextNode.type === 'imageNode' && typeof contextNode.data.position === 'string') {
+      const position = contextNode.data.position;
+      commitGuideData({
+        ...guideData,
+        cover_image_url: contextNode.data.type === 'cover' ? '' : guideData.cover_image_url,
+        image_prompts: (guideData.image_prompts ?? []).filter((image) => image.position !== position),
+        generated_images: (guideData.generated_images ?? []).filter((image) => image.position !== position),
+      });
+      return;
+    }
+    if (contextNode.id.startsWith('section-')) {
+      const sectionContent = typeof contextNode.data.content === 'string' ? contextNode.data.content.trim() : '';
+      if (!sectionContent) return;
+      const start = guideData.content_markdown.indexOf(sectionContent);
+      if (start < 0) return;
+      const before = guideData.content_markdown.slice(0, start).trimEnd();
+      const after = guideData.content_markdown.slice(start + sectionContent.length).trimStart();
+      commitGuideData({
+        ...guideData,
+        content_markdown: [before, after].filter(Boolean).join('\n\n'),
+      });
+    }
+  }, [commitGuideData, contextNode, guideData, readOnly]);
+
+  const addCta = useCallback((key: 'cta_top' | 'cta_middle' | 'cta_final') => {
+    if (!guideData || readOnly || guideData[key]) return;
+    commitGuideData({ ...guideData, [key]: { label: '', url: '', text: '' } });
+  }, [commitGuideData, guideData, readOnly]);
+
+  const addContentSection = useCallback(() => {
+    if (!guideData || readOnly) return;
+    const content = `${guideData.content_markdown.trim()}\n\n## Nova seção\n\nComece a escrever aqui.`.trim();
+    commitGuideData({ ...guideData, content_markdown: content });
+  }, [commitGuideData, guideData, readOnly]);
+
+  const handleEditorSave = useCallback((updated: GeneratedGuideData) => {
+    commitGuideData(updated);
+  }, [commitGuideData]);
 
   const handleInputsChange = useCallback((inputs: GuideFlowInputs) => {
     setFlowTargetType(inputs.targetType);
@@ -609,7 +729,13 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
     });
   }, [isFullscreen]);
 
+  const contextNodeRemovable = !!contextNode && (
+    contextNode.id.startsWith('cta_') || contextNode.id.startsWith('section-') || contextNode.id === 'links' || contextNode.type === 'imageNode'
+  );
+
   return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
     <div
       ref={canvasRef}
       className={
@@ -625,6 +751,8 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
         onEdgesChange={onEdgesChange}
         onConnect={readOnly ? undefined : onConnect}
         onNodeClick={handleNodeClick}
+        onNodeContextMenu={(_event, node) => setContextNode(node)}
+        onPaneContextMenu={() => setContextNode(null)}
         nodesConnectable={!readOnly}
         edgesReconnectable={!readOnly}
         nodeTypes={nodeTypes}
@@ -642,6 +770,12 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
           showFitView={false}
           showInteractive={false}
         >
+          <ControlButton onClick={undoGuideChange} disabled={!historyState.canUndo || readOnly} title="Desfazer (Ctrl+Z)" aria-label="Desfazer">
+            <Undo2 className="h-4 w-4" />
+          </ControlButton>
+          <ControlButton onClick={redoGuideChange} disabled={!historyState.canRedo || readOnly} title="Refazer (Ctrl+Y)" aria-label="Refazer">
+            <Redo2 className="h-4 w-4" />
+          </ControlButton>
           <ControlButton
             onClick={toggleFullscreen}
             title={isFullscreen ? 'Sair da tela cheia' : 'Expandir canvas'}
@@ -690,5 +824,39 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
         );
       })()}
     </div>
+      </ContextMenuTrigger>
+      {!readOnly && guideData && (
+        <ContextMenuContent className="w-56">
+          {contextNode ? (
+            <>
+              <ContextMenuLabel className="truncate text-xs text-muted-foreground">{String(contextNode.data.label ?? contextNode.id)}</ContextMenuLabel>
+              <ContextMenuItem onSelect={editContextNode} disabled={contextNode.type !== 'imageNode' && !nodeToEditorData(contextNode.id, contextNode.type ?? '', contextNode.data)}>
+                <Pencil className="mr-2 h-4 w-4" /> Editar card
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem onSelect={removeContextNode} disabled={!contextNodeRemovable} className="text-destructive focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" /> {contextNode.id === 'links' ? 'Limpar links' : 'Excluir card'}
+              </ContextMenuItem>
+            </>
+          ) : (
+            <>
+              <ContextMenuLabel>Adicionar card</ContextMenuLabel>
+              <ContextMenuSub>
+                <ContextMenuSubTrigger><Megaphone className="mr-2 h-4 w-4" /> CTA</ContextMenuSubTrigger>
+                <ContextMenuSubContent className="w-52">
+                  <ContextMenuItem disabled={!!guideData.cta_top} onSelect={() => addCta('cta_top')}>CTA inicial</ContextMenuItem>
+                  <ContextMenuItem disabled={!!guideData.cta_middle} onSelect={() => addCta('cta_middle')}>CTA intermediário</ContextMenuItem>
+                  <ContextMenuItem disabled={!!guideData.cta_final} onSelect={() => addCta('cta_final')}>CTA final</ContextMenuItem>
+                </ContextMenuSubContent>
+              </ContextMenuSub>
+              <ContextMenuItem onSelect={addContentSection}><FileText className="mr-2 h-4 w-4" /> Seção de conteúdo</ContextMenuItem>
+              <ContextMenuItem disabled><Link2 className="mr-2 h-4 w-4" /> Links internos já incluído</ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem disabled><Plus className="mr-2 h-4 w-4" /> Mais tipos em breve</ContextMenuItem>
+            </>
+          )}
+        </ContextMenuContent>
+      )}
+    </ContextMenu>
   );
 }

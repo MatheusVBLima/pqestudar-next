@@ -255,7 +255,7 @@ function IntegrityNodeComponent({ data }: { data: IntegrityNodeData }) {
         )}
 
         {/* Directive checks */}
-        <div className="max-h-[320px] overflow-y-auto space-y-1 pr-1">
+        <div className="nowheel nodrag nopan max-h-[320px] space-y-1 overflow-y-auto overscroll-contain pr-1">
           {checks.map((check, i) => {
             const cfg = statusConfig[check.status];
             const Icon = cfg.icon;

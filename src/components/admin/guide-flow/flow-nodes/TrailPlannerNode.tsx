@@ -170,7 +170,7 @@ function SubjectSelect({
             />
           </div>
 
-          <div className="max-h-52 overflow-y-auto p-1">
+          <div className="nowheel nodrag nopan max-h-52 overflow-y-auto overscroll-contain p-1">
             {options.map((item) => {
               const isSelected = item === value;
               return (
@@ -366,7 +366,7 @@ function TrailPlannerNodeComponent({ data }: { data: TrailPlannerNodeData }) {
         )}
 
         {showOverview && (
-          <div className="max-h-44 overflow-y-auto rounded-md border border-border/60 bg-background/70">
+          <div className="nowheel nodrag nopan max-h-44 overflow-y-auto overscroll-contain rounded-md border border-border/60 bg-background/70">
             {allCoverages.map((item) => (
               <button
                 key={item.subject}

@@ -12,10 +12,11 @@ import { CATEGORIAS, CATEGORIAS_PUBLICAS } from '@/lib/guide-editorial-options';
 import MarkdownEditor from '@/components/admin/MarkdownEditor';
 import {
   Type, Search, FileText, Megaphone, Link2, AlertTriangle,
-  CheckCircle, Loader2, Plus, Trash2, Save, Cog, Eye, Copy, Check,
+  CheckCircle, Loader2, Plus, Trash2, Save, Cog, Eye, Copy, Check, Sparkles, MousePointerClick,
 } from 'lucide-react';
 import type { GeneratedGuideData } from './GuideFlowPreview';
 import { useGuideAuthors } from '@/hooks/useGuideAuthors';
+import { useGuides } from '@/hooks/useGuides';
 
 type EditorNodeType = 'meta' | 'seo' | 'content' | 'cta' | 'links';
 
@@ -54,6 +55,16 @@ interface Props {
 }
 
 // ─── Slug validation ───
+function slugifyGuideTitle(title: string): string {
+  return title
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function useSlugValidation(slug: string, originalSlug: string) {
   const [status, setStatus] = useState<'idle' | 'checking' | 'ok' | 'conflict'>('idle');
 
@@ -199,7 +210,14 @@ function MetaEditor({ local, update, slugStatus, internalCode }: {
       </div>
       <div className="space-y-1.5 sm:col-span-2 sm:row-start-1">
         <Label>Título</Label>
-        <Input value={local.title} onChange={(e) => update('title', e.target.value)} />
+        <Input
+          value={local.title}
+          onChange={(e) => {
+            const nextTitle = e.target.value;
+            update('title', nextTitle);
+            update('slug', slugifyGuideTitle(nextTitle));
+          }}
+        />
       </div>
 
       <div className="space-y-1.5 sm:col-span-2 sm:row-start-2">
@@ -448,6 +466,27 @@ function LinksEditor({ local, update }: {
   update: <K extends keyof GeneratedGuideData>(key: K, value: GeneratedGuideData[K]) => void;
 }) {
   const links = local.internal_links;
+  const { data: availableGuides = [], isLoading } = useGuides(false);
+  const [selectionMode, setSelectionMode] = useState<'manual' | 'automatic'>('manual');
+  const [selectedSlug, setSelectedSlug] = useState<string>();
+
+  const normalizedWords = (text: string) => new Set(
+    text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((word) => word.length >= 4 && !['como', 'para', 'mais', 'sobre', 'guia', 'guias'].includes(word))
+  );
+  const sourceWords = normalizedWords(`${local.title} ${local.short_description} ${local.category} ${local.public_category} ${local.content_markdown}`);
+  const suggestions = availableGuides
+    .filter((guide) => guide.slug !== local.slug && !links.some((link) => link.url === `/guias/${guide.slug}`))
+    .map((guide) => {
+      const candidateWords = normalizedWords(`${guide.title} ${guide.short_description} ${guide.category} ${guide.public_category}`);
+      const overlap = [...sourceWords].filter((word) => candidateWords.has(word)).length;
+      const score = overlap * 2 + (guide.category === local.category ? 5 : 0) + (guide.public_category === local.public_category ? 3 : 0);
+      return { guide, score };
+    })
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score || a.guide.title.localeCompare(b.guide.title, 'pt-BR'))
+    .slice(0, 5);
 
   const updateLink = (index: number, field: 'label' | 'url', value: string) => {
     const updated = [...links];
@@ -463,8 +502,61 @@ function LinksEditor({ local, update }: {
     update('internal_links', [...links, { label: '', url: '' }]);
   };
 
+  const addSelectedGuide = (slug: string) => {
+    const guide = availableGuides.find((item) => item.slug === slug);
+    if (!guide || links.some((link) => link.url === `/guias/${guide.slug}`)) return;
+    update('internal_links', [...links, { label: guide.title, url: `/guias/${guide.slug}` }]);
+    setSelectedSlug(undefined);
+  };
+
+  const applyAutomaticSuggestions = () => {
+    const automaticLinks = suggestions.map(({ guide }) => ({ label: guide.title, url: `/guias/${guide.slug}` }));
+    update('internal_links', [...links, ...automaticLinks]);
+  };
+
   return (
     <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted/40 p-1">
+        <Button type="button" size="sm" variant={selectionMode === 'manual' ? 'default' : 'ghost'} onClick={() => setSelectionMode('manual')} className="gap-1.5">
+          <MousePointerClick className="h-3.5 w-3.5" /> Manual
+        </Button>
+        <Button type="button" size="sm" variant={selectionMode === 'automatic' ? 'default' : 'ghost'} onClick={() => setSelectionMode('automatic')} className="gap-1.5">
+          <Sparkles className="h-3.5 w-3.5" /> Automático
+        </Button>
+      </div>
+
+      {selectionMode === 'manual' ? (
+        <div className="space-y-1.5 rounded-lg border bg-muted/20 p-3">
+          <Label>Selecionar um guia existente</Label>
+          <Select value={selectedSlug} onValueChange={addSelectedGuide}>
+            <SelectTrigger className="focus:ring-0 focus:ring-offset-0">
+              <SelectValue placeholder={isLoading ? 'Carregando guias...' : 'Escolha um guia para adicionar'} />
+            </SelectTrigger>
+            <SelectContent>
+              {availableGuides.filter((guide) => guide.slug !== local.slug && !links.some((link) => link.url === `/guias/${guide.slug}`)).map((guide) => (
+                <SelectItem key={guide.id} value={guide.slug}>{guide.title}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-muted-foreground">O título e a URL correta são preenchidos automaticamente.</p>
+        </div>
+      ) : (
+        <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold">Sugestões por relevância</p>
+              <p className="text-[10px] text-muted-foreground">Categoria, título e termos do conteúdo são comparados.</p>
+            </div>
+            <Button type="button" size="sm" onClick={applyAutomaticSuggestions} disabled={!suggestions.length} className="shrink-0 gap-1.5">
+              <Sparkles className="h-3.5 w-3.5" /> Adicionar {suggestions.length || ''}
+            </Button>
+          </div>
+          {suggestions.length ? suggestions.map(({ guide }) => (
+            <div key={guide.id} className="truncate rounded-md bg-background/70 px-2 py-1.5 text-xs">{guide.title}</div>
+          )) : <p className="py-2 text-center text-xs text-muted-foreground">Nenhuma nova sugestão relevante.</p>}
+        </div>
+      )}
+
       {links.map((link, i) => (
         <div key={i} className="flex items-start gap-2 p-2 rounded-lg border bg-muted/20">
           <div className="flex-1 space-y-1.5">
@@ -487,7 +579,7 @@ function LinksEditor({ local, update }: {
         </div>
       ))}
       <Button variant="outline" size="sm" onClick={addLink} className="gap-1.5 w-full">
-        <Plus className="h-3.5 w-3.5" /> Adicionar link
+        <Plus className="h-3.5 w-3.5" /> Adicionar URL manualmente
       </Button>
     </div>
   );

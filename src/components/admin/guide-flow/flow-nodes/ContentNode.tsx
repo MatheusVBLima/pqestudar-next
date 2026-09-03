@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Badge } from '@/components/ui/badge';
 import { FileText, ListChecks, CheckCircle } from 'lucide-react';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 
 interface ContentNodeData {
   label: string;
@@ -39,7 +40,14 @@ function ContentNodeComponent({ data }: { data: ContentNodeData }) {
       </div>
 
       <div className="p-3 space-y-1.5 text-xs">
-        <p className="nodrag nowheel max-h-44 overflow-y-auto whitespace-pre-wrap pr-1 text-muted-foreground leading-relaxed">{preview}</p>
+        <div className="nowheel nodrag nopan max-h-52 overflow-y-auto overflow-x-hidden overscroll-contain pr-1">
+          <MarkdownContent
+            variant="prose"
+            className="pointer-events-none break-words text-[11px] leading-relaxed text-foreground/85 [&_a]:break-all [&_a]:text-primary [&_blockquote]:my-2 [&_code]:text-[10px] [&_h1]:mb-2 [&_h1]:mt-1 [&_h1]:text-sm [&_h2]:mb-2 [&_h2]:mt-1 [&_h2]:text-sm [&_h3]:mb-1 [&_h3]:mt-2 [&_h3]:text-xs [&_img]:my-2 [&_img]:max-h-36 [&_img]:w-full [&_img]:object-cover [&_li]:mb-0.5 [&_ol]:mb-2 [&_p]:mb-2 [&_pre]:my-2 [&_table]:text-[10px] [&_ul]:mb-2"
+          >
+            {preview}
+          </MarkdownContent>
+        </div>
         <div className="flex justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/50">
           <span>{wordCount} palavras</span>
           <span>{content?.split('\n').filter((l: string) => /^###? /.test(l)).length ?? 0} headings</span>

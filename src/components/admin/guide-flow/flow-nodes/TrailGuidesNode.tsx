@@ -53,7 +53,7 @@ function TrailGuidesNodeComponent({ data }: { data: TrailGuidesNodeData }) {
         </div>
 
         {data.guides.length > 0 ? (
-          <div className="nodrag nopan max-h-72 space-y-1.5 overflow-y-auto pr-1">
+          <div className="nowheel nodrag nopan max-h-72 space-y-1.5 overflow-y-auto overscroll-contain pr-1">
             {data.guides.map((guide) => {
               const association = data.associations?.find((item) => item.guide.id === guide.id);
               const href = guide.slug ? `/guias/${guide.slug}?preview=1` : undefined;

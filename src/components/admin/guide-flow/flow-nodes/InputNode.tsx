@@ -107,7 +107,7 @@ function FlowSelect({
       {open && (
         <div
           role="listbox"
-          className="absolute left-0 top-[calc(100%+4px)] z-[1000] max-h-52 w-full min-w-[var(--radix-select-trigger-width)] overflow-y-auto rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
+          className="nowheel nodrag nopan absolute left-0 top-[calc(100%+4px)] z-[1000] max-h-52 w-full min-w-[var(--radix-select-trigger-width)] overflow-y-auto overscroll-contain rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
         >
           {options.map((option) => {
             const isSelected = option.value === value;
@@ -217,7 +217,7 @@ function ToolPicker({
               className="h-8 rounded-md text-xs"
             />
           </div>
-          <div className="max-h-56 overflow-y-auto p-1">
+          <div className="nowheel nodrag nopan max-h-56 overflow-y-auto overscroll-contain p-1">
             {filteredTools.length > 0 ? filteredTools.map((tool) => {
               const hasInfo = hasToolPageInfo(tool);
               return (

@@ -78,7 +78,7 @@ function SourcesNodeComponent({ data }: { data: SourcesNodeData }) {
           </div>
         </div>
 
-        <div className="p-3 space-y-3 max-h-[520px] overflow-y-auto">
+        <div className="nowheel nodrag nopan max-h-[520px] space-y-3 overflow-y-auto overscroll-contain p-3">
           {isLoading && (
             <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground text-xs">
               <Loader2 className="h-4 w-4 animate-spin" /> Carregando Biblioteca…

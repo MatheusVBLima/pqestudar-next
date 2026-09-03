@@ -27,7 +27,12 @@ function LinksNodeComponent({ data }: { data: LinksNodeData }) {
         </Badge>
       </div>
 
-      <div className="p-3 space-y-1 text-xs max-h-[180px] overflow-y-auto">
+      <div className="nowheel nodrag nopan max-h-[180px] space-y-1 overflow-y-auto overscroll-contain p-3 text-xs">
+        {!links?.length && (
+          <p className="py-3 text-center text-[10px] leading-relaxed text-muted-foreground">
+            Selecione os links manualmente ou gere sugestões automáticas.
+          </p>
+        )}
         {links?.map((link, i) => (
           <div key={i} className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
             <ExternalLink className="h-3 w-3 shrink-0" />
