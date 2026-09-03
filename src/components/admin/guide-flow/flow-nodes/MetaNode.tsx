@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Badge } from '@/components/ui/badge';
-import { Type, Tag, User, FileText, Pencil, Eye } from 'lucide-react';
+import { Type, Tag, User, FileText, Pencil, Eye, Hash } from 'lucide-react';
 
 interface MetaNodeData {
   title?: string;
@@ -10,10 +10,11 @@ interface MetaNodeData {
   public_category?: string;
   author_name?: string;
   short_description?: string;
+  internal_code?: string;
 }
 
 function MetaNodeComponent({ data }: { data: MetaNodeData }) {
-  const { title, slug, category, public_category, author_name, short_description } = data;
+  const { title, slug, category, public_category, author_name, short_description, internal_code } = data;
 
   return (
     <div className="bg-card border border-primary/30 rounded-[1.2rem] shadow-card w-[320px] overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all group">
@@ -37,6 +38,12 @@ function MetaNodeComponent({ data }: { data: MetaNodeData }) {
           <Tag className="h-3 w-3 shrink-0" />
           <span className="truncate">{slug}</span>
         </div>
+        {internal_code && (
+          <div className="flex items-center gap-2 text-muted-foreground" title="Código interno do guia">
+            <Hash className="h-3 w-3 shrink-0" />
+            <span className="font-mono text-[10px] font-medium tracking-wider text-foreground">{internal_code}</span>
+          </div>
+        )}
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="secondary" className="text-[10px] h-5" title="Categoria Interna (editorial)">
             <Tag className="h-2.5 w-2.5 mr-1 opacity-60" />{category || '—'}

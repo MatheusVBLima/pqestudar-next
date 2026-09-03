@@ -12,7 +12,7 @@ import { CATEGORIAS, CATEGORIAS_PUBLICAS } from '@/lib/guide-editorial-options';
 import MarkdownEditor from '@/components/admin/MarkdownEditor';
 import {
   Type, Search, FileText, Megaphone, Link2, AlertTriangle,
-  CheckCircle, Loader2, Plus, Trash2, Save, Cog, Eye,
+  CheckCircle, Loader2, Plus, Trash2, Save, Cog, Eye, Copy, Check,
 } from 'lucide-react';
 import type { GeneratedGuideData } from './GuideFlowPreview';
 import { useGuideAuthors } from '@/hooks/useGuideAuthors';
@@ -164,23 +164,45 @@ function MetaEditor({ local, update, slugStatus, internalCode }: {
   internalCode: string;
 }) {
   const { authors } = useGuideAuthors();
+  const [codeCopied, setCodeCopied] = useState(false);
   const [customAuthor, setCustomAuthor] = useState(
     !authors.some((author) => author.name === local.author_name)
   );
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-1.5">
-        <Label>Código interno</Label>
-        <Input value={internalCode} readOnly className="font-mono tracking-wider" />
-        <p className="text-[10px] text-muted-foreground">Criado automaticamente e usado como pasta das imagens.</p>
+    <div className="grid gap-4 sm:grid-cols-2">
+      <div className="space-y-1.5 sm:col-start-2 sm:row-start-5">
+        <Label className="text-xs text-muted-foreground">Código interno</Label>
+        <div className="flex items-center gap-2">
+          <Input
+            value={internalCode}
+            readOnly
+            disabled
+            className="h-9 max-w-[200px] font-mono text-sm tracking-wider disabled:cursor-default disabled:opacity-70"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            title="Copiar código interno"
+            onClick={() => {
+              void navigator.clipboard.writeText(internalCode);
+              setCodeCopied(true);
+              window.setTimeout(() => setCodeCopied(false), 2000);
+            }}
+          >
+            {codeCopied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+            <span className="sr-only">Copiar código interno</span>
+          </Button>
+        </div>
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 sm:col-span-2 sm:row-start-1">
         <Label>Título</Label>
         <Input value={local.title} onChange={(e) => update('title', e.target.value)} />
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 sm:col-span-2 sm:row-start-2">
         <Label className="flex items-center gap-2">
           Slug
           {slugStatus === 'checking' && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
@@ -199,13 +221,13 @@ function MetaEditor({ local, update, slugStatus, internalCode }: {
         <p className="text-[10px] text-muted-foreground">Apenas letras minúsculas, números e hífens.</p>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 rounded-md border border-primary/25 bg-primary/5 p-3 sm:col-start-1 sm:row-start-4">
         <Label className="flex items-center gap-1.5">
           <Cog className="h-3.5 w-3.5 text-primary/70" />
           Categoria Interna
         </Label>
         <Select value={local.category} onValueChange={(v) => update('category', v)}>
-          <SelectTrigger>
+          <SelectTrigger className="focus:ring-0 focus:ring-offset-0">
             <SelectValue placeholder="Editorial..." />
           </SelectTrigger>
           <SelectContent>
@@ -217,13 +239,13 @@ function MetaEditor({ local, update, slugStatus, internalCode }: {
         <p className="text-[10px] text-muted-foreground">Usada para guiar a IA · não exibida ao público.</p>
       </div>
 
-      <div className="space-y-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/5 p-3">
+      <div className="space-y-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/5 p-3 sm:col-start-2 sm:row-start-4">
         <Label className="flex items-center gap-1.5">
           <Eye className="h-3.5 w-3.5 text-emerald-600" />
           Categoria Pública *
         </Label>
         <Select value={local.public_category} onValueChange={(v) => update('public_category', v)}>
-          <SelectTrigger className="bg-background">
+          <SelectTrigger className="bg-background focus:ring-0 focus:ring-offset-0">
             <SelectValue placeholder="Badge no site..." />
           </SelectTrigger>
           <SelectContent>
@@ -235,7 +257,7 @@ function MetaEditor({ local, update, slugStatus, internalCode }: {
         <p className="text-[10px] text-muted-foreground">Apenas badge visual · NÃO influencia geração.</p>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 sm:col-start-1 sm:row-start-5">
         <div className="flex items-center justify-between">
           <Label>Autor</Label>
           <Button
@@ -255,7 +277,7 @@ function MetaEditor({ local, update, slugStatus, internalCode }: {
           />
         ) : (
           <Select value={local.author_name} onValueChange={(v) => update('author_name', v)}>
-            <SelectTrigger>
+            <SelectTrigger className="h-9 focus:ring-0 focus:ring-offset-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -272,7 +294,7 @@ function MetaEditor({ local, update, slugStatus, internalCode }: {
         )}
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 sm:col-span-2 sm:row-start-3">
         <Label>Descrição curta</Label>
         <Textarea
           value={local.short_description}

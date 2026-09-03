@@ -120,7 +120,7 @@ function buildInitialEdges(): Edge[] {
   ];
 }
 
-export function buildGeneratedLayout(data: GeneratedGuideData, structureNames: string[], libraryName: string | null, onRegenerateImage?: (prompt: string, position: string) => void, onEditPrompt?: (position: string) => void): { nodes: Node[]; edges: Edge[] } {
+export function buildGeneratedLayout(data: GeneratedGuideData, structureNames: string[], libraryName: string | null, onRegenerateImage?: (prompt: string, position: string) => void, onEditPrompt?: (position: string) => void, internalCode?: string): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
   const col = 0;
@@ -134,7 +134,8 @@ export function buildGeneratedLayout(data: GeneratedGuideData, structureNames: s
   // Column 0: Meta + SEO
   addNode('meta', 'metaNode', {
     title: data.title, slug: data.slug, category: data.category,
-    author_name: data.author_name, short_description: data.short_description,
+    public_category: data.public_category, author_name: data.author_name,
+    short_description: data.short_description, internal_code: internalCode ?? data.internal_code,
   }, 0, 0);
 
   addNode('seo', 'seoNode', {
@@ -339,8 +340,8 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
     if (!guideData || !guideData.title) {
       return { nodes: buildInitialNodes(), edges: buildInitialEdges() };
     }
-    return buildGeneratedLayout(guideData, structureNames, libraryName, onRegenerateImage, handleEditImagePrompt);
-  }, [guideData, handleEditImagePrompt, libraryName, onRegenerateImage, structureNames]);
+    return buildGeneratedLayout(guideData, structureNames, libraryName, onRegenerateImage, handleEditImagePrompt, guideInternalCode);
+  }, [guideData, guideInternalCode, handleEditImagePrompt, libraryName, onRegenerateImage, structureNames]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges);
@@ -373,11 +374,11 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
 
   useEffect(() => {
     if (guideData && guideData.title) {
-      const layout = buildGeneratedLayout(guideData, structureNames, libraryName, onRegenerateImage, handleEditImagePrompt);
+      const layout = buildGeneratedLayout(guideData, structureNames, libraryName, onRegenerateImage, handleEditImagePrompt, guideInternalCode);
       setNodes(layout.nodes);
       setEdges(layout.edges);
     }
-  }, [guideData, handleEditImagePrompt, libraryName, onRegenerateImage, setEdges, setNodes, structureNames]);
+  }, [guideData, guideInternalCode, handleEditImagePrompt, libraryName, onRegenerateImage, setEdges, setNodes, structureNames]);
 
   const onConnect = useCallback((params: Connection) => {
     setEdges((eds) => addEdge(params, eds));
