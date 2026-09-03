@@ -286,6 +286,7 @@ function nodeToEditorData(nodeId: string, nodeType: string, nodeData: Record<str
 
 interface FlowCanvasProps {
   guideData: GeneratedGuideData | null;
+  guideInternalCode: string;
   prefillInputs?: GuideFlowInputs | null;
   isGenerating: boolean;
   onGenerate: (inputs: GuideFlowInputs) => void;
@@ -299,7 +300,7 @@ interface FlowCanvasProps {
   editorialSummary?: React.ReactNode;
 }
 
-export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate, onGuideDataChange, sources, onInputsChange, onTargetTypeChange, onRegenerateImage, onUpdateImagePrompt, readOnly = false, editorialSummary }: FlowCanvasProps) {
+export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGenerating, onGenerate, onGuideDataChange, sources, onInputsChange, onTargetTypeChange, onRegenerateImage, onUpdateImagePrompt, readOnly = false, editorialSummary }: FlowCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const initialLayoutAppliedRef = useRef(false);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -665,6 +666,7 @@ export function FlowCanvas({ guideData, prefillInputs, isGenerating, onGenerate,
           onClose={() => setEditorOpen(false)}
           data={editorData}
           guideData={guideData}
+          guideInternalCode={guideInternalCode}
           onSave={handleEditorSave}
         />
       )}

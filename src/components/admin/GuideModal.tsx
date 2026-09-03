@@ -22,6 +22,7 @@ import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/error-message";
 import { useGuideAuthors } from "@/hooks/useGuideAuthors";
 import { useAuth } from "@/hooks/useAuth";
+import { createGuideInternalCode, uploadGuideImage } from "@/lib/guide-assets";
 
 interface GuideModalProps {
   open: boolean;
@@ -278,9 +279,11 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
   const coverFileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [internalCode, setInternalCode] = useState(guide?.internal_code || "");
 
   useEffect(() => {
     if (guide) {
+      setInternalCode(guide.internal_code);
       setTitle(guide.title);
       setSlug(guide.slug);
       setSlugManual(true);
@@ -319,6 +322,7 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
         imagePath: l.imagePath || null,
       })));
     } else {
+      setInternalCode(createGuideInternalCode());
       setTitle(""); setSlug(""); setSlugManual(false);
       setCategory(CATEGORIAS[0].label); setPublicCategory("Guias"); setShortDescription("");
       setContentMarkdown(""); setSeoTitle(""); setSeoDescription("");
@@ -403,6 +407,7 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
       payload.internal_links = validLinks;
       payload.author_name = authorName.trim() || "Equipe PqEstudar";
       payload.cover_image_url = coverImageUrl || null;
+      payload.internal_code = internalCode;
       if (guide) payload.id = guide.id;
       await onSave(payload);
       onClose();
@@ -437,9 +442,7 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
 
           <TabsContent value="basic" className="space-y-4 mt-4">
             {/* Internal Code (read-only) */}
-            {guide && (
-              <InternalCodeField code={guide.internal_code} />
-            )}
+            <InternalCodeField code={internalCode} />
             <Separator />
             {/* Cover Image */}
             <div>
@@ -510,17 +513,8 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
                           }
                           setCoverUploading(true);
                           try {
-                            const ext = file.name.split('.').pop() || 'png';
-                            const id = guide?.id || 'new';
-                            const path = `${id}/${Date.now()}.${ext}`;
-                            const { error: uploadError } = await supabase.storage
-                              .from('guide-covers')
-                              .upload(path, file, { upsert: false });
-                            if (uploadError) throw uploadError;
-                            const { data: publicData } = supabase.storage
-                              .from('guide-covers')
-                              .getPublicUrl(path);
-                            setCoverImageUrl(publicData.publicUrl);
+                            const uploaded = await uploadGuideImage(file, internalCode, 'cover');
+                            setCoverImageUrl(uploaded.publicUrl);
                           } catch (err: unknown) {
                             toast({ title: "Erro no upload", description: getErrorMessage(err), variant: "destructive" });
                           } finally {
@@ -671,7 +665,7 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
           <TabsContent value="content" className="space-y-4 mt-4">
             <div>
               <Label>Conteúdo do guia</Label>
-              <MarkdownEditor visual value={contentMarkdown} onChange={setContentMarkdown} placeholder="Comece a escrever ou cole seu conteúdo aqui..." rows={16} />
+              <MarkdownEditor visual guideInternalCode={internalCode} value={contentMarkdown} onChange={setContentMarkdown} placeholder="Comece a escrever ou cole seu conteúdo aqui..." rows={16} />
             </div>
           </TabsContent>
 

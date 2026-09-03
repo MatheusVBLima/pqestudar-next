@@ -21,6 +21,7 @@ export interface ImagePrompt {
 }
 
 export interface GeneratedGuideData {
+  internal_code?: string;
   title: string;
   slug: string;
   short_description: string;

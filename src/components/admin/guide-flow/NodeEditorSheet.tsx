@@ -49,6 +49,7 @@ interface Props {
   onClose: () => void;
   data: NodeEditorData | null;
   guideData: GeneratedGuideData;
+  guideInternalCode: string;
   onSave: (updated: GeneratedGuideData) => void;
 }
 
@@ -81,7 +82,7 @@ function useSlugValidation(slug: string, originalSlug: string) {
   return status;
 }
 
-export function NodeEditorSheet({ open, onClose, data, guideData, onSave }: Props) {
+export function NodeEditorSheet({ open, onClose, data, guideData, guideInternalCode, onSave }: Props) {
   const [local, setLocal] = useState<GeneratedGuideData>(guideData);
   const [originalSlug] = useState(guideData.slug);
 
@@ -125,9 +126,9 @@ export function NodeEditorSheet({ open, onClose, data, guideData, onSave }: Prop
         </SheetHeader>
 
         <div className="-mr-6 min-h-0 flex-1 space-y-5 overflow-y-auto pb-4 pr-6">
-          {data.nodeType === 'meta' && <MetaEditor local={local} update={update} slugStatus={slugStatus} />}
+          {data.nodeType === 'meta' && <MetaEditor local={local} update={update} slugStatus={slugStatus} internalCode={guideInternalCode} />}
           {data.nodeType === 'seo' && <SeoEditor local={local} update={update} />}
-          {data.nodeType === 'content' && <ContentEditor local={local} update={update} sectionIndex={data.sectionIndex} />}
+          {data.nodeType === 'content' && <ContentEditor local={local} update={update} sectionIndex={data.sectionIndex} internalCode={guideInternalCode} />}
           {data.nodeType === 'cta' && <CtaEditor local={local} update={update} ctaKey={data.nodeId as 'cta_top' | 'cta_middle' | 'cta_final'} />}
           {data.nodeType === 'links' && <LinksEditor local={local} update={update} />}
         </div>
@@ -156,10 +157,11 @@ export function NodeEditorSheet({ open, onClose, data, guideData, onSave }: Prop
 }
 
 // ─── Meta Editor ───
-function MetaEditor({ local, update, slugStatus }: {
+function MetaEditor({ local, update, slugStatus, internalCode }: {
   local: GeneratedGuideData;
   update: <K extends keyof GeneratedGuideData>(key: K, value: GeneratedGuideData[K]) => void;
   slugStatus: 'idle' | 'checking' | 'ok' | 'conflict';
+  internalCode: string;
 }) {
   const { authors } = useGuideAuthors();
   const [customAuthor, setCustomAuthor] = useState(
@@ -168,6 +170,11 @@ function MetaEditor({ local, update, slugStatus }: {
 
   return (
     <div className="space-y-4">
+      <div className="space-y-1.5">
+        <Label>Código interno</Label>
+        <Input value={internalCode} readOnly className="font-mono tracking-wider" />
+        <p className="text-[10px] text-muted-foreground">Criado automaticamente e usado como pasta das imagens.</p>
+      </div>
       <div className="space-y-1.5">
         <Label>Título</Label>
         <Input value={local.title} onChange={(e) => update('title', e.target.value)} />
@@ -316,10 +323,11 @@ function SeoEditor({ local, update }: {
 }
 
 // ─── Content Section Editor ───
-function ContentEditor({ local, update, sectionIndex }: {
+function ContentEditor({ local, update, sectionIndex, internalCode }: {
   local: GeneratedGuideData;
   update: <K extends keyof GeneratedGuideData>(key: K, value: GeneratedGuideData[K]) => void;
   sectionIndex?: number;
+  internalCode: string;
 }) {
   const idx = sectionIndex ?? 0;
   const baseSectionsRef = useRef(parseSections(local.content_markdown));
@@ -354,7 +362,7 @@ function ContentEditor({ local, update, sectionIndex }: {
         <Badge variant="secondary" className="text-[10px]">{wordCount} palavras</Badge>
         <Badge variant="outline" className="text-[10px]">Seção {(sectionIndex ?? 0) + 1}</Badge>
       </div>
-      <MarkdownEditor visual showWordCount={false} value={sectionContent} onChange={handleContentChange} />
+      <MarkdownEditor visual showWordCount={false} guideInternalCode={internalCode} value={sectionContent} onChange={handleContentChange} />
     </div>
   );
 }

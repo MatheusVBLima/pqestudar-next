@@ -7,10 +7,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MarkdownContent } from "@/components/ui/markdown-content";
-import { Eye, Code2, CodeXml, Heading2, Heading3, Minus, ImageIcon, Info, Link2, Bold, Italic, List, ListChecks, ListOrdered, Quote, Redo2, Undo2, Highlighter, Youtube } from "lucide-react";
+import { Eye, Code2, CodeXml, Heading2, Heading3, Minus, ImageIcon, Info, Link2, Bold, Italic, List, ListChecks, ListOrdered, Quote, Redo2, Undo2, Highlighter, Youtube, Upload, Loader2 } from "lucide-react";
 import { marked, Renderer, Tokens } from "marked";
 import TurndownService from "turndown";
 import DOMPurify from "dompurify";
+import { uploadGuideImage } from "@/lib/guide-assets";
+import { toast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/error-message";
 
 // Configure marked with custom renderer for our classes
 const renderer = new Renderer();
@@ -191,6 +194,8 @@ interface MarkdownEditorProps {
   /** Starts in a visual, blog-style editor while keeping Markdown as storage. */
   visual?: boolean;
   showWordCount?: boolean;
+  /** Code used as the Supabase folder for uploaded inline images. */
+  guideInternalCode?: string;
 }
 
 const HIGHLIGHT_COLORS = [
@@ -294,6 +299,7 @@ export default function MarkdownEditor({
   showHeadings = true,
   visual = false,
   showWordCount = true,
+  guideInternalCode,
 }: MarkdownEditorProps) {
   const [activeTab, setActiveTab] = useState<string>(visual ? "visual" : "edit");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -312,6 +318,14 @@ export default function MarkdownEditor({
   const [videoLayout, setVideoLayout] = useState<VideoLayout>("right");
   const [videoFormat, setVideoFormat] = useState<VideoFormat>("vertical");
   const videoMarkdownSelectionRef = useRef({ start: 0, end: 0 });
+  const imageMarkdownSelectionRef = useRef({ start: 0, end: 0 });
+  const imageFileRef = useRef<HTMLInputElement>(null);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [imageMode, setImageMode] = useState<"url" | "upload">("url");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   latestValueRef.current = value;
   
   const wordCount = countMarkdownWords(value);
@@ -356,17 +370,60 @@ export default function MarkdownEditor({
     if (url) runVisualCommand("createLink", url);
   }, [runVisualCommand]);
 
-  const insertVisualImage = useCallback(() => {
-    const url = window.prompt("Cole a URL da imagem:");
+  const openImageDialog = useCallback(() => {
+    if (activeTab === "visual") {
+      const selection = window.getSelection();
+      if (selection?.rangeCount && visualEditorRef.current?.contains(selection.anchorNode)) {
+        savedVisualRangeRef.current = selection.getRangeAt(0).cloneRange();
+      }
+    } else if (textareaRef.current) {
+      imageMarkdownSelectionRef.current = { start: textareaRef.current.selectionStart, end: textareaRef.current.selectionEnd };
+    }
+    setImageUrl("");
+    setImageAlt("");
+    setImageFile(null);
+    setImageMode("url");
+    setImageDialogOpen(true);
+  }, [activeTab]);
+
+  const insertResolvedImage = useCallback((url: string) => {
     if (!url) return;
-    const alt = window.prompt("Descreva a imagem para acessibilidade:", "") || "";
     const image = document.createElement("img");
     image.src = url;
-    image.alt = alt;
+    image.alt = imageAlt.trim();
     image.loading = "lazy";
+    image.decoding = "async";
     image.style.maxWidth = "100%";
-    runVisualCommand("insertHTML", image.outerHTML);
-  }, [runVisualCommand]);
+    if (activeTab === "visual") {
+      const selection = window.getSelection();
+      if (selection && savedVisualRangeRef.current) {
+        selection.removeAllRanges();
+        selection.addRange(savedVisualRangeRef.current);
+      }
+      runVisualCommand("insertHTML", `${image.outerHTML}<p><br></p>`);
+    } else {
+      const { start, end } = imageMarkdownSelectionRef.current;
+      onChange(value.substring(0, start) + `\n\n${image.outerHTML}\n\n` + value.substring(end));
+    }
+    savedVisualRangeRef.current = null;
+    setImageDialogOpen(false);
+  }, [activeTab, imageAlt, onChange, runVisualCommand, value]);
+
+  const uploadInlineImage = useCallback(async () => {
+    if (!guideInternalCode || !imageFile) return;
+    setImageUploading(true);
+    try {
+      const uploaded = await uploadGuideImage(imageFile, guideInternalCode, "content");
+      setImageUrl(uploaded.publicUrl);
+      insertResolvedImage(uploaded.publicUrl);
+      toast({ title: "Imagem enviada", description: `Salva na pasta ${guideInternalCode}.` });
+    } catch (error) {
+      toast({ title: "Erro no upload", description: getErrorMessage(error), variant: "destructive" });
+    } finally {
+      setImageUploading(false);
+      if (imageFileRef.current) imageFileRef.current.value = "";
+    }
+  }, [guideInternalCode, imageFile, insertResolvedImage]);
 
   const openVideoDialog = useCallback(() => {
     if (activeTab === "visual") {
@@ -539,7 +596,7 @@ export default function MarkdownEditor({
     }, 0);
   }, [value, onChange]);
 
-  const insertImage = useCallback(() => {
+  const _insertImage = useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
     const start = textarea.selectionStart;
@@ -923,7 +980,7 @@ export default function MarkdownEditor({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => activeTab === "visual" ? insertVisualImage() : insertImage()}
+                onClick={openImageDialog}
                 title="Inserir imagem inline"
               >
                 <ImageIcon className="h-4 w-4" />
@@ -1083,6 +1140,40 @@ export default function MarkdownEditor({
           </span>
         </p>
       )}
+
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent className="rounded-2xl sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><ImageIcon className="h-5 w-5 text-primary" /> Inserir imagem</DialogTitle>
+            <DialogDescription>Use uma imagem da internet ou envie um arquivo para o guia.</DialogDescription>
+          </DialogHeader>
+          <Tabs value={imageMode} onValueChange={(mode) => setImageMode(mode as "url" | "upload")}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4" /> URL</TabsTrigger>
+              <TabsTrigger value="upload" disabled={!guideInternalCode}><Upload className="mr-2 h-4 w-4" /> Upload</TabsTrigger>
+            </TabsList>
+            <TabsContent value="url" className="space-y-2 pt-3">
+              <Label htmlFor="editor-image-url">URL da imagem</Label>
+              <Input id="editor-image-url" value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} placeholder="https://exemplo.com/imagem.png" autoFocus />
+            </TabsContent>
+            <TabsContent value="upload" className="space-y-2 pt-3">
+              <Label htmlFor="editor-image-file">Arquivo da imagem</Label>
+              <Input ref={imageFileRef} id="editor-image-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" disabled={imageUploading} onChange={(event) => setImageFile(event.target.files?.[0] ?? null)} />
+              <p className="text-xs text-muted-foreground">A imagem será renomeada automaticamente pela ordem de envio.</p>
+            </TabsContent>
+          </Tabs>
+          <div className="space-y-2">
+            <Label htmlFor="editor-image-alt">Descrição da imagem (acessibilidade)</Label>
+            <Input id="editor-image-alt" value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} placeholder="Descreva o que aparece na imagem" />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setImageDialogOpen(false)}>Cancelar</Button>
+            {imageMode === "url" && <Button type="button" onClick={() => insertResolvedImage(imageUrl.trim())} disabled={!imageUrl.trim()}>Inserir imagem</Button>}
+            {imageMode === "upload" && !imageUploading && <Button type="button" onClick={() => void uploadInlineImage()} disabled={!imageFile}><Upload className="mr-2 h-4 w-4" /> Enviar e inserir</Button>}
+            {imageMode === "upload" && imageUploading && <Button type="button" disabled><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando</Button>}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={videoDialogOpen} onOpenChange={setVideoDialogOpen}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto rounded-2xl sm:max-w-3xl">

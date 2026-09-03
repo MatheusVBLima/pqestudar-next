@@ -20,6 +20,7 @@ import { Eye, Save, Send, RotateCcw } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-message';
 import { PUBLIC_SUPABASE_URL } from '@/lib/runtime-env';
 import { useAuth } from '@/hooks/useAuth';
+import { createGuideInternalCode } from '@/lib/guide-assets';
 
 const EMPTY_GUIDE: GeneratedGuideData = {
   title: '', slug: '', short_description: '', seo_title: '', seo_description: '',
@@ -57,6 +58,7 @@ export default function GuideFlow() {
   const [currentInputs, setCurrentInputs] = useState<GuideFlowInputs>(DEFAULT_GUIDE_FLOW_INPUTS);
   const [flowPrefill, setFlowPrefill] = useState<GuideFlowInputs | null>(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [internalCode, setInternalCode] = useState(() => createGuideInternalCode());
   const restoredGuideKeyRef = useRef<string | null>(null);
   const restoredToolIdRef = useRef<string | null>(null);
 
@@ -104,6 +106,7 @@ export default function GuideFlow() {
       }
       setIsReadOnly(isModeratorPanel && guide.is_published && !isOwner);
       setLinkedGuideId(guide.id);
+      setInternalCode(guide.internal_code);
 
       if (guide.flow_data) {
         // Restore full flow state
@@ -593,6 +596,7 @@ export default function GuideFlow() {
         cta_final_url: guideData.cta_final?.url || null,
         cta_final_text: guideData.cta_final?.text || null,
         flow_data: flowDataPayload as unknown as Json,
+        internal_code: internalCode,
       };
 
       if (linkedGuideId) {
@@ -602,7 +606,7 @@ export default function GuideFlow() {
         // Create new guide
         await createGuide.mutateAsync({
           ...guidePayload,
-          internal_code: `FLOW-${Date.now()}`,
+          internal_code: internalCode,
           is_featured: false,
           sort_order: 0,
         } as TablesInsert<'guides'>);
@@ -625,6 +629,7 @@ export default function GuideFlow() {
     setGuideData(null);
     setLinkedGuideId(null);
     setLinkedToolId(null);
+    setInternalCode(createGuideInternalCode());
   };
 
   return (
@@ -654,6 +659,7 @@ export default function GuideFlow() {
 
       <FlowCanvas
         guideData={guideData}
+        guideInternalCode={internalCode}
         prefillInputs={flowPrefill}
         isGenerating={isGenerating}
         onGenerate={handleGenerate}
