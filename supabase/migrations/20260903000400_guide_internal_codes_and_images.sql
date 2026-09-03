@@ -1,5 +1,5 @@
 -- One stable code for guides created manually or through the assisted flow.
-CREATE OR REPLACE FUNCTION public.generate_guide_internal_code()
+CREATE OR REPLACE FUNCTION public.new_guide_internal_code()
 RETURNS text
 LANGUAGE plpgsql
 VOLATILE
@@ -17,7 +17,7 @@ END;
 $$;
 
 ALTER TABLE public.guides
-  ALTER COLUMN internal_code SET DEFAULT public.generate_guide_internal_code();
+  ALTER COLUMN internal_code SET DEFAULT public.new_guide_internal_code();
 
 CREATE UNIQUE INDEX IF NOT EXISTS guides_internal_code_unique_idx
   ON public.guides (internal_code);
