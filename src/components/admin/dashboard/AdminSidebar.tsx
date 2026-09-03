@@ -35,6 +35,7 @@ const insightsItems = [
   { title: 'Concursos', href: '/admin/insights/concursos', icon: BookOpen },
   { title: 'Guias', href: '/admin/insights/guias', icon: BookOpen },
   { title: 'Exclusivos', href: '/admin/insights/exclusivos', icon: Sparkles },
+  { title: 'Cursos premium', href: '/admin/insights/premium-cursos', icon: GraduationCap },
   { title: 'Auditorias', href: '/admin/insights/auditorias', icon: Search },
   { title: 'Atividade', href: '/admin/insights/atividade-admin', icon: Shield },
 ];

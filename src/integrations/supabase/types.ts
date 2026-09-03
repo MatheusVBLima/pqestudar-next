@@ -4244,6 +4244,18 @@ export type Database = {
         Args: { end_at?: string | null; start_at?: string | null }
         Returns: Json
       }
+      analytics_premium_courses_dashboard: {
+        Args: { end_at?: string | null; start_at?: string | null }
+        Returns: Json
+      }
+      admin_new_signups_dashboard: {
+        Args: {
+          bucket_size?: string
+          end_at?: string | null
+          start_at?: string | null
+        }
+        Returns: Json
+      }
       featured_tool_click_counts_public: {
         Args: Record<PropertyKey, never>
         Returns: { tool_id: string; click_count: number }[]

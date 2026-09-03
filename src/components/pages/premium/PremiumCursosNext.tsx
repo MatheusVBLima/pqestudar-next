@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { ManageableCard } from "@/components/management/ManageableCard";
 import { usePremiumItemAdminActions } from "@/hooks/usePremiumItemAdminActions";
 import { PremiumItemEditDialog, type PremiumItemSaved } from "@/components/premium/PremiumItemEditDialog";
 import { PremiumBackButton } from "@/components/premium/PremiumBackButton";
+import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import {
   DndContext,
   closestCenter,
@@ -53,6 +54,8 @@ export default function PremiumCursosNext() {
   const { togglePublish, remove, reorder } = usePremiumItemAdminActions();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { track, analyticsReady } = useAnalyticsTracker();
+  const catalogTrackedRef = useRef(false);
 
   const openCreate = () => {
     setEditingId(null);
@@ -113,6 +116,17 @@ export default function PremiumCursosNext() {
     fetchCourses();
   }, [fetchCourses]);
 
+  useEffect(() => {
+    if (!analyticsReady || isManagementMode || loading || catalogTrackedRef.current) return;
+    catalogTrackedRef.current = true;
+    void track({
+      event_name: "premium_courses_catalog_view",
+      path: "/premium/cursos",
+      meta: { visible_courses: courses.length },
+      allowAnonymous: true,
+    });
+  }, [analyticsReady, courses.length, isManagementMode, loading, track]);
+
   const allTags = Array.from(new Set(courses.flatMap((course) => course.tags || []))).sort();
 
   const filteredCourses = isManagementMode
@@ -127,8 +141,29 @@ export default function PremiumCursosNext() {
         return matchesSearch && matchesTags;
       });
 
-  const toggleTag = (tag: string) =>
-    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+  useEffect(() => {
+    if (!analyticsReady || isManagementMode || !searchTerm.trim()) return;
+    const timeout = window.setTimeout(() => {
+      void track({
+        event_name: "premium_course_search",
+        path: "/premium/cursos",
+        meta: { query_length: searchTerm.trim().length, result_count: filteredCourses.length },
+        allowAnonymous: true,
+      });
+    }, 700);
+    return () => window.clearTimeout(timeout);
+  }, [analyticsReady, filteredCourses.length, isManagementMode, searchTerm, track]);
+
+  const toggleTag = (tag: string) => {
+    const active = selectedTags.includes(tag);
+    setSelectedTags((prev) => (active ? prev.filter((t) => t !== tag) : [...prev, tag]));
+    void track({
+      event_name: "premium_course_filter",
+      path: "/premium/cursos",
+      meta: { tag, action: active ? "remove" : "add" },
+      allowAnonymous: true,
+    });
+  };
   const clearFilters = () => {
     setSearchTerm("");
     setSelectedTags([]);
@@ -350,6 +385,13 @@ export default function PremiumCursosNext() {
                   <Link
                     key={course.id}
                     href={`/premium/cursos/${course.slug}`}
+                    onClick={() => void track({
+                      event_name: "premium_course_card_open",
+                      entity_type: "premium_item",
+                      entity_id: course.id,
+                      meta: { course_slug: course.slug },
+                      allowAnonymous: true,
+                    })}
                     aria-label={`Ver detalhes de ${course.title}`}
                     className="group block min-w-0 max-w-full rounded-[1.2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >

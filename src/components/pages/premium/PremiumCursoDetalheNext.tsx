@@ -20,6 +20,7 @@ import {
 import { usePremiumSavedItems } from "@/hooks/usePremiumSavedItems";
 import { PremiumBackButton } from "@/components/premium/PremiumBackButton";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { usePremiumCourseAnalytics } from "@/hooks/usePremiumCourseAnalytics";
 
 interface CourseDetail {
   id: string;
@@ -66,6 +67,7 @@ export default function PremiumCursoDetalheNext() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isSaved, toggleSave, isToggling } = usePremiumSavedItems();
+  const { trackCourseEvent } = usePremiumCourseAnalytics(course?.id, course?.slug);
 
   useEffect(() => {
     if (!slug) return;
@@ -239,7 +241,14 @@ export default function PremiumCursoDetalheNext() {
                 className="w-full sm:w-auto sm:min-w-[280px] h-12 text-base font-semibold"
                 asChild
               >
-                <a href={course.external_url!} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={course.external_url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackCourseEvent("premium_course_external_click", {
+                    destination_host: new URL(course.external_url!).hostname,
+                  })}
+                >
                   Acessar curso
                   <ExternalLink className="ml-2 h-4 w-4" />
                 </a>
@@ -248,7 +257,10 @@ export default function PremiumCursoDetalheNext() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => toggleSave(course.id, { title: course.title, slug: course.slug })}
+                onClick={() => {
+                  trackCourseEvent("premium_course_save_click", { action: saved ? "remove" : "save" });
+                  void toggleSave(course.id, { title: course.title, slug: course.slug });
+                }}
                 disabled={isToggling(course.id)}
                 className="text-muted-foreground hover:text-foreground"
               >
@@ -281,7 +293,10 @@ export default function PremiumCursoDetalheNext() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toggleSave(course.id, { title: course.title, slug: course.slug })}
+              onClick={() => {
+                trackCourseEvent("premium_course_save_click", { action: saved ? "remove" : "save" });
+                void toggleSave(course.id, { title: course.title, slug: course.slug });
+              }}
               disabled={isToggling(course.id)}
               className="mt-2"
             >
