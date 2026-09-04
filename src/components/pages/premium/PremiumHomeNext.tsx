@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Briefcase, Gift, Bookmark, ArrowRight } from "lucide-react";
+import { BookOpen, Briefcase, Gift, Bookmark, ArrowRight, MapPinned } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { usePageSettings } from "@/hooks/usePageSettings";
@@ -38,6 +38,7 @@ const quickAccess = [
   { title: "Cursos", icon: BookOpen, href: "/premium/cursos", color: "text-blue-500" },
   { title: "Vagas", icon: Briefcase, href: "/premium/vagas", color: "text-green-500" },
   { title: "Benefícios", icon: Gift, href: "/premium/beneficios", color: "text-purple-500" },
+  { title: "Mapa", icon: MapPinned, href: "/premium/mapa-beneficios", color: "text-fuchsia-500" },
   { title: "Salvos", icon: Bookmark, href: "/premium/salvos", color: "text-orange-500" },
 ];
 
@@ -202,7 +203,7 @@ export default function PremiumHomeNext() {
         />
 
         <section aria-label="Acessos rápidos">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
             {quickAccess.map((item) => (
               <Link
                 key={item.href}

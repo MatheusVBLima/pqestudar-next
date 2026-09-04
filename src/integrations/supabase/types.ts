@@ -2499,6 +2499,402 @@ export type Database = {
         }
         Relationships: []
       }
+      benefit_coverages: {
+          Row: {
+            benefit_id: string
+          boundary_path: string
+          center_lat: number
+          center_lng: number
+          country_code: string
+          coverage_level: string
+          created_at: string
+          default_zoom: number
+          ibge_code: string | null
+          id: string
+          is_active: boolean
+          label: string
+          municipality_name: string | null
+          source_url: string | null
+          state_code: string | null
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          benefit_id: string
+          boundary_path: string
+          center_lat: number
+          center_lng: number
+          country_code?: string
+          coverage_level: string
+          created_at?: string
+          default_zoom?: number
+          ibge_code?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          municipality_name?: string | null
+          source_url?: string | null
+          state_code?: string | null
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          benefit_id?: string
+          boundary_path?: string
+          center_lat?: number
+          center_lng?: number
+          country_code?: string
+          coverage_level?: string
+          created_at?: string
+          default_zoom?: number
+          ibge_code?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          municipality_name?: string | null
+          source_url?: string | null
+          state_code?: string | null
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "benefit_coverages_benefit_id_fkey"
+            columns: ["benefit_id"]
+            isOneToOne: false
+            referencedRelation: "premium_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      benefit_service_points: {
+        Row: {
+          address: string | null
+          coverage_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          latitude: number
+          longitude: number
+          name: string
+          sort_order: number
+          source_url: string | null
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          coverage_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude: number
+          longitude: number
+          name: string
+          sort_order?: number
+          source_url?: string | null
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          coverage_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number
+          longitude?: number
+          name?: string
+          sort_order?: number
+          source_url?: string | null
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "benefit_service_points_coverage_id_fkey"
+            columns: ["coverage_id"]
+            isOneToOne: false
+            referencedRelation: "benefit_coverages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      benefit_eligibility_criteria: {
+        Row: {
+          applies_to_routes: string[] | null
+          benefit_id: string
+          created_at: string
+          criterion_key: string
+          effective_from: string | null
+          effective_to: string | null
+          expected_value: Json
+          group_key: string
+          group_operator: string
+          id: string
+          importance: string
+          is_active: boolean
+          match_message: string
+          mismatch_message: string
+          operator: string
+            reference_period: string | null
+            route_key: string
+          rule_key: string
+          rule_version: number
+          sort_order: number
+          source_url: string
+          supersedes_id: string | null
+          unknown_message: string
+          updated_at: string
+          verified_at: string
+        }
+          Insert: {
+            applies_to_routes?: string[] | null
+            benefit_id: string
+          created_at?: string
+          criterion_key: string
+          effective_from?: string | null
+          effective_to?: string | null
+          expected_value?: Json
+          group_key?: string
+          group_operator?: string
+          id?: string
+          importance?: string
+          is_active?: boolean
+          match_message: string
+          mismatch_message: string
+          operator: string
+            reference_period?: string | null
+            route_key?: string
+          rule_key: string
+          rule_version?: number
+          sort_order?: number
+          source_url: string
+          supersedes_id?: string | null
+          unknown_message: string
+          updated_at?: string
+          verified_at: string
+        }
+          Update: {
+            applies_to_routes?: string[] | null
+            benefit_id?: string
+          created_at?: string
+          criterion_key?: string
+          effective_from?: string | null
+          effective_to?: string | null
+          expected_value?: Json
+          group_key?: string
+          group_operator?: string
+          id?: string
+          importance?: string
+          is_active?: boolean
+          match_message?: string
+          mismatch_message?: string
+          operator?: string
+            reference_period?: string | null
+            route_key?: string
+          rule_key?: string
+          rule_version?: number
+          sort_order?: number
+          source_url?: string
+          supersedes_id?: string | null
+          unknown_message?: string
+          updated_at?: string
+          verified_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "benefit_eligibility_criteria_benefit_id_fkey"
+            columns: ["benefit_id"]
+            isOneToOne: false
+            referencedRelation: "premium_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "benefit_eligibility_criteria_supersedes_id_fkey"
+            columns: ["supersedes_id"]
+            isOneToOne: false
+            referencedRelation: "benefit_eligibility_criteria"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      benefit_eligibility_verifications: {
+        Row: {
+          applies_to_routes: string[] | null
+          benefit_id: string
+          created_at: string
+          effective_from: string | null
+          effective_to: string | null
+          group_key: string | null
+          group_operator: string | null
+          id: string
+          is_active: boolean
+          message: string
+          reference_period: string | null
+          route_key: string
+          rule_version: number
+          sort_order: number
+          source_url: string
+          supersedes_id: string | null
+          updated_at: string
+          verification_key: string
+          verified_at: string
+        }
+        Insert: {
+          applies_to_routes?: string[] | null
+          benefit_id: string
+          created_at?: string
+          effective_from?: string | null
+          effective_to?: string | null
+          group_key?: string | null
+          group_operator?: string | null
+          id?: string
+          is_active?: boolean
+          message: string
+          reference_period?: string | null
+          route_key?: string
+          rule_version?: number
+          sort_order?: number
+          source_url: string
+          supersedes_id?: string | null
+          updated_at?: string
+          verification_key: string
+          verified_at: string
+        }
+        Update: {
+          applies_to_routes?: string[] | null
+          benefit_id?: string
+          created_at?: string
+          effective_from?: string | null
+          effective_to?: string | null
+          group_key?: string | null
+          group_operator?: string | null
+          id?: string
+          is_active?: boolean
+          message?: string
+          reference_period?: string | null
+          route_key?: string
+          rule_version?: number
+          sort_order?: number
+          source_url?: string
+          supersedes_id?: string | null
+          updated_at?: string
+          verification_key?: string
+          verified_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "benefit_eligibility_verifications_benefit_id_fkey"
+            columns: ["benefit_id"]
+            isOneToOne: false
+            referencedRelation: "premium_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "benefit_eligibility_verifications_supersedes_id_fkey"
+            columns: ["supersedes_id"]
+            isOneToOne: false
+            referencedRelation: "benefit_eligibility_verifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eligibility_profile_preferences: {
+        Row: {
+          active_profile_id: string | null
+          created_at: string
+          profile_filter_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_profile_id?: string | null
+          created_at?: string
+          profile_filter_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_profile_id?: string | null
+          created_at?: string
+          profile_filter_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eligibility_profile_preferences_active_profile_id_fkey"
+            columns: ["active_profile_id"]
+            isOneToOne: false
+            referencedRelation: "eligibility_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eligibility_profiles: {
+        Row: {
+          age_recorded_at: string | null
+          age_years: number | null
+          birth_date: string | null
+          cadunico_status: string | null
+          conditions: string[] | null
+          created_at: string
+          education_network: string | null
+          employment_status: string | null
+          household_monthly_income: number | null
+          household_size: number | null
+          id: string
+          label: string
+          municipality_ibge_code: string | null
+          municipality_name: string | null
+          owner_user_id: string
+          state_code: string | null
+          student_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          age_recorded_at?: string | null
+          age_years?: number | null
+          birth_date?: string | null
+          cadunico_status?: string | null
+          conditions?: string[] | null
+          created_at?: string
+          education_network?: string | null
+          employment_status?: string | null
+          household_monthly_income?: number | null
+          household_size?: number | null
+          id?: string
+          label?: string
+          municipality_ibge_code?: string | null
+          municipality_name?: string | null
+          owner_user_id: string
+          state_code?: string | null
+          student_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          age_recorded_at?: string | null
+          age_years?: number | null
+          birth_date?: string | null
+          cadunico_status?: string | null
+          conditions?: string[] | null
+          created_at?: string
+          education_network?: string | null
+          employment_status?: string | null
+          household_monthly_income?: number | null
+          household_size?: number | null
+          id?: string
+          label?: string
+          municipality_ibge_code?: string | null
+          municipality_name?: string | null
+          owner_user_id?: string
+          state_code?: string | null
+          student_status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       premium_items: {
         Row: {
           created_at: string
