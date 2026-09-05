@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { toast } from '@/hooks/use-toast';
 
 export interface DbNotification {
   id: string;
@@ -85,7 +86,22 @@ export const useDbNotifications = () => {
         .eq('user_id', user.id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onMutate: async () => {
+      const key = [...QUERY_KEY, user?.id];
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<DbNotification[]>(key);
+      queryClient.setQueryData<DbNotification[]>(key, []);
+      return { key, previous };
+    },
+    onError: (error, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(context.key, context.previous);
+      toast({
+        title: 'Não foi possível limpar as notificações',
+        description: error instanceof Error ? error.message : 'Tente novamente em instantes.',
+        variant: 'destructive',
+      });
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 
   const notifications = query.data ?? [];
@@ -98,5 +114,6 @@ export const useDbNotifications = () => {
     markRead: markReadMutation.mutate,
     markAllRead: markAllReadMutation.mutate,
     clearAll: clearAllMutation.mutate,
+    clearing: clearAllMutation.isPending,
   };
 };

@@ -20,6 +20,7 @@ const MAX_NOTIFICATIONS = 50;
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const { toast } = useToast();
 
   // Load notifications from localStorage on mount
@@ -36,12 +37,14 @@ export const useNotifications = () => {
         console.error('Error loading notifications:', error);
       }
     }
+    setHydrated(true);
   }, []);
 
   // Save notifications to localStorage whenever they change
   useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
-  }, [notifications]);
+  }, [hydrated, notifications]);
 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
@@ -91,6 +94,7 @@ export const useNotifications = () => {
 
   const clearAllNotifications = () => {
     setNotifications([]);
+    localStorage.removeItem(NOTIFICATIONS_KEY);
   };
 
   // Simulate account deletion notification
