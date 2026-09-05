@@ -511,18 +511,23 @@ export default function PremiumBenefitsMapNext() {
           <p className="mt-1 max-w-2xl text-muted-foreground">Veja em quais regiões cada benefício está disponível.</p>
         </div>
         <div className="flex flex-wrap items-start justify-end gap-3">
-          <div className="rounded-xl border bg-card px-3 py-2 text-left">
-            <div className="flex items-center gap-3">
+          <div className="text-left">
+            <div className="flex h-10 items-center gap-2 rounded-md border border-input bg-background px-4 py-2">
               <UserRound className="h-4 w-4 text-muted-foreground" />
               <label htmlFor="profile-filter" className="cursor-pointer text-sm font-medium">Usar perfil</label>
               {profile.loading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Switch id="profile-filter" checked={profile.filterEnabled} disabled={profile.saving} onCheckedChange={(checked) => void toggleProfile(checked)} />}
+              {profile.activeProfile && (
+                <button
+                  type="button"
+                  onClick={() => setProfileDialogOpen(true)}
+                  aria-label="Editar perfil"
+                  title="Editar perfil"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-primary transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
+                </button>
+              )}
             </div>
-            {profile.activeProfile && (
-              <div className="mt-1.5 flex items-center justify-between gap-3 pl-7 text-xs">
-                <span className="text-muted-foreground">{profile.filterEnabled ? "Perfil ativo" : "Perfil salvo"}</span>
-                <button type="button" onClick={() => setProfileDialogOpen(true)} className="inline-flex items-center gap-1 font-medium text-primary hover:underline"><Pencil className="h-3 w-3" /> Editar perfil</button>
-              </div>
-            )}
           </div>
           <div className="text-right">
             <Button type="button" variant="outline" onClick={useMyLocation} disabled={locating} className="gap-2">{locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />} {locating ? "Localizando..." : "Usar minha localização"}</Button>
