@@ -167,6 +167,13 @@ export function EligibilityProfileDialog({ open, initialValues, saving, error, o
                 <div className="space-y-2 sm:col-span-2"><Label htmlFor="household-income">Renda mensal aproximada do grupo familiar</Label><Input id="household-income" type="number" min={0} step="0.01" inputMode="decimal" value={values.householdMonthlyIncome ?? ""} onChange={(event) => update("householdMonthlyIncome", event.target.value === "" ? null : Number(event.target.value))} placeholder="Ex.: 2400,00" /><p className="text-xs text-muted-foreground">A renda por pessoa será calculada; ela não será solicitada nem armazenada separadamente.</p></div>
               </div>
               <div className="space-y-2"><Label>Situação no Cadastro Único</Label><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{([["yes", "Sim"], ["no", "Não"], ["unknown", "Não sei"], [null, "Prefiro não informar"]] as Array<[TriState | null, string]>).map(([value, label]) => <button key={label} type="button" onClick={() => update("cadunicoStatus", value)} className={cn("rounded-lg border px-3 py-2 text-sm transition-colors", values.cadunicoStatus === value ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted")}>{label}</button>)}</div></div>
+              {values.cadunicoStatus === "yes" && (
+                <div className="space-y-2">
+                  <Label htmlFor="cadunico-family-size">Quantas pessoas fazem parte da sua família no CadÚnico?</Label>
+                  <Input id="cadunico-family-size" type="number" min={1} max={50} inputMode="numeric" value={values.cadunicoFamilySize ?? ""} onChange={(event) => update("cadunicoFamilySize", event.target.value === "" ? null : Number(event.target.value))} placeholder="Prefiro não informar" />
+                  <p className="text-xs text-muted-foreground">Considere as pessoas cadastradas no mesmo código familiar do CadÚnico.</p>
+                </div>
+              )}
             </div>
           )}
 

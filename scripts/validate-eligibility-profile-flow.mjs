@@ -85,9 +85,10 @@ try {
     municipalityIbgeCode: "3550308",
     ageYears: 29,
     householdSize: 3,
+    cadunicoFamilySize: 2,
     studentStatus: "higher_education",
     educationNetwork: "private",
-    cadunicoStatus: null,
+    cadunicoStatus: "yes",
     conditions: null,
   }, userId, new Date());
   const created = await request("/rest/v1/eligibility_profiles", {
@@ -99,6 +100,7 @@ try {
   check(created.ok && created.body.length === 1, `Profile creation failed: ${JSON.stringify(created.body)}`);
   const profile = created.body[0];
   check(profile.age_years === 29 && /^\d{4}-\d{2}-\d{2}$/.test(profile.age_recorded_at), "Reported age was not persisted with its reference date.");
+  check(profile.household_size === 3 && profile.cadunico_family_size === 2, "Household and CadUnico family sizes were not persisted independently.");
   const enabledPreference = await savePreference(token, profile.id, true);
   check(enabledPreference.active_profile_id === profile.id && enabledPreference.profile_filter_enabled === true, "Created profile was not activated.");
   check((await profiles(token)).length === 1, "First save created more than one profile.");
@@ -137,6 +139,7 @@ try {
   check(conditional.education_network === null, "Not studying did not clear education_network remotely.");
   check(conditional.state_code === null && conditional.municipality_name === null && conditional.municipality_ibge_code === null, "Removing the state did not clear municipality fields remotely.");
   check(conditional.household_monthly_income === null && conditional.cadunico_status === null, "Optional fields acquired inferred values.");
+  check(conditional.cadunico_family_size === null, "Leaving confirmed CadUnico status did not clear its family size.");
   check(conditional.conditions === null, "Prefer not to disclose conditions was not stored as null.");
   check(conditional.age_recorded_at === "2026-01-10", "An unrelated edit incorrectly changed age_recorded_at.");
 
@@ -165,6 +168,11 @@ try {
   check(!rejected.ok && rejected.status >= 400, "The database accepted an invalid age.");
   check((await profiles(token))[0].age_years === 30 && (await preference(token)).profile_filter_enabled, "A rejected write corrupted profile or preference state.");
 
+  const rejectedFamilySize = await request(`/rest/v1/eligibility_profiles?id=eq.${profile.id}`, {
+    token, method: "PATCH", prefer: "return=representation", body: JSON.stringify({ cadunico_family_size: 51 }),
+  });
+  check(!rejectedFamilySize.ok && rejectedFamilySize.status >= 400, "The database accepted an invalid CadUnico family size.");
+
   console.log(JSON.stringify({
     passed: true,
     operationsUsedAnonAuthenticatedToken: true,
@@ -172,7 +180,7 @@ try {
     profileCount: (await profiles(token)).length,
     ageYears: (await profiles(token))[0].age_years,
     ageRecordedAt: (await profiles(token))[0].age_recorded_at,
-    checks: 24,
+    checks: 28,
   }, null, 2));
 } finally {
   if (userId) {

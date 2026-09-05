@@ -36,6 +36,7 @@ export interface EligibilityProfile {
   municipalityIbgeCode?: string | null;
   householdMonthlyIncome?: number | null;
   householdSize?: number | null;
+  cadunicoFamilySize?: number | null;
   cadunicoStatus?: TriState | null;
   studentStatus?: StudentStatus | null;
   educationNetwork?: EducationNetwork | null;
@@ -50,6 +51,7 @@ export type CriterionKey =
   | "household_monthly_income"
   | "per_capita_income"
   | "household_size"
+  | "cadunico_family_size"
   | "cadunico_status"
   | "student_status"
   | "education_network"

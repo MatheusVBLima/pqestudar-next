@@ -12,6 +12,7 @@ export interface EligibilityProfileFormValues {
   ageYears: number | null;
   householdMonthlyIncome: number | null;
   householdSize: number | null;
+  cadunicoFamilySize: number | null;
   cadunicoStatus: TriState | null;
   studentStatus: StudentStatus | null;
   educationNetwork: EducationNetwork | null;
@@ -27,6 +28,7 @@ export const EMPTY_PROFILE_FORM: EligibilityProfileFormValues = {
   ageYears: null,
   householdMonthlyIncome: null,
   householdSize: null,
+  cadunicoFamilySize: null,
   cadunicoStatus: null,
   studentStatus: null,
   educationNetwork: null,
@@ -46,6 +48,7 @@ export function normalizeProfileForm(values: EligibilityProfileFormValues): Elig
     ageYears: values.ageYears == null ? null : Math.trunc(values.ageYears),
     householdMonthlyIncome: values.householdMonthlyIncome == null ? null : Number(values.householdMonthlyIncome),
     householdSize: values.householdSize == null ? null : Math.trunc(values.householdSize),
+    cadunicoFamilySize: values.cadunicoStatus === "yes" && values.cadunicoFamilySize != null ? Math.trunc(values.cadunicoFamilySize) : null,
     cadunicoStatus: values.cadunicoStatus ?? null,
     studentStatus,
     educationNetwork: !studentStatus || studentStatus === "not_student" ? null : values.educationNetwork ?? null,
@@ -59,6 +62,7 @@ export function validateProfileStep(values: EligibilityProfileFormValues, step: 
   if (step === 1) {
     if (values.ageYears != null && (!Number.isInteger(values.ageYears) || values.ageYears < 0 || values.ageYears > 120)) return "Informe uma idade entre 0 e 120 anos.";
     if (values.householdSize != null && (!Number.isInteger(values.householdSize) || values.householdSize < 1 || values.householdSize > 50)) return "A quantidade de pessoas deve estar entre 1 e 50.";
+    if (values.cadunicoFamilySize != null && (!Number.isInteger(values.cadunicoFamilySize) || values.cadunicoFamilySize < 1 || values.cadunicoFamilySize > 50)) return "A quantidade de pessoas no CadÚnico deve estar entre 1 e 50.";
     if (values.householdMonthlyIncome != null && values.householdMonthlyIncome < 0) return "A renda familiar não pode ser negativa.";
   }
   return null;
@@ -73,6 +77,7 @@ export function profileFormFromRow(row: EligibilityProfileRow): EligibilityProfi
     ageYears: row.age_years,
     householdMonthlyIncome: row.household_monthly_income,
     householdSize: row.household_size,
+    cadunicoFamilySize: row.cadunico_family_size ?? null,
     cadunicoStatus: row.cadunico_status as TriState | null,
     studentStatus: row.student_status as StudentStatus | null,
     educationNetwork: row.education_network as EducationNetwork | null,
@@ -92,6 +97,7 @@ export function eligibilityProfileFromRow(row: EligibilityProfileRow): Eligibili
     municipalityIbgeCode: row.municipality_ibge_code,
     householdMonthlyIncome: row.household_monthly_income,
     householdSize: row.household_size,
+    cadunicoFamilySize: row.cadunico_status === "yes" ? row.cadunico_family_size ?? null : null,
     cadunicoStatus: row.cadunico_status as TriState | null,
     studentStatus: row.student_status as StudentStatus | null,
     educationNetwork: row.education_network as EducationNetwork | null,
@@ -122,6 +128,7 @@ export function profileInsertFromForm(
     age_recorded_at: ageRecordedAt,
     household_monthly_income: normalized.householdMonthlyIncome,
     household_size: normalized.householdSize,
+    cadunico_family_size: normalized.cadunicoFamilySize,
     cadunico_status: normalized.cadunicoStatus,
     student_status: normalized.studentStatus,
     education_network: normalized.educationNetwork,

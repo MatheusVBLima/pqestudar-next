@@ -8,7 +8,7 @@ function profileRow(overrides = {}) {
     id: "profile-1", owner_user_id: "user-1", label: "Perfil principal",
     age_years: null, age_recorded_at: null, birth_date: null, state_code: null,
     municipality_name: null, municipality_ibge_code: null,
-    household_monthly_income: null, household_size: null, cadunico_status: null,
+    household_monthly_income: null, household_size: null, cadunico_family_size: null, cadunico_status: null,
     student_status: null, education_network: null, employment_status: null,
     conditions: null, created_at: "2026-09-03T00:00:00Z", updated_at: "2026-09-03T00:00:00Z",
     ...overrides,
@@ -28,6 +28,41 @@ test("clears education network when the profile no longer studies", () => {
   assert.equal(normalized.educationNetwork, null);
 });
 
+test("keeps CadUnico family size only while CadUnico is explicitly confirmed", () => {
+  const confirmed = normalizeProfileForm({ ...EMPTY_PROFILE_FORM, cadunicoStatus: "yes", cadunicoFamilySize: 2 });
+  const denied = normalizeProfileForm({ ...confirmed, cadunicoStatus: "no" });
+  const unknown = normalizeProfileForm({ ...confirmed, cadunicoStatus: "unknown" });
+  const undisclosed = normalizeProfileForm({ ...confirmed, cadunicoStatus: null });
+  assert.equal(confirmed.cadunicoFamilySize, 2);
+  assert.equal(denied.cadunicoFamilySize, null);
+  assert.equal(unknown.cadunicoFamilySize, null);
+  assert.equal(undisclosed.cadunicoFamilySize, null);
+});
+
+test("persists declared CadUnico family size without changing household size", () => {
+  const payload = profileInsertFromForm({
+    ...EMPTY_PROFILE_FORM,
+    householdSize: 4,
+    cadunicoStatus: "yes",
+    cadunicoFamilySize: 2,
+  }, "user-1");
+  assert.equal(payload.household_size, 4);
+  assert.equal(payload.cadunico_family_size, 2);
+});
+
+test("legacy profiles have no inferred CadUnico family size", () => {
+  const legacy = profileRow({ household_size: 1 });
+  delete legacy.cadunico_family_size;
+  const normalized = normalizeProfileForm({
+    ...EMPTY_PROFILE_FORM,
+    householdSize: legacy.household_size,
+    cadunicoStatus: legacy.cadunico_status,
+    cadunicoFamilySize: legacy.cadunico_family_size,
+  });
+  assert.equal(normalized.householdSize, 1);
+  assert.equal(normalized.cadunicoFamilySize, null);
+});
+
 test("clears municipality when its state is removed", () => {
   const normalized = normalizeProfileForm({ ...EMPTY_PROFILE_FORM, municipalityName: "Fortaleza", municipalityIbgeCode: "2304400" });
   assert.equal(normalized.municipalityName, null);
@@ -37,6 +72,7 @@ test("clears municipality when its state is removed", () => {
 test("validates numeric fields without requiring optional answers", () => {
   assert.equal(validateProfileStep(EMPTY_PROFILE_FORM, 1), null);
   assert.match(validateProfileStep({ ...EMPTY_PROFILE_FORM, householdSize: 0 }, 1), /quantidade/i);
+  assert.match(validateProfileStep({ ...EMPTY_PROFILE_FORM, cadunicoStatus: "yes", cadunicoFamilySize: 51 }, 1), /CadÚnico/i);
 });
 
 test("creates one profile and persists it as active", async () => {

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import type { Database } from "@/integrations/supabase/types";
+import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "@/lib/runtime-env";
+import { resolvePremiumItemSlugWithClient } from "@/lib/premium-item-slug-client";
 
 const PROTECTED_PREFIXES = ["/meu-perfil", "/meus-materiais", "/salvos", "/ferramentas/salvos", "/premium", "/admin", "/moderador"];
 
@@ -10,7 +14,7 @@ function hasSupabaseAuthCookie(request: NextRequest): boolean {
   });
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname === "/index.html") {
@@ -39,6 +43,22 @@ export function proxy(request: NextRequest) {
     url.pathname = "/login";
     url.searchParams.set("from", pathname);
     return NextResponse.redirect(url, 307);
+  }
+
+  const benefitPrefix = "/premium/beneficios/";
+  if (pathname.startsWith(benefitPrefix)) {
+    const requestedSlug = pathname.slice(benefitPrefix.length);
+    if (requestedSlug && !requestedSlug.includes("/")) {
+      const supabase = createServerClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+        cookies: { getAll: () => request.cookies.getAll(), setAll: () => undefined },
+      });
+      const resolution = await resolvePremiumItemSlugWithClient(supabase, requestedSlug);
+      if (resolution.kind === "alias") {
+        const url = request.nextUrl.clone();
+        url.pathname = `${benefitPrefix}${resolution.canonicalSlug}`;
+        return NextResponse.redirect(url, 308);
+      }
+    }
   }
 
   const requestHeaders = new Headers(request.headers);

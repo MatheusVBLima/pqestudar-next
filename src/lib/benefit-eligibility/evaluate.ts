@@ -51,6 +51,7 @@ function profileValue(profile: EligibilityProfile, key: BenefitEligibilityCriter
     municipality_ibge_code: profile.municipalityIbgeCode,
     household_monthly_income: profile.householdMonthlyIncome,
     household_size: profile.householdSize,
+    cadunico_family_size: profile.cadunicoStatus === "yes" ? profile.cadunicoFamilySize : null,
     cadunico_status: profile.cadunicoStatus,
     student_status: profile.studentStatus,
     education_network: profile.educationNetwork,

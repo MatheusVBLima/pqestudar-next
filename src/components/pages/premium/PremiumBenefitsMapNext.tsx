@@ -179,7 +179,7 @@ const FALLBACK_BENEFITS: Benefit[] = [
     description: "Vale para recarga gratuita do botijão destinado a famílias elegíveis do CadÚnico, conforme seleção e disponibilidade do programa.",
     boundaryPath: "/data/brasil-limite.geojson",
     sourceUrl: "https://www.gov.br/secom/pt-br/arquivos/faq-consolidado-programa-gas-do-povo",
-    detailPath: "/premium/beneficios/auxilio-gas-vale-gas",
+    detailPath: "/premium/beneficios/gas-do-povo",
     center: [-14.2, -51.9],
     zoom: 4,
     locations: [],

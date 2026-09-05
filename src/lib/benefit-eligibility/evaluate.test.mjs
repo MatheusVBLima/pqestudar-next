@@ -26,6 +26,24 @@ test("calculates per-capita income from source values without persisting it", ()
   assert.equal(calculatePerCapitaIncome({ householdMonthlyIncome: 2400 }), null);
 });
 
+test("reads CadUnico family size only when CadUnico is explicitly confirmed", () => {
+  const criterion = {
+    ...baseCriterion,
+    criterionKey: "cadunico_family_size",
+    operator: "greater_than_or_equal",
+    expectedValue: 2,
+    groupOperator: "and",
+  };
+  assert.equal(evaluateBenefitCompatibility({ profile: { cadunicoStatus: "yes", cadunicoFamilySize: 2 }, criteria: [criterion] }).level, "high");
+  assert.equal(evaluateBenefitCompatibility({ profile: { cadunicoStatus: "no", cadunicoFamilySize: 2 }, criteria: [criterion] }).level, "needs_information");
+  assert.equal(evaluateBenefitCompatibility({ profile: { cadunicoStatus: "unknown", cadunicoFamilySize: 2 }, criteria: [criterion] }).level, "needs_information");
+  assert.equal(evaluateBenefitCompatibility({ profile: { cadunicoStatus: "yes" }, criteria: [criterion] }).level, "needs_information");
+});
+
+test("keeps household size as the divisor for existing income estimates", () => {
+  assert.equal(calculatePerCapitaIncome({ householdMonthlyIncome: 2400, householdSize: 4, cadunicoFamilySize: 2, cadunicoStatus: "yes" }), 600);
+});
+
 test("uses declared age as recorded instead of incrementing it or inventing a birth date", () => {
   const result = evaluateBenefitCompatibility({
     profile: { ageYears: 17, ageRecordedAt: "2024-01-01", birthDate: "1990-01-01" },

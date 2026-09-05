@@ -2834,6 +2834,7 @@ export type Database = {
       }
       eligibility_profiles: {
         Row: {
+          cadunico_family_size: number | null
           age_recorded_at: string | null
           age_years: number | null
           birth_date: string | null
@@ -2854,6 +2855,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cadunico_family_size?: number | null
           age_recorded_at?: string | null
           age_years?: number | null
           birth_date?: string | null
@@ -2874,6 +2876,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cadunico_family_size?: number | null
           age_recorded_at?: string | null
           age_years?: number | null
           birth_date?: string | null
@@ -2894,6 +2897,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      premium_item_slug_aliases: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          old_slug: string
+          premium_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          old_slug: string
+          premium_item_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          old_slug?: string
+          premium_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "premium_item_slug_aliases_premium_item_id_fkey"
+            columns: ["premium_item_id"]
+            isOneToOne: false
+            referencedRelation: "premium_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       premium_items: {
         Row: {
