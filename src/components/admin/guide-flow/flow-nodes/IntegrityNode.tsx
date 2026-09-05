@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { Handle, Position } from '@xyflow/react';
+import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { Badge } from '@/components/ui/badge';
 import { ShieldCheck, CheckCircle2, AlertTriangle, XCircle, MinusCircle, HelpCircle, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -193,6 +193,43 @@ const statusConfig: Record<ComplianceStatus, { icon: typeof CheckCircle2; color:
   sem_fonte: { icon: XCircle, color: 'text-red-400', label: 'Sem fonte' },
 };
 
+function getCorrection(check: DirectiveCheck, data: GeneratedGuideData): { location: string; instructions: string[]; nodeTypes: string[] } {
+  if (check.status === 'sem_fonte') {
+    return { location: 'Fontes do Fluxo → Estrutura Editorial', instructions: [`Ative o arquivo da diretriz “${check.directive}”. Se ele não estiver disponível, cadastre-o na Biblioteca de Conhecimento e atualize as fontes.`], nodeTypes: ['sourcesNode'] };
+  }
+  switch (check.directive) {
+    case 'Estilo de Títulos': {
+      const instructions = [];
+      if (data.title.length <= 10 || data.title.length > 70) instructions.push(`Metadados → Título: use de 11 a 70 caracteres. Atual: “${data.title}” (${data.title.length}).`);
+      if (!/^## \*\*/m.test(data.content_markdown)) instructions.push('Conteúdo → subtítulos H2: não foi encontrado H2 em negrito. Use o formato ## **Subtítulo**.');
+      return { location: 'Metadados e títulos das seções', instructions, nodeTypes: [...(data.title.length <= 10 || data.title.length > 70 ? ['metaNode'] : []), ...(!/^## \*\*/m.test(data.content_markdown) ? ['contentNode'] : [])] };
+    }
+    case 'Estrutura Textual':
+      return { location: 'Seções de conteúdo', instructions: [`O conteúdo tem ${(data.content_markdown.match(/^## /gm) || []).length} seções H2. Esta verificação exige pelo menos 3. Adicione seções pelo menu de contexto do fluxo e use títulos com ##.`], nodeTypes: ['contentNode'] };
+    case 'Diretriz de Imagens':
+      return { location: 'Imagens e conteúdo do guia', instructions: ['Esta verificação não encontrou uma tag <img> no conteúdo nem uma sugestão de capa. Inclua uma imagem no conteúdo ou gere novamente com uma sugestão de capa.'], nodeTypes: ['imageNode', 'contentNode'] };
+    case 'Função do Tipo de Guia':
+      return { location: 'Seções de conteúdo', instructions: [`Esta verificação exige pelo menos 500 palavras no conteúdo. Faltam ${Math.max(0, 500 - data.content_markdown.split(/\s+/).length)} palavras. Revise e desenvolva as seções que precisam de explicações.`], nodeTypes: ['contentNode'] };
+    case 'Linguagem Padrão': {
+      const terms = ['disruptivo', 'inovador', 'revolucionário', 'incrível', 'fantástico', 'neste artigo', 'nesse artigo', 'vamos falar sobre'];
+      const lines = data.content_markdown.split('\n').filter(line => terms.some(term => line.toLowerCase().includes(term)));
+      return { location: 'Conteúdo → trechos com linguagem genérica', instructions: lines.map(line => `Revise este trecho: “${line.trim()}”`), nodeTypes: ['contentNode'] };
+    }
+    case 'Ritmo de Leitura':
+      return { location: 'Conteúdo → frases longas', instructions: ['Reduza a média para até 25 palavras por frase para atender a esta verificação; prefira até 22.', ...data.content_markdown.split(/[.!?]+/).filter(sentence => sentence.trim().split(/\s+/).length > 25).map(sentence => `Divida esta frase: “${sentence.trim()}”`)], nodeTypes: ['contentNode'] };
+    case 'Sistema de Links Internos':
+      return { location: 'Links Internos', instructions: ['Inclua pelo menos 2 links com endereço iniciado por /.', ...data.internal_links.filter(link => !link.url.startsWith('/')).map(link => `Corrija o endereço de “${link.label}”: ${link.url}`)], nodeTypes: ['linksNode'] };
+    case 'SEO — Título':
+      return { location: 'SEO → Título SEO', instructions: [`Preencha o título SEO com até 60 caracteres. Atual: ${data.seo_title?.length ?? 0} caracteres.`], nodeTypes: ['seoNode'] };
+    case 'SEO — Meta Description':
+      return { location: 'SEO → Meta description', instructions: [`Preencha a meta description com até 160 caracteres. Atual: ${data.seo_description?.length ?? 0} caracteres.`], nodeTypes: ['seoNode'] };
+    case 'CTAs Contextuais':
+      return { location: 'Cards de CTA', instructions: ['Esta verificação exige pelo menos 2 CTAs. No espaço vazio do fluxo, abra o menu de contexto (toque prolongado no celular) → Adicionar card → CTA.', `Posições disponíveis: ${[!data.cta_top && 'inicial', !data.cta_middle && 'intermediária', !data.cta_final && 'final'].filter(Boolean).join(', ')}.`], nodeTypes: ['ctaNode', 'contentNode'] };
+    default:
+      return { location: 'Metadados e conteúdo', instructions: [check.observation, 'Preencha os campos indicados nos metadados ou nas seções de conteúdo. Se não houver seções, adicione uma pelo menu de contexto do fluxo.'], nodeTypes: ['metaNode', 'contentNode'] };
+  }
+}
+
 interface IntegrityNodeData {
   guideData: GeneratedGuideData;
   structureFileNames: string[];
@@ -201,6 +238,7 @@ interface IntegrityNodeData {
 }
 
 function IntegrityNodeComponent({ data }: { data: IntegrityNodeData }) {
+  const { getNodes, fitView, setNodes } = useReactFlow();
   const { guideData, structureFileNames, hasLibrary, libraryName } = data;
 
   const checks = useMemo(() => evaluateDirectives(guideData, structureFileNames), [guideData, structureFileNames]);
@@ -259,6 +297,10 @@ function IntegrityNodeComponent({ data }: { data: IntegrityNodeData }) {
           {checks.map((check, i) => {
             const cfg = statusConfig[check.status];
             const Icon = cfg.icon;
+            const correction = check.status !== 'conforme' && check.status !== 'nao_aplicavel'
+              ? getCorrection(check, guideData)
+              : null;
+            const targets = correction ? getNodes().filter(node => correction.nodeTypes.includes(node.type ?? '')) : [];
             return (
               <div key={i} className="rounded-md bg-muted/40 px-2 py-1.5 space-y-0.5">
                 <div className="flex items-center gap-1.5">
@@ -274,6 +316,31 @@ function IntegrityNodeComponent({ data }: { data: IntegrityNodeData }) {
                     <Link2 className="h-2 w-2 text-muted-foreground/60" />
                     <p className="text-[8px] text-muted-foreground/60 italic truncate">{check.sourceFile}</p>
                   </div>
+                )}
+                {correction && (
+                  <details className="pt-1" onClick={(event) => event.stopPropagation()}>
+                    <summary className="min-h-8 cursor-pointer rounded px-1 py-2 text-[10px] font-medium text-primary focus-visible:outline focus-visible:outline-2">
+                      Ver onde corrigir
+                    </summary>
+                    <div className="space-y-2 break-words px-1 py-2 text-[10px]">
+                      <p className="font-semibold">Onde: {correction.location}</p>
+                      <ul className="list-disc space-y-1 pl-3">
+                        {correction.instructions.map((instruction, index) => <li key={index}>{instruction}</li>)}
+                      </ul>
+                      {targets.map(target => <button
+                        key={target.id}
+                        type="button"
+                        className="block min-h-9 w-full rounded-md border border-border bg-background px-2 text-left font-medium text-primary hover:bg-muted"
+                        onClick={() => {
+                          setNodes(nodes => nodes.map(node => ({ ...node, selected: node.id === target.id })));
+                          void fitView({ nodes: [target], padding: 0.3, duration: 350, maxZoom: 1 });
+                        }}
+                      >
+                        Localizar: {String(target.data.label ?? (target.type === 'seoNode' ? 'SEO' : target.type === 'metaNode' ? 'Metadados' : target.type === 'linksNode' ? 'Links Internos' : target.type === 'sourcesNode' ? 'Fontes do Fluxo' : target.type === 'imageNode' ? 'Imagem' : 'CTA'))}
+                      </button>)}
+                      {targets.length === 0 && <p className="text-muted-foreground">Não há um bloco correspondente no fluxo atual. Siga a orientação acima para adicionar o conteúdo ou configurar a fonte.</p>}
+                    </div>
+                  </details>
                 )}
               </div>
             );

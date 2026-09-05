@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/admin/dashboard/PageHeader';
 import { FlowCanvas } from '@/components/admin/guide-flow/FlowCanvas';
 import { EditorialSummaryPanel } from '@/components/admin/guide-flow/EditorialSummaryPanel';
 import type { GeneratedGuideData, ImagePrompt } from '@/components/admin/guide-flow/GuideFlowPreview';
@@ -16,7 +15,7 @@ import { updateToolAction } from '@/app/actions/tools';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json, Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { toast } from '@/hooks/use-toast';
-import { Eye, Save, Send, RotateCcw } from 'lucide-react';
+import { Eye, Save, Send, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-message';
 import { PUBLIC_SUPABASE_URL } from '@/lib/runtime-env';
 import { useAuth } from '@/hooks/useAuth';
@@ -52,6 +51,7 @@ export default function GuideFlow() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isMobileHeaderOpen, setIsMobileHeaderOpen] = useState(false);
   const [guideData, setGuideData] = useState<GeneratedGuideData | null>(null);
   const [linkedGuideId, setLinkedGuideId] = useState<string | null>(null);
   const [linkedToolId, setLinkedToolId] = useState<string | null>(null);
@@ -633,13 +633,28 @@ export default function GuideFlow() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
-      <div className="flex shrink-0 items-center justify-between">
-        <PageHeader
-          title="Fluxos"
-          description={isReadOnly ? "Visualização do processo editorial publicado. Nenhuma alteração será permitida." : "Criação assistida de guias e páginas de ferramentas com base na Biblioteca de Conhecimento."}
-        />
-        <div className="flex items-center gap-2">
+    <div className="flex h-full min-h-0 min-w-0 flex-col gap-2 overflow-hidden md:gap-4">
+      <div className="max-h-[45%] shrink-0 overflow-y-auto overscroll-contain md:max-h-none">
+        <div className="sticky top-0 z-10 flex min-h-11 items-center justify-between gap-2 bg-card">
+          <h2 className="text-xl font-bold tracking-tight md:text-2xl">Fluxos</h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 shrink-0 md:hidden"
+            aria-label={isMobileHeaderOpen ? 'Recolher informações e ações' : 'Mostrar informações e ações'}
+            aria-expanded={isMobileHeaderOpen}
+            aria-controls="flow-page-information"
+            onClick={() => setIsMobileHeaderOpen(open => !open)}
+          >
+            {isMobileHeaderOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </div>
+        <div id="flow-page-information" className={`${isMobileHeaderOpen ? 'flex' : 'hidden'} flex-col gap-3 pb-2 pt-2 md:flex`}>
+          <p className="text-sm text-muted-foreground md:text-base">
+            {isReadOnly ? "Visualização do processo editorial publicado. Nenhuma alteração será permitida." : "Criação assistida de guias e páginas de ferramentas com base na Biblioteca de Conhecimento."}
+          </p>
+        <div className="flex flex-wrap items-center gap-2">
           {isReadOnly && <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"><Eye className="h-3.5 w-3.5" />Modo leitor</span>}
           {guideData && !isReadOnly && (
             <>
@@ -654,6 +669,7 @@ export default function GuideFlow() {
               </Button>
             </>
           )}
+        </div>
         </div>
       </div>
 

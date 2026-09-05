@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronRight, ChevronLeft, BookOpen, Compass, Target, FolderOpen, ShieldCheck } from 'lucide-react';
+import { useId, useState } from 'react';
+import { ChevronRight, ChevronLeft, BookOpen, Compass, Target, FolderOpen, ShieldCheck, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { findOption, TIPOS_GUIA, CATEGORIAS, INTENCOES, type GuideOption } from '@/lib/guide-editorial-options';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -49,6 +49,7 @@ export function EditorialSummaryPanel({
   selectionMode,
 }: EditorialSummaryPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const panelId = useId();
 
   const tipoOption = findOption(TIPOS_GUIA, tipo);
   const categoriaOption = findOption(CATEGORIAS, categoria);
@@ -59,15 +60,19 @@ export function EditorialSummaryPanel({
   return (
     <TooltipProvider>
       <div className={cn(
-        "absolute right-0 top-1/2 -translate-y-1/2 z-40 transition-transform duration-300 ease-in-out",
+        "absolute right-0 top-1/2 -translate-y-1/2 z-40 flex max-h-[calc(100%-1rem)] w-[min(20rem,calc(100%-2.75rem))] transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
         {/* Toggle tab */}
         <button
+          type="button"
+          aria-label={isOpen ? 'Fechar resumo editorial' : 'Abrir resumo editorial'}
+          aria-expanded={isOpen}
+          aria-controls={panelId}
           onClick={() => setIsOpen(prev => !prev)}
           className={cn(
             "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full",
-            "flex items-center justify-center w-10 h-20 rounded-l-lg",
+            "flex items-center justify-center w-11 h-20 rounded-l-lg",
             "bg-card border border-r-0 border-border shadow-md",
             "text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors",
             hasSelections && "border-primary/30"
@@ -83,10 +88,18 @@ export function EditorialSummaryPanel({
         </button>
 
         {/* Panel content */}
-        <div className={cn(
-          "w-80 max-h-[80vh] bg-card border border-border rounded-l-xl shadow-xl overflow-hidden flex flex-col"
+        <div id={panelId} inert={!isOpen} className={cn(
+          "w-full min-h-0 max-h-[80dvh] bg-card border border-border rounded-l-xl shadow-xl overflow-hidden flex flex-col"
         )}>
-          <div className="px-4 py-3 border-b border-border bg-muted/30">
+          <div className="relative shrink-0 pl-4 pr-12 py-3 border-b border-border bg-muted/30">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              aria-label="Fechar resumo editorial"
+              className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
               <BookOpen className="h-4 w-4 text-primary" />
               Resumo Editorial
@@ -96,7 +109,7 @@ export function EditorialSummaryPanel({
             </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
             {!hasSelections && activeStructureCount === 0 && activeLibraryNames.length === 0 && (
               <p className="text-xs text-muted-foreground text-center py-6">
                 Preencha os campos do formulário para ver o resumo editorial.

@@ -16,7 +16,8 @@ import {
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Maximize2, Minimize2, Pencil, Trash2, Plus, Megaphone, FileText, Link2, Undo2, Redo2 } from 'lucide-react';
+import { Maximize2, Minimize2, Pencil, Trash2, Plus, Megaphone, FileText, Link2, Undo2, Redo2, Smartphone, RectangleHorizontal, Map as MapIcon, ChevronDown } from 'lucide-react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import {
   ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuLabel,
   ContextMenuSeparator, ContextMenuSub, ContextMenuSubContent,
@@ -316,6 +317,29 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
   const redoStackRef = useRef<GeneratedGuideData[]>([]);
   const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMinimapOpen, setIsMinimapOpen] = useState(false);
+  const [expansionOrientation, setExpansionOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const expansionRequestRef = useRef(0);
+  const orientationLockedRef = useRef(false);
+
+  const releaseOrientation = useCallback(() => {
+    expansionRequestRef.current += 1;
+    if (orientationLockedRef.current) {
+      try { screen.orientation?.unlock?.(); } catch { /* Some browsers restrict unlocking. */ }
+      orientationLockedRef.current = false;
+    }
+  }, []);
+
+  const exitFullscreen = useCallback(() => {
+    releaseOrientation();
+    if (document.fullscreenElement === canvasRef.current) {
+      void document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {
+        // Keep the exit control available if the browser refuses to leave fullscreen.
+      });
+    } else {
+      setIsFullscreen(false);
+    }
+  }, [releaseOrientation]);
   const [inputPatch, setInputPatch] = useState<{ id: number; patch: Partial<GuideFlowInputs> } | null>(null);
   const [flowTargetType, setFlowTargetType] = useState<GuideFlowInputs['targetType']>('guide');
   const [trailStageSelection, setTrailStageSelection] = useState<TrailStageSelection | null>(null);
@@ -688,22 +712,26 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsFullscreen(false);
+        exitFullscreen();
       }
     };
 
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousOverflow;
+      releaseOrientation();
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isFullscreen]);
+  }, [isFullscreen, exitFullscreen, releaseOrientation]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(document.fullscreenElement === canvasRef.current);
+      const expanded = document.fullscreenElement === canvasRef.current;
+      if (!expanded) releaseOrientation();
+      setIsFullscreen(expanded);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -711,23 +739,34 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, []);
+  }, [releaseOrientation]);
 
-  const toggleFullscreen = useCallback(() => {
-    if (isFullscreen) {
-      if (document.fullscreenElement) {
-        void document.exitFullscreen();
-      } else {
-        setIsFullscreen(false);
-      }
-      return;
-    }
-
+  const expandFullscreen = useCallback(async (orientation: 'portrait' | 'landscape') => {
+    const request = ++expansionRequestRef.current;
+    setExpansionOrientation(orientation);
     setIsFullscreen(true);
-    void canvasRef.current?.requestFullscreen?.().catch(() => {
-      setIsFullscreen(true);
-    });
-  }, [isFullscreen]);
+    try {
+      await canvasRef.current?.requestFullscreen?.();
+    } catch {
+      // The fixed canvas remains usable when native fullscreen is unavailable.
+    }
+    if (request !== expansionRequestRef.current) return;
+    const orientationApi = screen.orientation as ScreenOrientation & {
+      lock?: (value: 'portrait' | 'landscape') => Promise<void>;
+    };
+    if (orientationApi?.lock) {
+      try {
+        await orientationApi.lock(orientation);
+        if (request !== expansionRequestRef.current) {
+          orientationApi.unlock();
+          return;
+        }
+        orientationLockedRef.current = true;
+      } catch {
+        // A visible hint asks the user to rotate the device manually.
+      }
+    }
+  }, []);
 
   const contextNodeRemovable = !!contextNode && (
     contextNode.id.startsWith('cta_') || contextNode.id.startsWith('section-') || contextNode.id === 'links' || contextNode.type === 'imageNode'
@@ -740,7 +779,7 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
       ref={canvasRef}
       className={
         isFullscreen
-          ? "fixed inset-0 z-[100] h-screen w-screen overflow-hidden bg-background"
+          ? "fixed inset-0 z-[100] h-dvh w-full overflow-hidden bg-background"
           : "relative min-h-0 w-full flex-1 rounded-[var(--admin-radius)] overflow-hidden border border-border/50 bg-background/50"
       }
     >
@@ -776,22 +815,55 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
           <ControlButton onClick={redoGuideChange} disabled={!historyState.canRedo || readOnly} title="Refazer (Ctrl+Y)" aria-label="Refazer">
             <Redo2 className="h-4 w-4" />
           </ControlButton>
-          <ControlButton
-            onClick={toggleFullscreen}
-            title={isFullscreen ? 'Sair da tela cheia' : 'Expandir canvas'}
-            aria-label={isFullscreen ? 'Sair da tela cheia' : 'Expandir canvas'}
-          >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </ControlButton>
+          {isFullscreen ? (
+            <ControlButton onClick={exitFullscreen} title="Sair da tela cheia" aria-label="Sair da tela cheia">
+              <Minimize2 className="h-4 w-4" />
+            </ControlButton>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="react-flow__controls-button" title="Expandir fluxo" aria-label="Expandir fluxo">
+                  <Maximize2 className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="end">
+                <DropdownMenuItem className="min-h-11" onSelect={() => void expandFullscreen('portrait')}>
+                  <Smartphone className="mr-2 h-4 w-4" /> Vertical
+                </DropdownMenuItem>
+                <DropdownMenuItem className="min-h-11" onSelect={() => void expandFullscreen('landscape')}>
+                  <RectangleHorizontal className="mr-2 h-4 w-4" /> Horizontal
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </Controls>
-        <MiniMap
-          className="!bg-card !border-border !rounded-[var(--admin-radius)] !shadow-card"
+        {isMinimapOpen && <MiniMap
+          className="!bottom-14 !bg-card !border-border !rounded-[var(--admin-radius)] !shadow-card"
           nodeColor="hsl(var(--primary) / 0.3)"
           maskColor="hsl(var(--background) / 0.7)"
           pannable
           zoomable
-        />
+        />}
       </ReactFlow>
+
+      <button
+        type="button"
+        onClick={() => setIsMinimapOpen((open) => !open)}
+        aria-expanded={isMinimapOpen}
+        aria-label={isMinimapOpen ? 'Minimizar mapa do fluxo' : 'Mostrar mapa do fluxo'}
+        className="absolute bottom-3 right-3 z-30 flex min-h-11 items-center gap-2 rounded-lg border border-border bg-card px-3 text-xs text-foreground shadow-card"
+      >
+        {isMinimapOpen ? <ChevronDown className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
+        {isMinimapOpen ? 'Minimizar mapa' : 'Mapa'}
+      </button>
+
+      {isFullscreen && (
+        <div className="pointer-events-none absolute inset-x-3 top-3 z-40 flex items-start justify-between gap-2">
+          <p role="status" className={`rounded-lg border border-border bg-card/95 px-3 py-2 text-xs text-foreground shadow-sm ${expansionOrientation === 'landscape' ? 'landscape:hidden' : 'portrait:hidden'}`}>
+            Gire o celular para usar o fluxo na {expansionOrientation === 'landscape' ? 'horizontal' : 'vertical'}.
+          </p>
+        </div>
+      )}
 
       {editorialSummary}
 
