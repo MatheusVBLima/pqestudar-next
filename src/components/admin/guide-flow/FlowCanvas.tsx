@@ -774,7 +774,7 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
+      <ContextMenuTrigger asChild disabled={editorOpen || imageEditorPosition !== null}>
     <div
       ref={canvasRef}
       className={

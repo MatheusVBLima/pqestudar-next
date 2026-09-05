@@ -310,6 +310,7 @@ export default function MarkdownEditor({
   const [slashSelection, setSlashSelection] = useState(0);
   const slashItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const savedVisualRangeRef = useRef<Range | null>(null);
+  const toolbarRangeRef = useRef<Range | null>(null);
   const [highlightPaletteOpen, setHighlightPaletteOpen] = useState(false);
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
@@ -332,6 +333,34 @@ export default function MarkdownEditor({
   const isUnderMin = minWords > 0 && wordCount < minWords;
   const parsedVideoId = youtubeVideoId(videoUrl);
 
+  const rememberVisualSelection = useCallback(() => {
+    const editor = visualEditorRef.current;
+    const selection = window.getSelection();
+    if (!editor || !selection?.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    if (editor.contains(range.commonAncestorContainer)) {
+      toolbarRangeRef.current = range.cloneRange();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'visual') return;
+    document.addEventListener('selectionchange', rememberVisualSelection);
+    return () => document.removeEventListener('selectionchange', rememberVisualSelection);
+  }, [activeTab, rememberVisualSelection]);
+
+  const restoreVisualSelection = useCallback(() => {
+    const editor = visualEditorRef.current;
+    const range = toolbarRangeRef.current;
+    if (!editor) return;
+    editor.focus({ preventScroll: true });
+    if (range && editor.contains(range.commonAncestorContainer)) {
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
+  }, []);
+
   useEffect(() => {
     if (activeTab !== "visual" || !visualEditorRef.current || visualHasFocusRef.current) return;
     const html = markdownToHtml(value);
@@ -340,6 +369,7 @@ export default function MarkdownEditor({
 
   const mountVisualEditor = useCallback((editor: HTMLDivElement | null) => {
     visualEditorRef.current = editor;
+    toolbarRangeRef.current = null;
     if (!editor) return;
     editor.innerHTML = markdownToHtml(latestValueRef.current);
   }, []);
@@ -360,10 +390,11 @@ export default function MarkdownEditor({
   }, [onChange]);
 
   const runVisualCommand = useCallback((command: string, argument?: string) => {
-    visualEditorRef.current?.focus();
+    restoreVisualSelection();
     document.execCommand(command, false, argument);
+    rememberVisualSelection();
     emitVisualChange();
-  }, [emitVisualChange]);
+  }, [emitVisualChange, rememberVisualSelection, restoreVisualSelection]);
 
   const insertVisualLink = useCallback(() => {
     const url = window.prompt("Cole a URL do link:", "/");
@@ -859,10 +890,24 @@ export default function MarkdownEditor({
   };
 
   return (
-    <div className={compact ? "space-y-1.5" : "space-y-2"}>
+    <div
+      className={compact ? "space-y-1.5" : "space-y-2"}
+      onPointerDown={(event) => event.stopPropagation()}
+      onContextMenu={(event) => event.stopPropagation()}
+    >
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex min-w-0 flex-wrap items-center gap-1">
+        <div
+          className="flex min-w-0 flex-wrap items-center gap-1"
+          onPointerDownCapture={(event) => {
+            if (activeTab !== 'visual' || !(event.target instanceof Element) || !event.target.closest('button')) return;
+            rememberVisualSelection();
+            event.preventDefault();
+          }}
+          onClickCapture={() => {
+            if (activeTab === 'visual') restoreVisualSelection();
+          }}
+        >
           {showHeadings && !compact && activeTab !== "preview" && (
             <>
               <Button
