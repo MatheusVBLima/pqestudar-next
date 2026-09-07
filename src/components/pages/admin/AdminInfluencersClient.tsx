@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Filter, Pencil, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, Filter, Pencil, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -35,6 +35,7 @@ export default function AdminInfluencersClient() {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("recent");
   const [showFilters, setShowFilters] = useState(false);
+  const [showPhones, setShowPhones] = useState(false);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Influencer | null>(null);
   const [deleting, setDeleting] = useState<Influencer | null>(null);
@@ -146,14 +147,14 @@ export default function AdminInfluencersClient() {
           <table className="w-full min-w-[1000px] table-fixed text-left text-sm">
             <caption className="sr-only">Influenciadores prospectados e status da afiliação</caption>
             <colgroup><col /><col /><col /><col className="w-[180px]" /><col className="w-[184px]" /><col className="w-[88px]" /></colgroup>
-            <thead className="border-b bg-muted/50 text-xs text-muted-foreground"><tr>{["Nome", "Perfil", "E-mail", "Telefone", "Afiliação", "Ações"].map(label => <th key={label} scope="col" className="px-3 py-3 font-medium">{label}</th>)}</tr></thead>
+            <thead className="border-b bg-muted/50 text-xs text-muted-foreground"><tr>{["Nome", "Perfil", "E-mail", "Telefone", "Afiliação", "Ações"].map(label => <th key={label} scope="col" className="px-3 py-3 font-medium">{label === "Telefone" ? <div className="flex items-center gap-2">Telefone<Button variant="ghost" size="icon" className="h-7 w-7" aria-label={showPhones ? "Ocultar telefones" : "Mostrar telefones"} title={showPhones ? "Ocultar telefones" : "Mostrar telefones"} aria-pressed={showPhones} onClick={() => setShowPhones(value => !value)}>{showPhones ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div> : label}</th>)}</tr></thead>
             <tbody className="divide-y">
               {query.isPending ? <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Carregando influenciadores…</td></tr> : rows.length === 0 ? <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{query.data?.length ? "Nenhum influenciador encontrado com esses filtros." : "Nenhum influenciador cadastrado. Cadastre seu primeiro contato."}</td></tr> : rows.map(row => (
                 <tr key={row.id} className="hover:bg-muted/30">
                   <td className="px-3 py-2.5"><span className="block truncate font-medium" title={row.name}>{row.name}</span></td>
                   <td className="px-3 py-2.5"><a href={/^https?:\/\//i.test(row.profile_url) ? row.profile_url : undefined} target="_blank" rel="noopener noreferrer" title={row.profile_url} className="flex items-center gap-1 text-primary hover:underline"><span className="truncate">{row.profile_url.replace(/^https?:\/\/(www\.)?/, "")}</span><ExternalLink className="h-3.5 w-3.5 shrink-0" /><span className="sr-only"> (abre em nova aba)</span></a></td>
                   <td className="px-3 py-2.5">{row.email ? <a className="block truncate hover:underline" title={row.email} href={`mailto:${row.email}`}>{row.email}</a> : <span className="text-muted-foreground">—</span>}</td>
-                  <td className="px-3 py-2.5">{row.phone ? <a className="block truncate hover:underline" title={row.phone} href={`tel:${row.phone.replace(/[^+\d]/g, "")}`}>{row.phone}</a> : <span className="text-muted-foreground">—</span>}</td>
+                  <td className="px-3 py-2.5">{row.phone ? showPhones ? <a className="block truncate hover:underline" title={row.phone} href={`tel:${row.phone.replace(/[^+\d]/g, "")}`}>{row.phone}</a> : <span className="text-muted-foreground" aria-label="Telefone oculto">••••••••••</span> : <span className="text-muted-foreground">—</span>}</td>
                   <td className="px-3 py-2.5">
                     <Select value={row.status} disabled={mutation.isPending} onValueChange={value => mutation.mutate({ kind: "status", id: row.id, status: value as Influencer["status"] })}>
                       <SelectTrigger aria-label={`Status de afiliação de ${row.name}`} className={`h-10 w-[160px] gap-3 px-4 font-medium [&>svg]:shrink-0 [&:focus:not(:focus-visible)]:ring-0 [&:focus:not(:focus-visible)]:ring-offset-0 ${colors[row.status]}`}><SelectValue /></SelectTrigger>

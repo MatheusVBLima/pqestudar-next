@@ -435,7 +435,7 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
                 ferramentaDescricao: targetType === 'tool' ? p.ferramentaDescricao : '',
                 ferramentaCoverImageUrl: targetType === 'tool' ? p.ferramentaCoverImageUrl : '',
                 ferramentaTags: targetType === 'tool' ? p.ferramentaTags : [],
-                visualMode: targetType === 'tool' ? 'prompt_only' : p.visualMode,
+                visualMode: p.visualMode,
                 tipo: targetType === 'tool' ? '' : p.tipo,
                 categoriaPublica: targetType === 'tool' ? (p.categoriaPublica || 'Ferramentas') : p.categoriaPublica,
               }));
@@ -627,8 +627,8 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
           <Label className="text-xs font-medium">Modo visual</Label>
           <RadioGroup
             value={inputs.visualMode}
-            onValueChange={(v) => setInputs((p) => ({ ...p, visualMode: v as 'generate' | 'prompt_only' }))}
-            className="flex gap-3"
+            onValueChange={(v) => setInputs((p) => ({ ...p, visualMode: v as 'generate' | 'prompt_only' | 'suggestion' }))}
+            className="flex flex-wrap gap-3"
           >
             <div className="flex items-center gap-1.5">
               <RadioGroupItem value="generate" id="vm-gen" className="h-3 w-3" />
@@ -643,6 +643,10 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
                 <FileText className="h-2.5 w-2.5 text-muted-foreground" />
                 Apenas prompts
               </label>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <RadioGroupItem value="suggestion" id="vm-suggestion" className="h-3 w-3" />
+              <label htmlFor="vm-suggestion" className="text-[10px] cursor-pointer">Imagem aqui (sem prompt)</label>
             </div>
           </RadioGroup>
         </div>

@@ -11,7 +11,7 @@ interface ImageNodeData {
   prompt: string;
   alt_text: string;
   editorial_function?: string;
-  status: 'success' | 'error' | 'generating' | 'pending' | 'prompt_only';
+  status: 'success' | 'error' | 'generating' | 'pending' | 'prompt_only' | 'suggestion';
   url?: string;
   error?: string;
   onRegenerate?: (prompt: string, position: string) => void;
@@ -29,6 +29,19 @@ export const ImageNode = memo(({ data }: { data: ImageNodeData }) => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (data.status === 'suggestion') {
+    return <div className="w-[300px] overflow-hidden rounded-[var(--admin-radius)] border border-dashed border-primary/30 bg-card shadow-sm">
+      <Handle type="target" position={Position.Left} className="!bg-primary" />
+      <div className="border-b border-border px-3 py-2 text-xs font-semibold">{label}</div>
+      <div className="flex min-h-28 flex-col items-center justify-center gap-2 p-4 text-center">
+        <ImageIcon className="h-5 w-5 text-primary" />
+        <span className="text-sm font-medium">Imagem aqui</span>
+        <p className="text-xs text-muted-foreground">{data.editorial_function || 'Sugestão de posição para adicionar uma imagem.'}</p>
+      </div>
+      <Handle type="source" position={Position.Right} className="!bg-primary" />
+    </div>;
+  }
 
   return (
     <TooltipProvider>

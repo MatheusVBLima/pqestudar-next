@@ -1,3 +1,4 @@
+import { parseGuideSections } from '@/lib/guide-sections';
 import { memo, useMemo } from 'react';
 import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +26,7 @@ function evaluateDirectives(data: GeneratedGuideData, structureFiles: string[]):
   const titulos = getMapping('titulos');
   if (titulos?.resolvedFile) {
     const titleLen = data.title.length;
-    const hasBoldH2 = /^## \*\*/m.test(data.content_markdown);
+    const hasBoldH2 = parseGuideSections(data.content_markdown).some(section => section.heading !== null);
     checks.push({
       directive: 'Estilo de Títulos',
       sourceFile: titulos.resolvedFile,
@@ -41,9 +42,9 @@ function evaluateDirectives(data: GeneratedGuideData, structureFiles: string[]):
   // 2. Estrutura Textual
   const estrutura = getMapping('estrutura');
   if (estrutura?.resolvedFile) {
-    const hasH2 = /^## /m.test(data.content_markdown);
+    const hasH2 = parseGuideSections(data.content_markdown).some(section => section.heading !== null);
     const hasH3 = /^### /m.test(data.content_markdown);
-    const sections = (data.content_markdown.match(/^## /gm) || []).length;
+    const sections = parseGuideSections(data.content_markdown).filter(section => section.heading !== null).length;
     checks.push({
       directive: 'Estrutura Textual',
       sourceFile: estrutura.resolvedFile,
@@ -60,13 +61,15 @@ function evaluateDirectives(data: GeneratedGuideData, structureFiles: string[]):
   const imagens = getMapping('imagens');
   if (imagens?.resolvedFile) {
     const hasImageTag = /<img/i.test(data.content_markdown);
-    const hasImageSuggestion = !!data.cover_image_suggestion;
+    const hasPlacements = (data.generated_images ?? data.image_prompts ?? []).some(image => image.status === 'suggestion');
+    const hasImageSuggestion = !!data.cover_image_suggestion || hasPlacements;
     checks.push({
       directive: 'Diretriz de Imagens',
       sourceFile: imagens.resolvedFile,
       status: hasImageTag || hasImageSuggestion ? 'conforme' : 'parcial',
       observation: hasImageTag
         ? 'Referências de imagem encontradas no conteúdo'
+        : hasPlacements ? 'Posições de imagem sugeridas, sem prompts ou imagens geradas'
         : hasImageSuggestion
         ? 'Sugestão de capa presente, sem imagens no corpo'
         : 'Sem referências de imagem',
@@ -201,11 +204,11 @@ function getCorrection(check: DirectiveCheck, data: GeneratedGuideData): { locat
     case 'Estilo de Títulos': {
       const instructions = [];
       if (data.title.length <= 10 || data.title.length > 70) instructions.push(`Metadados → Título: use de 11 a 70 caracteres. Atual: “${data.title}” (${data.title.length}).`);
-      if (!/^## \*\*/m.test(data.content_markdown)) instructions.push('Conteúdo → subtítulos H2: não foi encontrado H2 em negrito. Use o formato ## **Subtítulo**.');
-      return { location: 'Metadados e títulos das seções', instructions, nodeTypes: [...(data.title.length <= 10 || data.title.length > 70 ? ['metaNode'] : []), ...(!/^## \*\*/m.test(data.content_markdown) ? ['contentNode'] : [])] };
+      if (!parseGuideSections(data.content_markdown).some(section => section.heading !== null)) instructions.push('Conteúdo → subtítulos H2: não foi encontrado H2 em negrito. Use o formato ## **Subtítulo**.');
+      return { location: 'Metadados e títulos das seções', instructions, nodeTypes: [...(data.title.length <= 10 || data.title.length > 70 ? ['metaNode'] : []), ...(!parseGuideSections(data.content_markdown).some(section => section.heading !== null) ? ['contentNode'] : [])] };
     }
     case 'Estrutura Textual':
-      return { location: 'Seções de conteúdo', instructions: [`O conteúdo tem ${(data.content_markdown.match(/^## /gm) || []).length} seções H2. Esta verificação exige pelo menos 3. Adicione seções pelo menu de contexto do fluxo e use títulos com ##.`], nodeTypes: ['contentNode'] };
+      return { location: 'Seções de conteúdo', instructions: [`O conteúdo tem ${parseGuideSections(data.content_markdown).filter(section => section.heading !== null).length} seções H2. Esta verificação exige pelo menos 3. Adicione seções pelo menu de contexto do fluxo e use títulos com ##.`], nodeTypes: ['contentNode'] };
     case 'Diretriz de Imagens':
       return { location: 'Imagens e conteúdo do guia', instructions: ['Esta verificação não encontrou uma tag <img> no conteúdo nem uma sugestão de capa. Inclua uma imagem no conteúdo ou gere novamente com uma sugestão de capa.'], nodeTypes: ['imageNode', 'contentNode'] };
     case 'Função do Tipo de Guia':

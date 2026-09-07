@@ -1,3 +1,4 @@
+import { normalizeGuideHeadings } from '@/lib/guide-sections';
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -270,7 +271,7 @@ function countMarkdownWords(markdown: string): number {
 // Generate HTML from markdown
 function markdownToHtml(markdown: string): string {
   if (!markdown) return "";
-  const rawHtml = marked.parse(markdown) as string;
+  const rawHtml = marked.parse(normalizeGuideHeadings(markdown)) as string;
   return DOMPurify.sanitize(rawHtml, purifyConfig);
 }
 
@@ -281,7 +282,7 @@ function containsHtml(text: string): boolean {
 
 // Convert H1 to H2 in markdown (H1 is reserved for page title)
 function normalizeHeadings(markdown: string): string {
-  return markdown.replace(/^# +(.+)$/gm, "## $1");
+  return normalizeGuideHeadings(markdown);
 }
 
 // Convert HTML to Markdown
@@ -1132,6 +1133,14 @@ export default function MarkdownEditor({
               data-placeholder={placeholder || "Comece a escrever seu guia..."}
               onFocus={() => { visualHasFocusRef.current = true; }}
               onBlur={() => { visualHasFocusRef.current = false; setSlashQuery(null); emitVisualChange(); }}
+              onPaste={(event) => {
+                event.preventDefault();
+                const plain = event.clipboardData.getData('text/plain');
+                const html = event.clipboardData.getData('text/html');
+                const markdown = html && !/^\s*#{1,6}(?!#)\s*\S/m.test(plain) ? htmlToMarkdown(html) : plain;
+                document.execCommand('insertHTML', false, markdownToHtml(markdown));
+                emitVisualChange();
+              }}
               onInput={handleVisualInput}
               onClick={(event) => { if ((event.target as HTMLElement).matches('input[type="checkbox"]')) emitVisualChange(); }}
               onKeyDown={handleVisualKeyDown}

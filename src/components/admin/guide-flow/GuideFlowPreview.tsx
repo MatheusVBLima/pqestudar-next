@@ -14,7 +14,7 @@ export interface ImagePrompt {
   prompt: string;
   alt_text: string;
   editorial_function?: string;
-  status: 'success' | 'error' | 'generating' | 'pending';
+  status: 'success' | 'error' | 'generating' | 'pending' | 'prompt_only' | 'suggestion';
   url?: string;
   storage_path?: string;
   error?: string;

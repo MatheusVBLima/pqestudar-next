@@ -1,5 +1,7 @@
 "use client";
 
+import { parseGuideSections } from '@/lib/guide-sections';
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -301,7 +303,7 @@ export default function GuideFlow() {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
           body: JSON.stringify({
             ...inputs,
-            visualMode: inputs.visualMode || 'generate',
+            visualMode: inputs.visualMode || 'suggestion',
             selectedLibrary: selectedLibraryName,
             structureContext,
             libraryContext,
@@ -424,7 +426,7 @@ export default function GuideFlow() {
   const buildFinalMarkdown = (data: GeneratedGuideData): string => {
     const isToolFlow = currentInputs.targetType === 'tool';
     const internalImages = (data.generated_images ?? data.image_prompts ?? [])
-      .filter(img => img.type === 'internal' && ((img.status === 'success' && img.url) || isToolFlow));
+      .filter(img => img.type === 'internal' && img.status !== 'suggestion' && ((img.status === 'success' && img.url) || isToolFlow));
 
     if (internalImages.length === 0) return data.content_markdown;
 
@@ -451,42 +453,11 @@ export default function GuideFlow() {
       return data.content_markdown + suffix;
     }
 
-    // Split markdown by H2 headings to identify sections
-    const lines = data.content_markdown.split('\n');
-    const sections: { startLine: number; endLine: number }[] = [];
-    let currentStart = -1;
-    let insideCodeFence = false;
-
-    for (let i = 0; i < lines.length; i++) {
-      if (/^\s*(```|~~~)/.test(lines[i])) insideCodeFence = !insideCodeFence;
-      if (!insideCodeFence && /^##\s/.test(lines[i])) {
-        if (currentStart >= 0) {
-          sections.push({ startLine: currentStart, endLine: i - 1 });
-        }
-        currentStart = i;
-      }
-    }
-    if (currentStart >= 0) {
-      sections.push({ startLine: currentStart, endLine: lines.length - 1 });
-    }
-
-    // Build result by inserting images after the corresponding sections
-    const result = [...lines];
-    // Process in reverse order so line insertions don't shift indices
-    const sortedSections = Array.from(imagesBySection.entries()).sort((a, b) => b[0] - a[0]);
-
-    for (const [sectionIndex, images] of sortedSections) {
-      const section = sections[sectionIndex - 1]; // 1-indexed
-      if (!section) continue;
-
-      const imgTags = images
-        .map(img => `<img src="${imageUrlFor(img)}" alt="${img.alt_text || 'Imagem em construção do PqEstudar'}" width="100%" loading="lazy" decoding="async" />`)
-        .join('\n\n');
-
-      result.splice(section.endLine + 1, 0, '', imgTags, '');
-    }
-
-    return result.join('\n');
+    return parseGuideSections(data.content_markdown).map((section, index) => {
+      const images = imagesBySection.get(index + 1) ?? [];
+      const tags = images.map(img => `<img src="${imageUrlFor(img)}" alt="${(img.alt_text || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}" width="100%" loading="lazy" decoding="async" />`);
+      return [section.content, ...tags].join('\n\n');
+    }).join('\n\n');
   };
 
   const handleSave = async (publish: boolean) => {

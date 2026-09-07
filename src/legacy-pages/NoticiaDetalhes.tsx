@@ -214,9 +214,9 @@ const NoticiaDetalhes = () => {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 text-center">
           <h1 className="text-2xl font-bold mb-4">Notícia não encontrada</h1>
-          <Button onClick={() => router.push("/noticias")}>
+          <Button onClick={() => router.push("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar para Notícias
+            Voltar ao início
           </Button>
         </div>
       </div>
@@ -292,9 +292,9 @@ const NoticiaDetalhes = () => {
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Botão Voltar */}
         <div className="mb-6">
-          <Button variant="ghost" onClick={() => router.push("/noticias")} className="hover:bg-accent">
+          <Button variant="ghost" onClick={() => router.push("/")} className="hover:bg-accent">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar para Notícias
+            Voltar ao início
           </Button>
         </div>
 

@@ -153,7 +153,8 @@ serve(async (req) => {
     } = body;
 
     const selectedProvider = getAiProvider(aiProvider);
-    const shouldGenerateImages = !isToolTarget && visualMode !== "prompt_only";
+    const suggestionsOnly = !visualMode || visualMode === "suggestion";
+    const shouldGenerateImages = !isToolTarget && visualMode === "generate";
 
     if (!tema || (!isToolTarget && !categoria)) {
       return jsonResponse({ error: "Tema e categoria sao obrigatorios" }, 400);
@@ -238,7 +239,13 @@ Regras:
 `
       : "";
 
-    const imageInstruction = isToolTarget
+    const imageInstruction = suggestionsOnly
+      ? `\n## POSICOES DE IMAGEM (PRIORIDADE SOBRE DIRETRIZES DE PROMPTS)
+Nao escreva prompts visuais e nao gere imagens. Apenas sugira pontos uteis para inserir imagens.
+Retorne image_prompts com prompt vazio, type internal, position after_section_N e editorial_function curta em portugues.
+N comeca em 1 e conta os cards de conteudo, incluindo introducao se existir antes do primeiro H2.
+Use a indicacao "Imagem aqui". Nao inclua tags img nem URLs de imagens no content_markdown.`
+      : isToolTarget
       ? `\n\n## IMAGENS PARA PAGINA DE FERRAMENTA
 Gere prompts de imagem para prints/areas da ferramenta. Use 3 imagens internas como padrao minimo. Pode sugerir mais se houver funcionalidades claramente diferentes.
 
@@ -314,7 +321,10 @@ Quando o destino nao for ferramenta, o campo "title" deve sempre comecar com a p
 ## Regras de output
 Retorne exclusivamente um JSON valido, sem markdown code fences e sem texto fora do JSON.`;
 
-    const imageSchema = isToolTarget
+    const imageSchema = suggestionsOnly
+      ? `,
+  "image_prompts": [{ "type": "internal", "position": "after_section_1", "prompt": "", "alt_text": "", "editorial_function": "Imagem aqui: ilustrar o conceito desta secao" }]`
+      : isToolTarget
       ? `,
   "image_prompts": [
     { "type": "internal", "position": "after_section_1", "prompt": "descricao do primeiro print real/manual da ferramenta", "alt_text": "texto alternativo em portugues", "editorial_function": "funcao editorial da imagem" },
@@ -379,6 +389,21 @@ Retorne um JSON com esta estrutura exata:
       }, 500);
     }
 
+    if (suggestionsOnly) {
+      const suggestions = Array.isArray(guideData.image_prompts) && guideData.image_prompts.length
+        ? guideData.image_prompts
+        : [{ type: "internal", position: "after_section_1", editorial_function: "Imagem aqui" }];
+      guideData.image_prompts = suggestions.map((item: any) => ({
+        type: item.type === "cover" ? "cover" : "internal",
+        position: item.type === "cover" ? "cover" : /^after_section_[1-9]\d*$/.test(item.position) ? item.position : "after_section_1",
+        prompt: "",
+        alt_text: "",
+        editorial_function: item.editorial_function || "Imagem aqui",
+        status: "suggestion",
+      }));
+      guideData.cover_image_url = "";
+      guideData.cover_image_suggestion = "";
+    }
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     if (guideData.image_prompts && Array.isArray(guideData.image_prompts) && guideData.image_prompts.length > 0 && shouldGenerateImages) {
       const generatedImages: any[] = [];
@@ -472,7 +497,7 @@ Retorne um JSON com esta estrutura exata:
         prompt: imgPrompt.prompt || "",
         alt_text: imgPrompt.alt_text || "",
         editorial_function: imgPrompt.editorial_function || "",
-        status: "prompt_only",
+        status: suggestionsOnly ? "suggestion" : "prompt_only",
       }));
     }
 

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { AdminSidebar } from "./AdminSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -14,7 +15,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, isDeveloper, loading: rolesLoading } = useUserRoles();
+  const { isAdmin, isDeveloper, loading: rolesLoading, error: rolesError, refetch: retryRoles } = useUserRoles();
   const router = useRouter();
   const pathname = usePathname() ?? "";
 
@@ -36,11 +37,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }, [lockViewport]);
 
   useEffect(() => {
-    if (stillLoading) return;
+    if (stillLoading || rolesError) return;
     if (!user || !canAccessCurrentRoute) {
       router.replace("/");
     }
-  }, [stillLoading, user, canAccessCurrentRoute, router]);
+  }, [stillLoading, rolesError, user, canAccessCurrentRoute, router]);
 
   if (stillLoading) {
     return (
@@ -52,6 +53,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </div>
     );
+  }
+
+  if (user && rolesError) {
+    return <div className="admin-radius flex min-h-screen items-center justify-center bg-background p-6">
+      <div role="alert" className="w-full max-w-md space-y-4 rounded-[var(--admin-radius)] border bg-card p-6">
+        <h1 className="text-lg font-semibold">Não foi possível verificar o acesso</h1>
+        <p className="text-sm text-muted-foreground">{rolesError}</p>
+        <Button onClick={() => void retryRoles()}>Tentar novamente</Button>
+      </div>
+    </div>;
   }
 
   if (!user || !canAccessCurrentRoute) {

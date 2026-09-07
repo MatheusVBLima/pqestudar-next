@@ -6,18 +6,6 @@
     "dynamic": false
   },
   {
-    "path": "/acervo-video-prod-b7g1",
-    "name": "Acervo video prod b7g1",
-    "area": "Site",
-    "dynamic": false
-  },
-  {
-    "path": "/acesso-kit-partida-8h3z",
-    "name": "Acesso kit partida 8h3z",
-    "area": "Site",
-    "dynamic": false
-  },
-  {
     "path": "/admin",
     "name": "Admin",
     "area": "Admin",
@@ -336,12 +324,6 @@
     "dynamic": false
   },
   {
-    "path": "/curadoria-conteudo-ia-k4f9",
-    "name": "Curadoria conteudo ia k4f9",
-    "area": "Site",
-    "dynamic": false
-  },
-  {
     "path": "/curadoria/[slug]",
     "name": "Curadoria · [slug]",
     "area": "Site",
@@ -396,12 +378,6 @@
     "dynamic": true
   },
   {
-    "path": "/kit",
-    "name": "Kit",
-    "area": "Site",
-    "dynamic": false
-  },
-  {
     "path": "/login",
     "name": "Login",
     "area": "Site",
@@ -418,12 +394,6 @@
     "name": "Mapa dos beneficios · [slug]",
     "area": "Site",
     "dynamic": true
-  },
-  {
-    "path": "/metodos-automacao-w2p5",
-    "name": "Metodos automacao w2p5",
-    "area": "Site",
-    "dynamic": false
   },
   {
     "path": "/meu-perfil",
@@ -466,12 +436,6 @@
     "name": "Noticia · [id]",
     "area": "Site",
     "dynamic": true
-  },
-  {
-    "path": "/noticias",
-    "name": "Noticias",
-    "area": "Site",
-    "dynamic": false
   },
   {
     "path": "/pqestudar-premium",
@@ -584,12 +548,6 @@
   {
     "path": "/ranking-comunidade",
     "name": "Ranking comunidade",
-    "area": "Site",
-    "dynamic": false
-  },
-  {
-    "path": "/recursos-alta-performance-z9x0",
-    "name": "Recursos alta performance z9x0",
     "area": "Site",
     "dynamic": false
   },

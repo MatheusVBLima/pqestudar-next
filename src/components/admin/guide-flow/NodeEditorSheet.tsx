@@ -1,3 +1,4 @@
+import { parseGuideSections, replaceGuideSection } from '@/lib/guide-sections';
 import { useState, useEffect, useRef } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
@@ -96,10 +97,9 @@ function useSlugValidation(slug: string, originalSlug: string) {
 export function NodeEditorSheet({ open, onClose, data, guideData, guideInternalCode, onSave }: Props) {
   const [local, setLocal] = useState<GeneratedGuideData>(guideData);
   const [originalSlug] = useState(guideData.slug);
+  const [contentInvalid, setContentInvalid] = useState(false);
 
-  useEffect(() => {
-    setLocal(guideData);
-  }, [guideData, open]);
+  // This editor mounts afresh for each card/open, keeping one stable edit snapshot.
 
   const slugStatus = useSlugValidation(local.slug, originalSlug);
 
@@ -108,6 +108,7 @@ export function NodeEditorSheet({ open, onClose, data, guideData, guideInternalC
   };
 
   const handleSave = () => {
+    if (contentInvalid || !local.content_markdown.trim()) return;
     onSave(local);
     onClose();
   };
@@ -132,14 +133,14 @@ export function NodeEditorSheet({ open, onClose, data, guideData, guideInternalC
             <SheetTitle className="text-base">{data.label}</SheetTitle>
           </div>
           <SheetDescription className="text-xs">
-            Edite os campos e clique em Salvar para aplicar as mudanças ao fluxo.
+            Aplicar atualiza os cards do fluxo. Para gravar no guia, use Rascunho ou Publicar no topo da página.
           </SheetDescription>
         </SheetHeader>
 
         <div className="-mr-6 min-h-0 flex-1 space-y-5 overflow-y-auto pb-4 pr-6">
           {data.nodeType === 'meta' && <MetaEditor local={local} update={update} slugStatus={slugStatus} internalCode={guideInternalCode} />}
           {data.nodeType === 'seo' && <SeoEditor local={local} update={update} />}
-          {data.nodeType === 'content' && <ContentEditor local={local} update={update} sectionIndex={data.sectionIndex} internalCode={guideInternalCode} />}
+          {data.nodeType === 'content' && <ContentEditor local={local} update={update} sectionIndex={data.sectionIndex} internalCode={guideInternalCode} onInvalidChange={setContentInvalid} />}
           {data.nodeType === 'cta' && <CtaEditor local={local} update={update} ctaKey={data.nodeId as 'cta_top' | 'cta_middle' | 'cta_final'} />}
           {data.nodeType === 'links' && <LinksEditor local={local} update={update} />}
         </div>
@@ -156,7 +157,7 @@ export function NodeEditorSheet({ open, onClose, data, guideData, guideInternalC
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={slugStatus === 'conflict'}
+            disabled={slugStatus === 'conflict' || contentInvalid}
             className="gap-1.5"
           >
             <Save className="h-3.5 w-3.5" /> Aplicar
@@ -363,35 +364,28 @@ function SeoEditor({ local, update }: {
 }
 
 // ─── Content Section Editor ───
-function ContentEditor({ local, update, sectionIndex, internalCode }: {
+function ContentEditor({ local, update, sectionIndex, internalCode, onInvalidChange }: {
   local: GeneratedGuideData;
   update: <K extends keyof GeneratedGuideData>(key: K, value: GeneratedGuideData[K]) => void;
   sectionIndex?: number;
   internalCode: string;
+  onInvalidChange: (invalid: boolean) => void;
 }) {
   const idx = sectionIndex ?? 0;
-  const baseSectionsRef = useRef(parseSections(local.content_markdown));
-  const [sectionContent, setSectionContent] = useState(baseSectionsRef.current[idx]?.content ?? '');
-
-  useEffect(() => {
-    const sections = parseSections(local.content_markdown);
-    baseSectionsRef.current = sections;
-    setSectionContent(sections[idx]?.content ?? '');
-    // A troca de seção deve carregar outro bloco. Alterações no próprio Markdown
-    // não podem ressincronizar o textarea a cada tecla, pois isso move o cursor.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx]);
-
+  const baseMarkdown = useRef(local.content_markdown);
+  const [sectionContent, setSectionContent] = useState(() => parseGuideSections(baseMarkdown.current)[idx]?.content ?? '');
+  const [contentError, setContentError] = useState('');
   const handleContentChange = (newContent: string) => {
     setSectionContent(newContent);
-    const allSections = baseSectionsRef.current.map((section) => ({ ...section }));
-    if (!allSections[idx]) {
-      allSections[idx] = { title: `Seção ${idx + 1}`, content: newContent };
-    } else {
-      allSections[idx].content = newContent;
+    try {
+      const rebuilt = replaceGuideSection(baseMarkdown.current, idx, newContent);
+      setContentError('');
+      onInvalidChange(false);
+      update('content_markdown', rebuilt);
+    } catch (error) {
+      onInvalidChange(true);
+      setContentError(error instanceof Error ? error.message : 'Revise o conteudo.');
     }
-    const rebuilt = allSections.map(s => s.content).join('\n\n');
-    update('content_markdown', rebuilt);
   };
 
   const wordCount = sectionContent.split(/\s+/).filter(Boolean).length;
@@ -402,6 +396,7 @@ function ContentEditor({ local, update, sectionIndex, internalCode }: {
         <Badge variant="secondary" className="text-[10px]">{wordCount} palavras</Badge>
         <Badge variant="outline" className="text-[10px]">Seção {(sectionIndex ?? 0) + 1}</Badge>
       </div>
+      {contentError && <p role="alert" className="text-xs text-destructive">{contentError}</p>}
       <MarkdownEditor visual showWordCount={false} guideInternalCode={internalCode} value={sectionContent} onChange={handleContentChange} />
     </div>
   );
@@ -585,30 +580,3 @@ function LinksEditor({ local, update }: {
   );
 }
 
-// ─── Utility: parse sections from markdown ───
-function parseSections(markdown: string): Array<{ title: string; content: string }> {
-  const lines = markdown.split('\n');
-  const sections: Array<{ title: string; content: string }> = [];
-  let currentLines: string[] = [];
-  let insideCodeFence = false;
-  let currentTitle = 'Introdução';
-
-  const flush = () => {
-    const text = currentLines.join('\n').trim();
-    if (text) sections.push({ title: currentTitle, content: currentLines.join('\n') });
-    currentLines = [];
-  };
-
-  for (const line of lines) {
-    if (/^\s*(```|~~~)/.test(line)) insideCodeFence = !insideCodeFence;
-    if (!insideCodeFence && /^## /.test(line)) {
-      flush();
-      currentTitle = line.replace(/^##\s*\*?\*?/, '').replace(/\*?\*?\s*$/, '').trim();
-      currentLines.push(line);
-    } else {
-      currentLines.push(line);
-    }
-  }
-  flush();
-  return sections;
-}

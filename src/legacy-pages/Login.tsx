@@ -15,7 +15,7 @@ export default function Login() {
   const handleGoBack = () => {
     const from = searchParams?.get('from')
     if (from === 'noticias') {
-      router.push('/noticias')
+      router.push('/')
     } else {
       router.push('/')
     }

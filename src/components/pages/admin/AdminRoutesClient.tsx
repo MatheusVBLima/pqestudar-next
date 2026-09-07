@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Filter, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ExternalLink, Filter, Search, SlidersHorizontal } from "lucide-react";
 import type { CatalogRoute } from "@/lib/route-catalog";
+import { groupCatalogRoutes, routeDisplayName, routeSection } from "@/lib/route-catalog-groups";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,11 +25,32 @@ export default function AdminRoutesClient({ routes }: { routes: CatalogRoute[] }
   const [kind, setKind] = useState("all");
   const [order, setOrder] = useState("asc");
   const [showFilters, setShowFilters] = useState(false);
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
+  const toggleGroup = (key: string) => setCollapsed(previous => {
+    const next = new Set(previous);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
   const [selected, setSelected] = useState<CatalogRoute | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
   const normalize = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
-  const filtered = routes.filter(route => (area === "all" || route.area === area) && (kind === "all" || route.dynamic === (kind === "dynamic")) && normalize(`${route.name} ${route.path}`).includes(normalize(search.trim())))
+  const filtered = routes.filter(route => (area === "all" || route.area === area) && (kind === "all" || route.dynamic === (kind === "dynamic")) && normalize(`${routeDisplayName(route)} ${route.path} ${route.area} ${routeSection(route)}`).includes(normalize(search.trim())))
     .sort((a, b) => a.path.localeCompare(b.path, "pt-BR", { numeric: true }) * (order === "asc" ? 1 : -1));
+  const groups = groupCatalogRoutes(filtered);
+  const allGroups = groupCatalogRoutes(routes);
+  const setCategoryExpanded = (category: string, expanded: boolean) => {
+    setCollapsed(previous => {
+      const next = new Set(previous);
+      const group = allGroups.find(item => item.area === category);
+      // Keep the category visible when collapsing its children.
+      next.delete(category);
+      group?.sections.forEach(section => {
+        const key = `${category}/${section.name}`;
+        if (expanded) next.delete(key); else next.add(key);
+      });
+      return next;
+    });
+  };
   const active = area !== "all" || kind !== "all" || order !== "asc";
   const parameters = selected?.path.match(/\[\[?[^\]]+\]\]?/g) ?? [];
   let valid = true;
@@ -56,6 +78,8 @@ export default function AdminRoutesClient({ routes }: { routes: CatalogRoute[] }
       <div className="flex flex-wrap items-center gap-3 border-b border-primary/10 px-4 py-2">
         <Button variant="ghost" size="icon" className={`h-9 w-9 ${showFilters || active ? "bg-primary/15 text-primary" : ""}`} onClick={() => setShowFilters(value => !value)} aria-label="Filtrar páginas" aria-expanded={showFilters} aria-controls="route-filters"><Filter className="h-4 w-4" /></Button>
         {active && <span className="text-xs text-primary">Filtros ativos</span>}
+        <Button variant="ghost" size="sm" onClick={() => setCollapsed(new Set())}>Expandir tudo</Button>
+        <Button variant="ghost" size="sm" onClick={() => setCollapsed(new Set(allGroups.flatMap(group => [group.area, ...group.sections.map(section => `${group.area}/${section.name}`)])))}>Recolher tudo</Button>
         <span className="ml-auto text-xs text-muted-foreground" aria-live="polite">{filtered.length} de {routes.length} páginas</span>
       </div>
       {showFilters && <div id="route-filters" className="flex flex-wrap items-center gap-2 border-b border-primary/10 bg-background/45 px-4 py-3">
@@ -70,13 +94,36 @@ export default function AdminRoutesClient({ routes }: { routes: CatalogRoute[] }
           <colgroup><col className="w-[25%]" /><col /><col className="w-[110px]" /><col className="w-[110px]" /><col className="w-[180px]" /></colgroup>
           <thead className="border-b border-primary/10 bg-muted/50 text-xs text-muted-foreground"><tr>{["Página", "Slug / rota", "Área", "Tipo", "Acessar"].map(label => <th key={label} scope="col" className="px-4 py-3 font-medium">{label}</th>)}</tr></thead>
           <tbody className="divide-y divide-border/70">
-            {filtered.map(route => <tr key={route.path} className="hover:bg-muted/30">
-              <td className="px-4 py-3"><span className="block truncate font-medium" title={route.name}>{route.name}</span></td>
+            {groups.map(group => <Fragment key={group.area}>
+              <tr className="bg-primary/10"><th colSpan={5} scope="rowgroup" className="p-0">
+                <div className="flex items-center gap-2 pr-4">
+                <button type="button" className="flex min-w-0 flex-1 items-center gap-2 px-4 py-3 text-left font-semibold" aria-expanded={!collapsed.has(group.area)} onClick={() => toggleGroup(group.area)}>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${collapsed.has(group.area) ? "-rotate-90" : ""}`} />
+                  {group.area}<span className="ml-auto text-xs font-normal text-muted-foreground">{group.count}</span>
+                </button>
+                <Button variant="ghost" size="sm" className="h-8 text-xs" aria-label={`Expandir todos os itens de ${group.area}`} onClick={() => setCategoryExpanded(group.area, true)}>Expandir itens</Button>
+                <Button variant="ghost" size="sm" className="h-8 text-xs" aria-label={`Recolher todos os itens de ${group.area}`} onClick={() => setCategoryExpanded(group.area, false)}>Recolher itens</Button>
+                </div>
+              </th></tr>
+              {!collapsed.has(group.area) && group.sections.map(section => {
+                const key = `${group.area}/${section.name}`;
+                return <Fragment key={key}>
+                  <tr className="bg-muted/50"><th colSpan={5} scope="rowgroup" className="p-0">
+                    <button type="button" className="flex w-full items-center gap-2 py-2.5 pl-8 pr-4 text-left text-xs font-semibold" aria-expanded={!collapsed.has(key)} onClick={() => toggleGroup(key)}>
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${collapsed.has(key) ? "-rotate-90" : ""}`} />
+                      {section.name}<span className="ml-auto font-normal text-muted-foreground">{section.routes.length}</span>
+                    </button>
+                  </th></tr>
+                  {!collapsed.has(key) && section.routes.map(route => <tr key={route.path} className="hover:bg-muted/30">
+              <td className="px-4 py-3"><span className="block truncate font-medium" title={routeDisplayName(route)}>{routeDisplayName(route)}</span></td>
               <td className="px-4 py-3">{route.dynamic ? <code className="block truncate text-xs" title={route.path}>{route.path}</code> : <a href={route.path} target="_blank" rel="noopener noreferrer" className="block truncate font-mono text-xs text-primary hover:underline" title={`Abrir ${route.path} em nova aba`}>{route.path}</a>}</td>
               <td className="px-4 py-3 text-muted-foreground">{route.area}</td>
               <td className="px-4 py-3 text-muted-foreground">{route.dynamic ? "Dinâmica" : "Fixa"}</td>
               <td className="px-4 py-3">{route.dynamic ? <Button variant="outline" size="sm" onClick={() => { setSelected(route); setValues({}); }}>Informar slug / ID</Button> : <Button asChild variant="ghost" size="sm"><a href={route.path} target="_blank" rel="noopener noreferrer" aria-label={`Abrir ${route.path} em nova aba`}>Abrir<ExternalLink className="h-3.5 w-3.5" /></a></Button>}</td>
-            </tr>)}
+                  </tr>)}
+                </Fragment>;
+              })}
+            </Fragment>)}
             {!filtered.length && <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">Nenhuma página encontrada com esses filtros.</td></tr>}
           </tbody>
         </table>

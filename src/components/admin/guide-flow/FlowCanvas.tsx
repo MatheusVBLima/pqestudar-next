@@ -1,3 +1,4 @@
+import { parseGuideSections } from '@/lib/guide-sections';
 import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
 import {
   ReactFlow,
@@ -174,29 +175,7 @@ export function buildGeneratedLayout(data: GeneratedGuideData, structureNames: s
   }
 
   // Column 1: Content sections
-  const lines = data.content_markdown.split('\n');
-  const sections: { title: string; content: string }[] = [];
-  let currentTitle = '';
-  let currentLines: string[] = [];
-  let insideCodeFence = false;
-
-  const flush = () => {
-    const text = currentLines.join('\n').trim();
-    if (text) sections.push({ title: currentTitle || 'Introdução', content: text });
-    currentLines = [];
-  };
-
-  for (const line of lines) {
-    if (/^\s*(```|~~~)/.test(line)) insideCodeFence = !insideCodeFence;
-    if (!insideCodeFence && /^## /.test(line)) {
-      flush();
-      currentTitle = line.replace(/^##\s*\*?\*?/, '').replace(/\*?\*?\s*$/, '').trim();
-      currentLines.push(line);
-    } else {
-      currentLines.push(line);
-    }
-  }
-  flush();
+  const sections = parseGuideSections(data.content_markdown);
 
   // Internal images mapped by position
   const internalImages = images.filter(img => img.type === 'internal');
@@ -205,7 +184,7 @@ export function buildGeneratedLayout(data: GeneratedGuideData, structureNames: s
     addNode(`section-${i}`, 'contentNode', { label: sec.title, content: sec.content, sectionIndex: i }, 1, i);
 
     // Check if there's an internal image for after this section
-    const imgForSection = internalImages.find(img => img.position === `after_section_${i}`);
+    const imgForSection = internalImages.find(img => img.position === `after_section_${i + 1}`);
     if (imgForSection) {
       const imgRow = i + 0.6; // Offset slightly
       const imgX = START_X + 1 * (NODE_W + GAP_X) + NODE_W + 20;
@@ -407,7 +386,10 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
   useEffect(() => {
     if (guideData && guideData.title) {
       const layout = buildGeneratedLayout(guideData, structureNames, libraryName, onRegenerateImage, handleEditImagePrompt, guideInternalCode);
-      setNodes(layout.nodes);
+      setNodes(previous => layout.nodes.map(node => {
+        const existing = previous.find(item => item.id === node.id);
+        return existing ? { ...node, position: existing.position } : node;
+      }));
       setEdges(layout.edges);
     }
   }, [guideData, guideInternalCode, handleEditImagePrompt, libraryName, onRegenerateImage, setEdges, setNodes, structureNames]);
@@ -867,8 +849,9 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
 
       {editorialSummary}
 
-      {guideData && !readOnly && (
+      {guideData && !readOnly && editorOpen && (
         <NodeEditorSheet
+          key={editorData?.nodeId}
           open={editorOpen}
           onClose={() => setEditorOpen(false)}
           data={editorData}

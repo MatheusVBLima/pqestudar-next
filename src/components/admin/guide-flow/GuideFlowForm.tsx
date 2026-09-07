@@ -35,7 +35,7 @@ export const DEFAULT_GUIDE_FLOW_INPUTS: GuideFlowInputs = {
   palavraChave: '',
   intencao: '',
   contextoAdicional: '',
-  visualMode: 'generate',
+  visualMode: 'suggestion',
   aiProvider: 'lovable',
   textModel: 'google/gemini-3-flash-preview',
   imageModel: 'google/gemini-2.5-flash-image',
@@ -56,7 +56,7 @@ export interface GuideFlowInputs {
   palavraChave: string;
   intencao: string;
   contextoAdicional: string;
-  visualMode: 'generate' | 'prompt_only';
+  visualMode: 'generate' | 'prompt_only' | 'suggestion';
   aiProvider: GuideFlowAiProvider;
   textModel: string;
   imageModel: string;
@@ -93,7 +93,7 @@ export function GuideFlowForm({ onGenerate, isGenerating }: Props) {
         <Label>Destino do fluxo</Label>
         <Select value={inputs.targetType} onValueChange={(v) => {
           const targetType = v as FlowTargetType;
-          setInputs((p) => ({ ...p, targetType, visualMode: targetType === 'tool' ? 'prompt_only' : p.visualMode }));
+          setInputs((p) => ({ ...p, targetType, visualMode: p.visualMode }));
         }}>
           <SelectTrigger className="rounded-[var(--admin-radius)] bg-background">
             <SelectValue />

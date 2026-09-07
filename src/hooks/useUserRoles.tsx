@@ -15,10 +15,10 @@ export interface UserRole {
 const ADMIN_CACHE = {
   staleTime: 10 * 60 * 1000,
   gcTime: 30 * 60 * 1000,
-  refetchOnMount: false as const,
+  refetchOnMount: true,
   refetchOnWindowFocus: false as const,
-  refetchOnReconnect: false as const,
-  retry: 0,
+  refetchOnReconnect: true,
+  retry: 2,
 };
 
 const getErrorMessage = (error: unknown) =>
@@ -28,27 +28,17 @@ export const useUserRoles = () => {
   const { user, loading: authLoading } = useAuth();
 
   const adminQuery = useQuery({
-    queryKey: ['check-admin', user?.id ?? 'anon'],
-    queryFn: async () => {
+    queryKey: ['check-admin', user?.id ?? 'anon', 'server-roles-v3'],
+    queryFn: async ({ signal }) => {
       if (!user) return { roles: [] as AppRole[] };
 
-      const roleChecks = await Promise.all(
-        (['admin', 'developer', 'moderator', 'user'] as AppRole[]).map(async (role) => {
-          const { data, error } = await supabase.rpc('has_role', {
-            _user_id: user.id,
-            _role: role,
-          });
-
-          if (error) {
-            console.error(`Error checking ${role} role:`, error);
-            return null;
-          }
-
-          return data === true ? role : null;
-        }),
-      );
-
-      return { roles: roleChecks.filter(Boolean) as AppRole[] };
+      const response = await fetch('/api/auth/roles', { credentials: 'same-origin', cache: 'no-store', signal });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Não foi possível verificar suas permissões. Tente novamente.');
+      if (data.userId !== user.id || !Array.isArray(data.roles)) {
+        throw new Error('Sua sessão mudou. Atualize a página para verificar o acesso.');
+      }
+      return { roles: data.roles.filter((role: string) => ['admin', 'developer', 'moderator', 'user'].includes(role)) as AppRole[] };
     },
     enabled: !!user,
     ...ADMIN_CACHE,
@@ -108,6 +98,7 @@ export const useUserRoles = () => {
     canAccessAdmin,
     canAccessModerator,
     loading,
+    error: adminQuery.isError ? getErrorMessage(adminQuery.error) : null,
     hasRole,
     assignRole,
     removeRole,
