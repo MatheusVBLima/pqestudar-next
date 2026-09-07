@@ -14,6 +14,34 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_influencers: {
+        Row: {
+          id: string
+          name: string
+          profile_url: string
+          email: string | null
+          phone: string | null
+          status: "pending" | "accepted" | "rejected"
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          profile_url: string
+          email?: string | null
+          phone?: string | null
+          status?: "pending" | "accepted" | "rejected"
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          profile_url?: string
+          email?: string | null
+          phone?: string | null
+          status?: "pending" | "accepted" | "rejected"
+        }
+        Relationships: []
+      }
       admin_activity_events: {
         Row: {
           action: string

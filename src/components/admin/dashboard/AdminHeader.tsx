@@ -5,6 +5,8 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 
 const routeTitles: Record<string, string> = {
+  '/admin/rotas': 'Catálogo de páginas',
+  '/admin/influenciadores': 'Influenciadores',
   '/admin': 'Visão geral',
   '/admin/insights/ferramentas': 'Análises — Ferramentas',
   '/admin/insights/concursos': 'Análises — Concursos',

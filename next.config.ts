@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import { generateRouteCatalog } from "./src/lib/route-catalog";
+
+generateRouteCatalog(process.cwd());
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },

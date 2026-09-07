@@ -479,6 +479,17 @@ export function AdminSidebar() {
         </SidebarGroup>
 
         <SectionLabel>Site</SectionLabel>
+        <SidebarGroup className={groupClass}>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/admin/rotas')} data-hover-label="Catálogo de páginas" className={itemClass(isActive('/admin/rotas'))}>
+                  <Link href="/admin/rotas"><FileText className="h-4 w-4" /><span>Catálogo de páginas</span></Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
         {/* Page Settings */}
         <SidebarGroup className={groupClass}>
           <SidebarGroupContent>
@@ -543,6 +554,21 @@ export function AdminSidebar() {
         </SidebarGroup>
 
         {/* Afiliados */}
+        <SidebarGroup className={groupClass}>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/admin/influenciadores')} data-hover-label="Influenciadores" className={itemClass(isActive('/admin/influenciadores'))}>
+                  <Link href="/admin/influenciadores">
+                    <Users className="h-4 w-4" />
+                    <span>Influenciadores</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>

@@ -1,0 +1,620 @@
+[
+  {
+    "path": "/",
+    "name": "Início",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/acervo-video-prod-b7g1",
+    "name": "Acervo video prod b7g1",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/acesso-kit-partida-8h3z",
+    "name": "Acesso kit partida 8h3z",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/admin",
+    "name": "Admin",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/afiliados",
+    "name": "Afiliados",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/bonus",
+    "name": "Bonus",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/certificado-que-conta",
+    "name": "Certificado que conta",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/concursos",
+    "name": "Concursos",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/concursos/anti-repeticao",
+    "name": "Anti repeticao",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/concursos/busca",
+    "name": "Busca",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/concursos/coleta",
+    "name": "Coleta",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/concursos/curadoria",
+    "name": "Curadoria",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/concursos/historico",
+    "name": "Historico",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/concursos/orquestracao-ia",
+    "name": "Orquestracao ia",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/curadorias",
+    "name": "Curadorias",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/curadorias/[id]",
+    "name": "Curadorias · [id]",
+    "area": "Admin",
+    "dynamic": true
+  },
+  {
+    "path": "/admin/curadorias/[id]/preview",
+    "name": "Preview",
+    "area": "Admin",
+    "dynamic": true
+  },
+  {
+    "path": "/admin/curadorias/new",
+    "name": "New",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/emails",
+    "name": "Emails",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/fluxo-guias",
+    "name": "Fluxo guias",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/fluxo-guias/biblioteca",
+    "name": "Biblioteca",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/guias",
+    "name": "Guias",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/guias/comentarios",
+    "name": "Comentarios",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/influenciadores",
+    "name": "Influenciadores",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/atividade-admin",
+    "name": "Atividade admin",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/auditorias",
+    "name": "Auditorias",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/concursos",
+    "name": "Concursos",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/concursos-eventos",
+    "name": "Concursos eventos",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/concursos-leitura",
+    "name": "Concursos leitura",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/copy-audit",
+    "name": "Copy audit",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/exclusivos",
+    "name": "Exclusivos",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/ferramentas",
+    "name": "Ferramentas",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/guias",
+    "name": "Guias",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/guias/autores",
+    "name": "Autores",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/premium-cursos",
+    "name": "Premium cursos",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/insights/seo-audit",
+    "name": "Seo audit",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/legal",
+    "name": "Legal",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/menu",
+    "name": "Menu",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/pages",
+    "name": "Pages",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/premium",
+    "name": "Premium",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/premium/importar-beneficios",
+    "name": "Importar beneficios",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/premium/itens",
+    "name": "Itens",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/premium/itens/[id]",
+    "name": "Itens · [id]",
+    "area": "Admin",
+    "dynamic": true
+  },
+  {
+    "path": "/admin/premium/tokens",
+    "name": "Tokens",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/premium/usuarios",
+    "name": "Usuarios",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/reengajamento",
+    "name": "Reengajamento",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/roles",
+    "name": "Roles",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/admin/rotas",
+    "name": "Rotas",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/bonus/[slug]",
+    "name": "Bonus · [slug]",
+    "area": "Site",
+    "dynamic": true
+  },
+  {
+    "path": "/breve",
+    "name": "Breve",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/carteirinha",
+    "name": "Carteirinha",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/certificado-que-conta",
+    "name": "Certificado que conta",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/certificado-que-conta/sucesso",
+    "name": "Sucesso",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/concursos",
+    "name": "Concursos",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/concursos/[slug]",
+    "name": "Concursos · [slug]",
+    "area": "Site",
+    "dynamic": true
+  },
+  {
+    "path": "/configuracoes-cookies",
+    "name": "Configuracoes cookies",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/curadoria-conteudo-ia-k4f9",
+    "name": "Curadoria conteudo ia k4f9",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/curadoria/[slug]",
+    "name": "Curadoria · [slug]",
+    "area": "Site",
+    "dynamic": true
+  },
+  {
+    "path": "/exclusivos",
+    "name": "Exclusivos",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/exclusivos/[slug]",
+    "name": "Exclusivos · [slug]",
+    "area": "Site",
+    "dynamic": true
+  },
+  {
+    "path": "/faq",
+    "name": "Faq",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/ferramentas",
+    "name": "Ferramentas",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/ferramentas/[slug]",
+    "name": "Ferramentas · [slug]",
+    "area": "Site",
+    "dynamic": true
+  },
+  {
+    "path": "/ferramentas/salvos",
+    "name": "Salvos",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/guias",
+    "name": "Guias",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/guias/[slug]",
+    "name": "Guias · [slug]",
+    "area": "Site",
+    "dynamic": true
+  },
+  {
+    "path": "/kit",
+    "name": "Kit",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/login",
+    "name": "Login",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/mapa-dos-beneficios",
+    "name": "Mapa dos beneficios",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/mapa-dos-beneficios/[slug]",
+    "name": "Mapa dos beneficios · [slug]",
+    "area": "Site",
+    "dynamic": true
+  },
+  {
+    "path": "/metodos-automacao-w2p5",
+    "name": "Metodos automacao w2p5",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/meu-perfil",
+    "name": "Meu perfil",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/meus-materiais",
+    "name": "Meus materiais",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/moderador",
+    "name": "Moderador",
+    "area": "Moderador",
+    "dynamic": false
+  },
+  {
+    "path": "/moderador/fluxos",
+    "name": "Fluxos",
+    "area": "Moderador",
+    "dynamic": false
+  },
+  {
+    "path": "/moderador/gerenciar-guias",
+    "name": "Gerenciar guias",
+    "area": "Moderador",
+    "dynamic": false
+  },
+  {
+    "path": "/moderador/guias",
+    "name": "Guias",
+    "area": "Moderador",
+    "dynamic": false
+  },
+  {
+    "path": "/noticia/[id]",
+    "name": "Noticia · [id]",
+    "area": "Site",
+    "dynamic": true
+  },
+  {
+    "path": "/noticias",
+    "name": "Noticias",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/pqestudar-premium",
+    "name": "Pqestudar premium",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/premium",
+    "name": "Premium",
+    "area": "Premium",
+    "dynamic": false
+  },
+  {
+    "path": "/premium/atualizacoes",
+    "name": "Atualizacoes",
+    "area": "Premium",
+    "dynamic": false
+  },
+  {
+    "path": "/premium/atualizacoes/[slug]",
+    "name": "Atualizacoes · [slug]",
+    "area": "Premium",
+    "dynamic": true
+  },
+  {
+    "path": "/premium/beneficios",
+    "name": "Beneficios",
+    "area": "Premium",
+    "dynamic": false
+  },
+  {
+    "path": "/premium/beneficios/[slug]",
+    "name": "Beneficios · [slug]",
+    "area": "Premium",
+    "dynamic": true
+  },
+  {
+    "path": "/premium/cursos",
+    "name": "Cursos",
+    "area": "Premium",
+    "dynamic": false
+  },
+  {
+    "path": "/premium/cursos/[slug]",
+    "name": "Cursos · [slug]",
+    "area": "Premium",
+    "dynamic": true
+  },
+  {
+    "path": "/premium/mapa-beneficios",
+    "name": "Mapa beneficios",
+    "area": "Premium",
+    "dynamic": false
+  },
+  {
+    "path": "/premium/p/[slug]",
+    "name": "P · [slug]",
+    "area": "Premium",
+    "dynamic": true
+  },
+  {
+    "path": "/premium/resgatar",
+    "name": "Resgatar",
+    "area": "Premium",
+    "dynamic": false
+  },
+  {
+    "path": "/premium/salvos",
+    "name": "Salvos",
+    "area": "Premium",
+    "dynamic": false
+  },
+  {
+    "path": "/premium/upgrade",
+    "name": "Upgrade",
+    "area": "Premium",
+    "dynamic": false
+  },
+  {
+    "path": "/premium/vagas",
+    "name": "Vagas",
+    "area": "Premium",
+    "dynamic": false
+  },
+  {
+    "path": "/premium/vagas/[slug]",
+    "name": "Vagas · [slug]",
+    "area": "Premium",
+    "dynamic": true
+  },
+  {
+    "path": "/privacidade",
+    "name": "Privacidade",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/produtos",
+    "name": "Produtos",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/produtos/[slug]",
+    "name": "Produtos · [slug]",
+    "area": "Site",
+    "dynamic": true
+  },
+  {
+    "path": "/ranking-comunidade",
+    "name": "Ranking comunidade",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/recursos-alta-performance-z9x0",
+    "name": "Recursos alta performance z9x0",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/salvos",
+    "name": "Salvos",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/sobre-pqestudar",
+    "name": "Sobre pqestudar",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/termos",
+    "name": "Termos",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/votacoes",
+    "name": "Votacoes",
+    "area": "Site",
+    "dynamic": false
+  }
+]

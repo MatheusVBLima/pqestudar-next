@@ -1,0 +1,664 @@
+{
+  "checkedAt": "2026-09-06T04:53:33.679Z",
+  "localTests": {
+    "jsonLdScriptEscapeExecuted": true,
+    "sanitizerRetainsEventHandler": true,
+    "sanitizerScriptExecuted": true
+  },
+  "crawl": [
+    {
+      "url": "https://www.pqestudar.com.br",
+      "finalUrl": "https://www.pqestudar.com.br/",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/concursos",
+      "finalUrl": "https://www.pqestudar.com.br/concursos",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/exclusivos",
+      "finalUrl": "https://www.pqestudar.com.br/exclusivos",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/guias",
+      "finalUrl": "https://www.pqestudar.com.br/guias",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/carteirinha",
+      "finalUrl": "https://www.pqestudar.com.br/carteirinha",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/sobre-pqestudar",
+      "finalUrl": "https://www.pqestudar.com.br/sobre-pqestudar",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/votacoes",
+      "finalUrl": "https://www.pqestudar.com.br/votacoes",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/mapa-dos-beneficios",
+      "finalUrl": "https://www.pqestudar.com.br/mapa-dos-beneficios",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/termos",
+      "finalUrl": "https://www.pqestudar.com.br/termos",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ranking-comunidade",
+      "finalUrl": "https://www.pqestudar.com.br/ranking-comunidade",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/privacidade",
+      "finalUrl": "https://www.pqestudar.com.br/privacidade",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/concursos/concurso-ifce-2026-edital-deve-ser-lancado-fevereiro",
+      "finalUrl": "https://www.pqestudar.com.br/concursos/concurso-ifce-2026-edital-deve-ser-lancado-fevereiro",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/concursos/concurso-irbr-2026-edital-publicado-diplomata-3-secretario",
+      "finalUrl": "https://www.pqestudar.com.br/concursos/concurso-irbr-2026-edital-publicado-diplomata-3-secretario",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/concursos/concurso-abin-2026-pedido-analise-possivel-edital",
+      "finalUrl": "https://www.pqestudar.com.br/concursos/concurso-abin-2026-pedido-analise-possivel-edital",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/concursos/concurso-camara-deputados-2026-policial-legislativo-federal",
+      "finalUrl": "https://www.pqestudar.com.br/concursos/concurso-camara-deputados-2026-policial-legislativo-federal",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/concursos/concurso-prf-2026-tudo-que-voce-precisa-saber",
+      "finalUrl": "https://www.pqestudar.com.br/concursos/concurso-prf-2026-tudo-que-voce-precisa-saber",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/concursos/concurso-prf-administrativo-2026-que-se-sabe-ate-agora",
+      "finalUrl": "https://www.pqestudar.com.br/concursos/concurso-prf-administrativo-2026-que-se-sabe-ate-agora",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/concursos/concurso-ibge-temporarios-2026-cenario-atual-proximos-passos",
+      "finalUrl": "https://www.pqestudar.com.br/concursos/concurso-ibge-temporarios-2026-cenario-atual-proximos-passos",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/guias/cursos-gratuitos-dao-direito-a-carteira-de-estudante-o-que-realmente-funciona",
+      "finalUrl": "https://www.pqestudar.com.br/guias/cursos-gratuitos-dao-direito-a-carteira-de-estudante-o-que-realmente-funciona",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/guias/emitir-ou-renovar-carteirinha-de-estudante-2026",
+      "finalUrl": "https://www.pqestudar.com.br/guias/emitir-ou-renovar-carteirinha-de-estudante-2026",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/guias/como-usar-comandos-e-prompts-do-chatgpt-nos-estudos",
+      "finalUrl": "https://www.pqestudar.com.br/guias/como-usar-comandos-e-prompts-do-chatgpt-nos-estudos",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/guias/como-escolher-cursos-online-com-certificado-que-realmente-valem-a-pena",
+      "finalUrl": "https://www.pqestudar.com.br/guias/como-escolher-cursos-online-com-certificado-que-realmente-valem-a-pena",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/guias/como-usar-certificados-de-cursos-online-no-curriculo-e-faculdade",
+      "finalUrl": "https://www.pqestudar.com.br/guias/como-usar-certificados-de-cursos-online-no-curriculo-e-faculdade",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/guias/como-conseguir-horas-complementares-com-cursos-online",
+      "finalUrl": "https://www.pqestudar.com.br/guias/como-conseguir-horas-complementares-com-cursos-online",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/guias/plataformas-com-cursos-gratuitos-e-certificado-melhores-opcoes",
+      "finalUrl": "https://www.pqestudar.com.br/guias/plataformas-com-cursos-gratuitos-e-certificado-melhores-opcoes",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/todas-do-enem",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/todas-do-enem",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/plataforma-ifmg",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/plataforma-ifmg",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/mec-livros",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/mec-livros",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/estude-no-ifrs",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/estude-no-ifrs",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/avamec",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/avamec",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/tec-concursos",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/tec-concursos",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/pdfelement",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/pdfelement",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/edrawmind",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/edrawmind",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/notion-ai",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/notion-ai",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/entr-ai",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/entr-ai",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/harvard-cs50",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/harvard-cs50",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/khan-academy",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/khan-academy",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/enap",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/enap",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/aprenda-mais-mec",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/aprenda-mais-mec",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/mit-opencourseware-ocw",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/mit-opencourseware-ocw",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/class-central",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/class-central",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/alison",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/alison",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/invertexto",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/invertexto",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/escola-virtual-de-governo-evg",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/escola-virtual-de-governo-evg",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/curso-enem-gratuito",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/curso-enem-gratuito",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/kultivi",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/kultivi",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/sebrae",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/sebrae",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/google-grow",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/google-grow",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/wqd-questoes",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/wqd-questoes",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/autometeed",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/autometeed",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/cursa",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/cursa",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/coursera",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/coursera",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/avasus",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/avasus",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/unasus",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/unasus",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/microsoft-certifications",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/microsoft-certifications",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/jurisway",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/jurisway",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/decktopus",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/decktopus",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/scispace",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/scispace",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/ccleaner",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/ccleaner",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    },
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas/fesn",
+      "finalUrl": "https://www.pqestudar.com.br/ferramentas/fesn",
+      "status": 200,
+      "externalScripts": [],
+      "suspiciousScripts": 0,
+      "metaRefresh": false
+    }
+  ],
+  "publicContent": {
+    "toolsChecked": 35,
+    "findings": [],
+    "domains": [
+      "affiliate.notion.so",
+      "alison.com",
+      "aprendamais.mec.gov.br",
+      "avamec.mec.gov.br",
+      "avasus.ufrn.br",
+      "cs50.harvard.edu",
+      "cursa.app",
+      "cursoenemgratuito.com.br",
+      "estude.ifrs.edu.br",
+      "event.wondershare.com",
+      "fesn.org.br",
+      "grow.google",
+      "kultivi.com",
+      "learn.microsoft.com",
+      "mais.ifmg.edu.br",
+      "meclivros.mec.gov.br",
+      "ocw.mit.edu",
+      "omkxiomwzbykmqttfozi.supabase.co",
+      "pt.khanacademy.org",
+      "scispace.com",
+      "sebrae.com.br",
+      "site.entr.ai",
+      "wqd.com.br",
+      "www.automateed.com",
+      "www.ccleaner.com",
+      "www.classcentral.com",
+      "www.coursera.org",
+      "www.decktopus.com",
+      "www.enap.gov.br",
+      "www.escolavirtual.gov.br",
+      "www.invertexto.com",
+      "www.jurisway.org.br",
+      "www.tecconcursos.com.br",
+      "www.todasdoenem.com.br",
+      "www.unasus.gov.br"
+    ]
+  },
+  "ads": [
+    {
+      "mode": "desktop",
+      "url": "https://www.pqestudar.com.br/ferramentas",
+      "origins": [
+        "https://www.pqestudar.com.br",
+        "https://omkxiomwzbykmqttfozi.supabase.co",
+        "https://www.googletagmanager.com",
+        "https://pagead2.googlesyndication.com",
+        "https://googleads.g.doubleclick.net",
+        "https://ep1.adtrafficquality.google",
+        "https://ep2.adtrafficquality.google",
+        "https://www.google.com"
+      ],
+      "popups": [],
+      "scripts": [
+        "https://pagead2.googlesyndication.com/pagead/managed/js/adsense/m202609010101/show_ads_impl.js?bust=122880829",
+        "https://www.googletagmanager.com/gtag/js?id=G-2N5LG0E1Q5",
+        "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1740357621806249"
+      ],
+      "frames": [
+        "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-1740357621806249&output=html&adk=1812271804&adf=3025194257&abgtt=6&lmt=1788670453&plat=2%3A16777216%2C3%3A16%2C4%3A16%2C9%3A32776%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C30%3A1081344%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&format=0x0&url=https%3A%2F%2Fwww.pqestudar.com.br%2Fferramentas&pra=5&aiof=11&asro=0&aimartd=4&aieuf=1&aicrs=1&uach=WyJXaW5kb3dzIiwiMTkuMC4wIiwieDg2IiwiIiwiMTQ4LjAuNzc3OC45NiIsbnVsbCwwLG51bGwsIjY0IixbWyJDaHJvbWl1bSIsIjE0OC4wLjc3NzguOTYiXSxbIkhlYWRsZXNzQ2hyb21lIiwiMTQ4LjAuNzc3OC45NiJdLFsiTm90L0EpQnJhbmQiLCI5OS4wLjAuMCJdXSwwXQ..&dt=1788670453021&bpp=16&bdt=17474&idt=474&shv=r20260901&mjsv=m202609010101&ptt=9&saldr=aa&abxe=1&cookie_enabled=1&eoidce=1&nras=1&correlator=7799535030682&frm=20&pv=2&u_tz=-180&u_his=2&u_h=720&u_w=1280&u_ah=720&u_aw=1280&u_cd=24&u_sd=1&dmc=16&adx=-12245933&ady=-12245933&biw=1280&bih=720&scr_x=0&scr_y=0&eid=95399629%2C95400775%2C95401045%2C122880835%2C122880829&oid=2&pvsid=1629859732699350&tmod=1698329593&uas=1&nvt=1&fsapi=1&fc=1920&brdim=0%2C0%2C0%2C0%2C1280%2C0%2C1280%2C720%2C1280%2C720&vis=1&rsz=%7C%7Cs%7C&abl=NS&fu=32768&bc=31&bz=1&pgls=CAk.&ifi=1&uci=a!1&fsb=1&dtd=613",
+        "https://www.google.com/recaptcha/api2/aframe",
+        "https://googleads.g.doubleclick.net/pagead/html/r20260901/r20190131/zrt_lookup.html"
+      ]
+    },
+    {
+      "mode": "mobile",
+      "url": "https://www.pqestudar.com.br/ferramentas",
+      "origins": [
+        "https://www.pqestudar.com.br",
+        "https://omkxiomwzbykmqttfozi.supabase.co",
+        "https://www.googletagmanager.com",
+        "https://pagead2.googlesyndication.com",
+        "https://googleads.g.doubleclick.net",
+        "https://ep1.adtrafficquality.google",
+        "https://ep2.adtrafficquality.google",
+        "https://www.google.com"
+      ],
+      "popups": [],
+      "scripts": [
+        "https://pagead2.googlesyndication.com/pagead/managed/js/adsense/m202609020101/show_ads_impl_fy2021.js?bust=122880884",
+        "https://www.googletagmanager.com/gtag/js?id=G-2N5LG0E1Q5",
+        "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1740357621806249"
+      ],
+      "frames": [
+        "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-1740357621806249&output=html&adk=1812271804&adf=3025194257&abgtt=6&lmt=1788670477&plat=2%3A16777216%2C3%3A65536%2C4%3A65536%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&format=0x0&url=https%3A%2F%2Fwww.pqestudar.com.br%2Fferramentas&pra=5&asro=0&aimartd=4&aieuf=1&aicrs=1&uach=WyJBbmRyb2lkIiwiMTQiLCJhcm0iLCIiLCIxNDguMC43Nzc4Ljk2IixudWxsLDEsbnVsbCwiNjQiLFtbIkNocm9taXVtIiwiMTQ4LjAuNzc3OC45NiJdLFsiSGVhZGxlc3NDaHJvbWUiLCIxNDguMC43Nzc4Ljk2Il0sWyJOb3QvQSlCcmFuZCIsIjk5LjAuMC4wIl1dLDBd&dt=1788670477413&bpp=5&bdt=17483&idt=444&shv=r20260901&mjsv=m202609020101&ptt=9&saldr=aa&abxe=1&cookie_enabled=1&eoidce=1&nras=1&correlator=1358284103084&frm=20&pv=2&u_tz=-180&u_his=2&u_h=915&u_w=412&u_ah=915&u_aw=412&u_cd=24&u_sd=2.625&dmc=16&adx=-12245933&ady=-12245933&biw=412&bih=839&scr_x=0&scr_y=0&eid=95399630%2C95400774%2C95401045%2C122880884&oid=2&pvsid=811621686083211&tmod=498939999&uas=1&nvt=1&fsapi=1&fc=1920&brdim=0%2C0%2C0%2C0%2C412%2C0%2C412%2C839%2C412%2C839&vis=1&rsz=%7C%7Cs%7C&abl=NS&fu=32768&bc=31&bz=1&pgls=CAk.&ifi=1&uci=a!1&fsb=1&dtd=488",
+        "https://www.google.com/recaptcha/api2/aframe",
+        "https://googleads.g.doubleclick.net/pagead/html/r20260901/r20190131/zrt_lookup_fy2021.html"
+      ]
+    }
+  ],
+  "safeBrowsing": [
+    {
+      "url": "https://www.pqestudar.com.br/ferramentas",
+      "status": "check_circle\nNenhum conteúdo não seguro foi encontrado\nInformações do site\n\nA última atualização destas informações foi em 5 de set. de 2026.\n\nA segurança dos sites pode mudar ao longo do tempo. Volte mais tarde para saber se há novidades."
+    },
+    {
+      "url": "www.pqestudar.com.br",
+      "status": "check_circle\nNenhum conteúdo não seguro foi encontrado\nInformações do site\n\nA última atualização destas informações foi em 5 de set. de 2026.\n\nA segurança dos sites pode mudar ao longo do tempo. Volte mais tarde para saber se há novidades."
+    }
+  ],
+  "axonAssets": [
+    {
+      "bytes": 123712,
+      "domains": [
+        "www.iec.ch"
+      ],
+      "hasWalletOrMiningTerms": false
+    },
+    {
+      "bytes": 268333,
+      "domains": [
+        "www.iec.ch"
+      ],
+      "hasWalletOrMiningTerms": false
+    },
+    {
+      "bytes": 216161,
+      "domains": [],
+      "hasWalletOrMiningTerms": false
+    },
+    {
+      "bytes": 1639581,
+      "domains": [
+        "www.iec.ch"
+      ],
+      "hasWalletOrMiningTerms": false
+    },
+    {
+      "bytes": 14692,
+      "domains": [],
+      "hasWalletOrMiningTerms": false
+    },
+    {
+      "bytes": 15308,
+      "domains": [],
+      "hasWalletOrMiningTerms": false
+    },
+    {
+      "bytes": 28400,
+      "domains": [],
+      "hasWalletOrMiningTerms": false
+    },
+    {
+      "bytes": 12616,
+      "domains": [],
+      "hasWalletOrMiningTerms": false
+    },
+    {
+      "bytes": 13044,
+      "domains": [],
+      "hasWalletOrMiningTerms": false
+    },
+    {
+      "bytes": 31368,
+      "domains": [],
+      "hasWalletOrMiningTerms": false
+    }
+  ],
+  "inventory": {
+    "trackedFiles": 697,
+    "sourceFiles": 681,
+    "trackedEnvFiles": []
+  }
+}

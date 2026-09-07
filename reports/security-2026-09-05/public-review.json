@@ -1,0 +1,346 @@
+{
+  "checkedAt": "2026-09-05T19:08:23.399Z",
+  "tls": [
+    {
+      "hostname": "pqestudar.com.br",
+      "authorized": true,
+      "issuer": {
+        "C": "US",
+        "O": "Let's Encrypt",
+        "CN": "YR2"
+      },
+      "validFrom": "Jul 23 02:19:57 2026 GMT",
+      "validTo": "Oct 21 02:19:56 2026 GMT",
+      "subjectAltName": "DNS:pqestudar.com.br"
+    },
+    {
+      "hostname": "www.pqestudar.com.br",
+      "authorized": true,
+      "issuer": {
+        "C": "US",
+        "O": "Let's Encrypt",
+        "CN": "YR1"
+      },
+      "validFrom": "Jul 23 19:08:12 2026 GMT",
+      "validTo": "Oct 21 19:08:11 2026 GMT",
+      "subjectAltName": "DNS:www.pqestudar.com.br"
+    }
+  ],
+  "http": [
+    {
+      "start": "http://pqestudar.com.br/ferramentas",
+      "chain": [
+        {
+          "url": "http://pqestudar.com.br/ferramentas",
+          "status": 308,
+          "location": "https://pqestudar.com.br/ferramentas",
+          "headers": {
+            "content-type": "text/plain",
+            "server": "Vercel"
+          }
+        },
+        {
+          "url": "https://pqestudar.com.br/ferramentas",
+          "status": 307,
+          "location": "https://www.pqestudar.com.br/ferramentas",
+          "headers": {
+            "content-type": "text/plain",
+            "server": "Vercel",
+            "strict-transport-security": "max-age=63072000"
+          }
+        },
+        {
+          "url": "https://www.pqestudar.com.br/ferramentas",
+          "status": 200,
+          "location": null,
+          "headers": {
+            "content-type": "text/html; charset=utf-8",
+            "server": "Vercel",
+            "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+            "x-content-type-options": "nosniff",
+            "x-frame-options": "SAMEORIGIN"
+          }
+        }
+      ]
+    },
+    {
+      "start": "https://pqestudar.com.br/ferramentas",
+      "chain": [
+        {
+          "url": "https://pqestudar.com.br/ferramentas",
+          "status": 307,
+          "location": "https://www.pqestudar.com.br/ferramentas",
+          "headers": {
+            "content-type": "text/plain",
+            "server": "Vercel",
+            "strict-transport-security": "max-age=63072000"
+          }
+        },
+        {
+          "url": "https://www.pqestudar.com.br/ferramentas",
+          "status": 200,
+          "location": null,
+          "headers": {
+            "content-type": "text/html; charset=utf-8",
+            "server": "Vercel",
+            "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+            "x-content-type-options": "nosniff",
+            "x-frame-options": "SAMEORIGIN"
+          }
+        }
+      ]
+    },
+    {
+      "start": "https://www.pqestudar.com.br/ferramentas",
+      "chain": [
+        {
+          "url": "https://www.pqestudar.com.br/ferramentas",
+          "status": 200,
+          "location": null,
+          "headers": {
+            "content-type": "text/html; charset=utf-8",
+            "server": "Vercel",
+            "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+            "x-content-type-options": "nosniff",
+            "x-frame-options": "SAMEORIGIN"
+          }
+        }
+      ]
+    },
+    {
+      "start": "https://www.pqestudar.com.br/robots.txt",
+      "chain": [
+        {
+          "url": "https://www.pqestudar.com.br/robots.txt",
+          "status": 200,
+          "location": null,
+          "headers": {
+            "content-type": "text/plain; charset=utf-8",
+            "server": "Vercel",
+            "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+            "x-content-type-options": "nosniff",
+            "x-frame-options": "SAMEORIGIN"
+          }
+        },
+        {
+          "body": "User-Agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\nDisallow: /premium\nDisallow: /premium/\nDisallow: /meu-perfil\nDisallow: /meus-materiais\nDisallow: /salvos\nDisallow: /ferramentas/salvos\nDisallow: /noticias\nDisallow: /noticia/\nDisallow: /bonus/\nDisallow: /breve\nDisallow: /kit\nDisallow: /mapa-dos-beneficios/\nDisallow: /acesso-kit-partida-8h3z\nDisallow: /curadoria-conteudo-ia-k4f9\nDisallow: /acervo-video-prod-b7g1\nDisallow: /metodos-automacao-w2p5\nDisallow: /recursos-alta-performance-z9x0\nDisallow: /api/\n\nSitemap: https://www.pqestudar.com.br/sitemap.xml\n"
+        }
+      ]
+    },
+    {
+      "start": "https://www.pqestudar.com.br/sitemap.xml",
+      "chain": [
+        {
+          "url": "https://www.pqestudar.com.br/sitemap.xml",
+          "status": 200,
+          "location": null,
+          "headers": {
+            "content-type": "application/xml",
+            "server": "Vercel",
+            "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+            "x-content-type-options": "nosniff",
+            "x-frame-options": "SAMEORIGIN"
+          }
+        }
+      ]
+    }
+  ],
+  "browsers": [
+    {
+      "mode": "desktop",
+      "status": 200,
+      "url": "https://www.pqestudar.com.br/ferramentas",
+      "origins": [
+        "https://www.pqestudar.com.br",
+        "https://omkxiomwzbykmqttfozi.supabase.co"
+      ],
+      "failures": [
+        {
+          "url": "https://omkxiomwzbykmqttfozi.supabase.co/rest/v1/tools_public",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://omkxiomwzbykmqttfozi.supabase.co/rest/v1/tools_public",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.pqestudar.com.br/ferramentas/todas-do-enem",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.pqestudar.com.br/ferramentas/plataforma-ifmg",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.pqestudar.com.br/ferramentas/estude-no-ifrs",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "navigations": [
+        "https://www.pqestudar.com.br/ferramentas",
+        "https://www.pqestudar.com.br/ferramentas"
+      ],
+      "popups": [],
+      "title": "Ferramentas e Plataformas Educacionais Gratuitas | PqEstudar | PqEstudar",
+      "scripts": [
+        "https://www.pqestudar.com.br/_next/static/chunks/0~k6u5_j-9bf2.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0dnt0il3mdvhe.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/14l~.r2kq13je.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0r8g4en3zj.~..js",
+        "https://www.pqestudar.com.br/_next/static/chunks/04.i-__.as.dk.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/turbopack-0811bzh11c0fb.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0x.73w57rn4ou.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0i.l9589uvx0j.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0qt13.9igxjae.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0~_5.ao~eoh_i.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0luw3oxiac3sj.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0jmo6s0v1a8ph.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/030hp2j0s9xnh.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0po4oq3pvranj.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/01brak0ti0mcg.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/17p_u44xgi7hf.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0cwy0ehrrjsce.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0jcz_ydpbxzta.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0f5r4_mxlftqj.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0jh8ut-8gww3y.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0euttv~8_s9wp.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/102ks7yhyehxs.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/03~yq9q893hmn.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0-hrh_uw98wb_.js"
+      ],
+      "frames": [],
+      "externalLinks": [
+        {
+          "text": "",
+          "href": "https://www.instagram.com/pqestudar/"
+        },
+        {
+          "text": "",
+          "href": "https://www.youtube.com/@mdias-ofc"
+        },
+        {
+          "text": "",
+          "href": "https://www.facebook.com/mdias.ofc"
+        },
+        {
+          "text": "",
+          "href": "https://www.threads.com/@mdias.ofc"
+        },
+        {
+          "text": "",
+          "href": "https://www.instagram.com/pqestudar/"
+        },
+        {
+          "text": "",
+          "href": "https://www.youtube.com/@mdias-ofc"
+        },
+        {
+          "text": "",
+          "href": "https://www.facebook.com/mdias.ofc"
+        },
+        {
+          "text": "",
+          "href": "https://www.threads.com/@mdias.ofc"
+        }
+      ],
+      "suspiciousLinks": [],
+      "text": "Este site usa cookies\n\nUtilizamos cookies para melhorar sua experiência e analisar o tráfego. Com sua autorização, compartilhamos dados com o Google para personalização e medição de anúncios. Você pode escolher quais tipos de cookies aceitar.\n\nAceitar Todos\nApenas Necessários\nPersonalizar\nFerramentas\nConcursos\nCursos\nGuias\nExclusivos\nVotações\nCarteirinha estudantil\nEntrar\nFerramentas e Plataformas Educacionais Gratuitas\n\nRecursos organizados para estudar melhor, ganhar produtividade e acessar plataformas confiáveis sem perder tempo.\n\nTodas\nIA\nOrganização\nSegurança\nEstudar\nFerramentas\nAnterior\n1\n2\n3\nPróximo\nTodas do ENEM\nDestaque\n507\ncliques\n\nPlataforma de estudos para o ENEM com questões, provas anteriores, simulados, redação e plano de estudo em um só lugar. Ajuda a praticar, revisar conteúdos e organizar a preparação de forma mais direcionada.\n\nEstudar\nVer ferramenta\nSalvar\nPlataforma +IFMG\nDestaque\n585\ncliques\n\nAmbiente online gratuito da Instituto Federal de Educação, Ciência e Tec"
+    },
+    {
+      "mode": "mobile",
+      "status": 200,
+      "url": "https://www.pqestudar.com.br/ferramentas",
+      "origins": [
+        "https://www.pqestudar.com.br",
+        "https://omkxiomwzbykmqttfozi.supabase.co"
+      ],
+      "failures": [
+        {
+          "url": "https://omkxiomwzbykmqttfozi.supabase.co/rest/v1/tools_public",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://omkxiomwzbykmqttfozi.supabase.co/rest/v1/tools_public",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://www.pqestudar.com.br/ferramentas/todas-do-enem",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "navigations": [
+        "https://www.pqestudar.com.br/ferramentas",
+        "https://www.pqestudar.com.br/ferramentas"
+      ],
+      "popups": [],
+      "title": "Ferramentas e Plataformas Educacionais Gratuitas | PqEstudar | PqEstudar",
+      "scripts": [
+        "https://www.pqestudar.com.br/_next/static/chunks/0~k6u5_j-9bf2.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0dnt0il3mdvhe.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/14l~.r2kq13je.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0r8g4en3zj.~..js",
+        "https://www.pqestudar.com.br/_next/static/chunks/04.i-__.as.dk.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/turbopack-0811bzh11c0fb.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0x.73w57rn4ou.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0i.l9589uvx0j.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0qt13.9igxjae.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0~_5.ao~eoh_i.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0luw3oxiac3sj.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0jmo6s0v1a8ph.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/030hp2j0s9xnh.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0po4oq3pvranj.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/01brak0ti0mcg.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/17p_u44xgi7hf.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0cwy0ehrrjsce.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0jcz_ydpbxzta.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0f5r4_mxlftqj.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0jh8ut-8gww3y.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0euttv~8_s9wp.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/102ks7yhyehxs.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/03~yq9q893hmn.js",
+        "https://www.pqestudar.com.br/_next/static/chunks/0-hrh_uw98wb_.js"
+      ],
+      "frames": [],
+      "externalLinks": [
+        {
+          "text": "",
+          "href": "https://www.instagram.com/pqestudar/"
+        },
+        {
+          "text": "",
+          "href": "https://www.youtube.com/@mdias-ofc"
+        },
+        {
+          "text": "",
+          "href": "https://www.facebook.com/mdias.ofc"
+        },
+        {
+          "text": "",
+          "href": "https://www.threads.com/@mdias.ofc"
+        },
+        {
+          "text": "",
+          "href": "https://www.instagram.com/pqestudar/"
+        },
+        {
+          "text": "",
+          "href": "https://www.youtube.com/@mdias-ofc"
+        },
+        {
+          "text": "",
+          "href": "https://www.facebook.com/mdias.ofc"
+        },
+        {
+          "text": "",
+          "href": "https://www.threads.com/@mdias.ofc"
+        }
+      ],
+      "suspiciousLinks": [],
+      "text": "Este site usa cookies\n\nUtilizamos cookies para melhorar sua experiência e analisar o tráfego. Com sua autorização, compartilhamos dados com o Google para personalização e medição de anúncios. Você pode escolher quais tipos de cookies aceitar.\n\nAceitar Todos\nApenas Necessários\nPersonalizar\nFerramentas e Plataformas Educacionais Gratuitas\n\nRecursos organizados para estudar melhor, ganhar produtividade e acessar plataformas confiáveis sem perder tempo.\n\nTodas\nIA\nOrganização\nSegurança\nEstudar\nFerramentas\nAnterior\n1\n2\n3\nPróximo\nTodas do ENEM\nDestaque\n507\ncliques\n\nPlataforma de estudos para o ENEM com questões, provas anteriores, simulados, redação e plano de estudo em um só lugar. Ajuda a praticar, revisar conteúdos e organizar a preparação de forma mais direcionada.\n\nEstudar\nVer ferramenta\nSalvar\nPlataforma +IFMG\nDestaque\n585\ncliques\n\nAmbiente online gratuito da Instituto Federal de Educação, Ciência e Tecnologia de Minas Gerais com cursos de curta duração, certificação e acessíveis à comu"
+    }
+  ],
+  "safeBrowsing": {
+    "url": "https://transparencyreport.google.com/safe-browsing/search?url=pqestudar.com.br&hl=pt_BR",
+    "text": "Relatório de Transparência\nRelatórios\nQuem somos\nStatus do site\nStatus do site no Navegação segura\n\nA tecnologia de Navegação segura do Google analisa bilhões de URLs por dia em busca de websites não seguros. Todos os dias, descobrimos milhares de novos sites com problemas de segurança. Muitos deles são websites legítimos que foram comprometidos. Ao detectar sites não seguros, exibimos avisos na Pesquisa Google e nos navegadores da Web. Além disso, você pode pesquisar para ver se é perigoso visitar um determinado website no momento.\n\nVerificar o status do site\nsearch\nStatus atual\nNão há dados disponíveis\n\nDesde 7 de abr. de 2020, a página de malware da Navegação segura foi arquivada.\n\nEm 29 de jan. de 2025, a página de visão geral foi arquivada.\n\nContribuímos para uma Web mais segura\n\nQueremos que o compartilhamento de informações incentive a contribuição das pessoas no combate a malware na Web.\n\nVamos trabalhar juntos para deixar a Web mais segura. open_in_new\nVoltar ao início\nFooter links\n\nCompartilhar\n\nRelatório de Transparência\nPágina inicial\nQuem somos\nPerguntas frequentes\nRecursos de transparência\nCentral de transparência de anúncios\nCentral de Transparência\nSobre nossos produtos\nComo a Pesquisa funciona\nComo o YouTube funciona\nCentral de Ajuda\nResponsabilidade\nPolítica pública\nProteção às crianças\nCentral de segurança\nIA responsável\nAjuda\nPrivacidade\nSobre o Google\nEnviar feedback\nMudar o idioma ou a região\nalemão – Deutsch\nárabe – العربية\nbúlgaro – български\ncatalão – català\nchinês – 中文\nchinês (Taiwan) – 中文（台灣）\ncoreano – 한국어\ncroata – hrvatski\ndinamarquês – dansk\neslovaco – slovenčina\nesloveno – slovenščina\nespanhol – español\nespanhol (América Latina) – español (Latinoamérica)\nfilipino – Filipino\nfinlandês – suomi\nfrancês – français\ngrego – Ελληνικά\nhebraico – עברית\nhindi – हिन्दी\nholandês – Nederlands\nhúngaro – magyar\nindonésio – Indonesia\ninglês – English\ninglês (Reino Unido) – English (United Kingdom)\nitaliano – italiano\njaponês – 日本語\nletão – latviešu\nlituano – lietuvių\nnorueguês – norsk\npersa – فارسی\npolonês – polski\nportuguês (Brasil)\nportuguês (Portugal) – português (Portugal)\nromeno – română\nrusso – русский\nsérvio – српски\nsueco – svenska\ntailandês – ไทย\ntcheco – čeština\nturco – Türkçe\nucraniano – українська\nvietnamita – Tiếng Việt"
+  }
+}

@@ -802,8 +802,10 @@ All colors MUST be HSL.
   border-radius: 1.2rem;
 }
 
-/* Keep modal scroll-lock from shifting the page horizontally */
-body[data-scroll-locked] {
+/* html already reserves the scrollbar gutter. Use higher specificity than
+   react-remove-scroll's dynamically injected body[data-scroll-locked] rule
+   so opening a modal cannot add a second gap and shift the background. */
+html body[data-scroll-locked] {
   margin-right: 0 !important;
   padding-right: 0 !important;
   overflow-x: hidden !important;
