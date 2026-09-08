@@ -61,4 +61,14 @@
 .page a:focus-visible, .page button:focus-visible { outline: 2px solid #ed59ff; outline-offset: 3px; }
 @media (max-width: 1100px) { .heroGrid { grid-template-columns: 1.2fr 1fr; } .heroCopy h1 { max-width: 560px; } .heroArt { right: 30%; left: 10%; opacity: .65; } .quick p { font-size: 12px; } }
 @media (max-width: 767px) { .container { padding: 0 20px; } .heroGrid { grid-template-columns: 1fr; gap: 25px; padding: 35px 0 20px; } .heroArt { left: 0; right: 0; bottom: 40%; opacity: .45; } .heroCopy > p { max-width: 90%; } .heroCopy h1 { max-width: 520px; } .values { gap: 14px; margin-top: 20px; font-size: 11px; } .welcome > div { padding: 18px; } .quickGrid { grid-template-columns: 1fr; gap: 9px; } .quick { min-height: 64px; } .quickIcon { width: 42px; height: 42px; } .rail > header { flex-direction: row; align-items: center; } .rail > header h2 { font-size: 20px; } .rail > header p { font-size: 12px; } .rail > header a { padding: 0 12px; margin: 0; font-size: 12px; } .benefitCard { flex-basis: 76vw; width: 76vw; max-width: 290px; } .route { flex-basis: 82%; } }
+@media (max-width: 767px) {
+  .welcome { display: none; }
+  .heroGrid { min-height: 0; gap: 0; padding: 28px 0 18px; }
+  .heroArt { bottom: 0; }
+  .quickGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .quick { justify-content: center; min-height: 50px; padding: 4px; gap: 0; border-radius: 12px; }
+  .quickIcon { width: 40px; height: 40px; background: transparent; }
+  .quickText, .quick > svg { display: none; }
+  .content { gap: 18px; }
+}
 @media (prefers-reduced-motion: reduce) { .page *, .page *::before, .page *::after { transition: none !important; scroll-behavior: auto !important; } }

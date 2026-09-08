@@ -167,10 +167,10 @@ export default function PremiumHomeNext() {
 
         <nav aria-label="Acessos premium" className={styles.quickGrid}>
           {quickAccess.map((item) => (
-            <Link key={item.href} href={item.href} className={styles.quick}>
-              <div className={styles.quickIcon}><item.icon size={27} /></div>
-              <div><strong>{item.title}</strong><p>{item.description}</p></div>
-              <ArrowRight size={19} />
+            <Link key={item.href} href={item.href} className={styles.quick} aria-label={item.title} title={item.title}>
+              <div className={styles.quickIcon} aria-hidden="true"><item.icon size={27} /></div>
+              <div className={styles.quickText}><strong>{item.title}</strong><p>{item.description}</p></div>
+              <ArrowRight size={19} aria-hidden="true" />
             </Link>
           ))}
         </nav>
