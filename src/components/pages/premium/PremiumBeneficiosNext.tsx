@@ -51,6 +51,10 @@ export default function PremiumBeneficiosNext() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  useEffect(() => {
+    setSearchTerm(new URLSearchParams(window.location.search).get("q") ?? "");
+  }, []);
+
   const fetchBenefits = useCallback(async () => {
     setLoading(true);
     try {
@@ -121,6 +125,7 @@ export default function PremiumBeneficiosNext() {
         const matchesSearch =
           !searchTerm ||
           benefit.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          visiblePremiumTags(benefit.tags).some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
           benefit.description_short?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesTags = selectedTags.length === 0 || selectedTags.some((tag) => tags.includes(tag));
         return matchesSearch && matchesTags;

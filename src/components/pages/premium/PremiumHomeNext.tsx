@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { BookOpen, Briefcase, Gift, Bookmark, ArrowRight, MapPinned } from "lucide-react";
+import Image from "next/image";
+import { Gift, Bookmark, ArrowRight, MapPinned, Trophy, ChartNoAxesColumnIncreasing, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { usePageSettings } from "@/hooks/usePageSettings";
@@ -12,9 +12,8 @@ import { usePremiumLastViewed } from "@/hooks/usePremiumLastViewed";
 import { renderHighlightedTitle } from "@/lib/highlight-title";
 import { ContinueCard } from "@/components/premium/ContinueCard";
 import { PremiumRail } from "@/components/premium/PremiumRail";
-import { CourseRailCard } from "@/components/premium/cards/CourseRailCard";
-import { JobRailCard } from "@/components/premium/cards/JobRailCard";
-import { BenefitRailCard } from "@/components/premium/cards/BenefitRailCard";
+import { VisualBenefitCard } from "@/components/premium/cards/VisualBenefitCard";
+import styles from "./PremiumHome.module.css";
 import { useManagementMode } from "@/hooks/useManagementMode";
 import { ManagementToolbar } from "@/components/management/ManagementToolbar";
 import { ManageableCard } from "@/components/management/ManageableCard";
@@ -35,11 +34,17 @@ interface PremiumItem {
 }
 
 const quickAccess = [
-  { title: "Cursos", icon: BookOpen, href: "/premium/cursos", color: "text-blue-500" },
-  { title: "Vagas", icon: Briefcase, href: "/premium/vagas", color: "text-green-500" },
-  { title: "Benefícios", icon: Gift, href: "/premium/beneficios", color: "text-purple-500" },
-  { title: "Mapa", icon: MapPinned, href: "/premium/mapa-beneficios", color: "text-fuchsia-500" },
-  { title: "Salvos", icon: Bookmark, href: "/premium/salvos", color: "text-orange-500" },
+  { title: "Benefícios", description: "Acesse todos os benefícios premium", icon: Gift, href: "/premium/beneficios" },
+  { title: "Mapa", description: "Explore oportunidades no seu estado", icon: MapPinned, href: "/premium/mapa-beneficios" },
+  { title: "Salvos", description: "Seus conteúdos favoritos", icon: Bookmark, href: "/premium/salvos" },
+];
+
+const recommendedRoutes = [
+  { title: "Primeiros Passos", tag: "Para começar", description: "Conheça os benefícios e comece sua jornada.", art: "hero", href: "/premium/beneficios" },
+  { title: "Rumo ao Emprego", tag: "Carreira", description: "Encontre apoios para seu futuro profissional.", art: "work", href: "/premium/beneficios?q=trabalho" },
+  { title: "Do Plano à Ação", tag: "Empreendedorismo", description: "Descubra apoios para tirar suas ideias do papel.", art: "business", href: "/premium/beneficios?q=empreend" },
+  { title: "Aprender Sempre", tag: "Estudos contínuos", description: "Explore oportunidades para seguir aprendendo.", art: "education", href: "/premium/beneficios?q=curso" },
+  { title: "Mais Cidadania", tag: "Seus direitos", description: "Explore os benefícios disponíveis na sua região.", art: "culture", href: "/premium/mapa-beneficios" },
 ];
 
 export default function PremiumHomeNext() {
@@ -50,10 +55,10 @@ export default function PremiumHomeNext() {
   const { isManagementMode } = useManagementMode();
   const { togglePublish, remove } = usePremiumItemAdminActions();
 
-  const [courses, setCourses] = useState<PremiumItem[]>([]);
-  const [jobs, setJobs] = useState<PremiumItem[]>([]);
   const [benefits, setBenefits] = useState<PremiumItem[]>([]);
-  const [loading, setLoading] = useState({ courses: true, jobs: true, benefits: true });
+  const [loading, setLoading] = useState({ benefits: true });
+  const [loadError, setLoadError] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -77,8 +82,8 @@ export default function PremiumHomeNext() {
       item_type: item.item_type,
       status: item.status,
     };
-    const setter = isPremiumBenefit(item.tags) ? setBenefits : item.item_type === "course" ? setCourses : setJobs;
-    setter((prev) => {
+    if (!isPremiumBenefit(item.tags)) return;
+    setBenefits((prev) => {
       const idx = prev.findIndex((p) => p.id === item.id);
       if (idx >= 0) {
         const next = [...prev];
@@ -90,33 +95,10 @@ export default function PremiumHomeNext() {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading({ benefits: true });
+    setLoadError(false);
     const baseSelect = "id, title, slug, description_short, logo_url, external_url, tags, item_type, status";
-    (async () => {
-      let q = supabase
-        .from("premium_items")
-        .select(baseSelect)
-        .eq("item_type", "course")
-        .order("sort_order", { ascending: true })
-        .limit(10);
-      if (!isManagementMode) q = q.eq("status", "published");
-      const { data } = await q;
-      setCourses(((data ?? []) as PremiumItem[]).filter((item) => !isPremiumBenefit(item.tags)));
-      setLoading((s) => ({ ...s, courses: false }));
-    })();
-
-    (async () => {
-      let q = supabase
-        .from("premium_items")
-        .select(baseSelect)
-        .eq("item_type", "job")
-        .order("sort_order", { ascending: true })
-        .limit(10);
-      if (!isManagementMode) q = q.eq("status", "published");
-      const { data } = await q;
-      setJobs((data ?? []) as PremiumItem[]);
-      setLoading((s) => ({ ...s, jobs: false }));
-    })();
-
     (async () => {
       let q = supabase
         .from("premium_items")
@@ -126,24 +108,19 @@ export default function PremiumHomeNext() {
         .order("sort_order", { ascending: true })
         .limit(10);
       if (!isManagementMode) q = q.eq("status", "published");
-      const { data } = await q;
+      const { data, error } = await q;
+      if (cancelled) return;
+      setLoadError(Boolean(error));
       setBenefits((data ?? []) as PremiumItem[]);
       setLoading((s) => ({ ...s, benefits: false }));
-    })();
-  }, [isManagementMode]);
+    })().catch(() => {
+      if (cancelled) return;
+      setLoadError(true);
+      setLoading({ benefits: false });
+    });
+    return () => { cancelled = true; };
+  }, [isManagementMode, retry]);
 
-  const handleTogglePublish = async (item: PremiumItem, kind: "course" | "job") => {
-    const newStatus = await togglePublish({ id: item.id, title: item.title, status: item.status });
-    if (!newStatus) return;
-    const setter = kind === "course" ? setCourses : setJobs;
-    setter((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: newStatus } : i)));
-  };
-  const handleDelete = async (item: PremiumItem, kind: "course" | "job") => {
-    const ok = await remove({ id: item.id, title: item.title });
-    if (!ok) return;
-    const setter = kind === "course" ? setCourses : setJobs;
-    setter((prev) => prev.filter((i) => i.id !== item.id));
-  };
   const handleToggleBenefitPublish = async (item: PremiumItem) => {
     const newStatus = await togglePublish({ id: item.id, title: item.title, status: item.status });
     if (!newStatus) return;
@@ -156,164 +133,63 @@ export default function PremiumHomeNext() {
   };
 
   return (
-    <>
-      <section className="relative bg-gradient-to-br from-primary/10 via-background to-background border-b overflow-hidden px-4 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(var(--primary)/0.12),transparent_55%)]" />
-        <div className="w-full max-w-[1440px] mx-auto py-12 md:py-16 relative">
-          <div className="grid lg:grid-cols-[1.4fr_1fr] gap-8 lg:gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-5 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-                {renderHighlightedTitle(ps.headerTitle ?? "Premium")}
-              </h1>
-              <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl">
-                {ps.headerDescription}
-              </p>
+    <div className={styles.page}>
+      <section className={styles.hero}>
+        <div className={styles.heroArt} aria-hidden="true">
+          <Image src="/images/premium/hero.webp" alt="" fill sizes="(max-width: 767px) 100vw, 60vw" preload />
+        </div>
+        <div className={styles.container}>
+          <div className={styles.heroGrid}>
+            <div className={styles.heroCopy}>
+              <h1>{renderHighlightedTitle(ps.headerTitle ?? "Premium")}</h1>
+              <p>{ps.headerDescription}</p>
+              <div className={styles.values}>
+                <span><Trophy />Mais oportunidades</span>
+                <span><ChartNoAxesColumnIncreasing />Desenvolva seu futuro</span>
+                <span><Users />Conte com a gente</span>
+              </div>
               {isActive() && subscription && (
-                <div className="flex flex-wrap items-center gap-3 mt-5">
-                  <span className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
-                    Plano {getPlanName()}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {getRemainingDays()} dias restantes
-                  </span>
-                </div>
+                <p className="mt-3 text-xs text-muted-foreground">Plano {getPlanName()} &middot; {getRemainingDays()} dias restantes</p>
               )}
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <ContinueCard item={lastViewed} />
-            </motion.div>
+            </div>
+            <div className={styles.welcome}>
+              <ContinueCard item={lastViewed?.type === "course" || lastViewed?.type === "job" ? null : lastViewed} />
+            </div>
           </div>
         </div>
       </section>
-
-      <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 space-y-10 md:space-y-12">
+      <main className={`${styles.container} ${styles.content}`}>
         <ManagementToolbar
-          createLabel="Novo item premium"
+          createLabel="Novo benefício"
           onCreate={openCreate}
-          hint="Edite, despublique ou exclua os destaques. Para reordenar, use /premium/cursos ou /premium/vagas."
+          hint="Edite, despublique ou exclua os benefícios em destaque."
         />
 
-        <section aria-label="Acessos rápidos">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-            {quickAccess.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="group flex items-center gap-3 p-4 rounded-[1.2rem] border border-border bg-card shadow-card hover:shadow-lg hover:border-primary/40 transition-all"
-              >
-                <div className={`h-10 w-10 rounded-lg bg-muted flex items-center justify-center ${item.color}`}>
-                  <item.icon className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold">{item.title}</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <PremiumRail
-          title="Cursos gratuitos em destaque"
-          subtitle="Seleção de cursos curados pela nossa equipe"
-          viewMoreHref="/premium/cursos"
-          isLoading={loading.courses}
-          isEmpty={!loading.courses && courses.length === 0}
-        >
-          {courses.map((c) => (
-            <ManageableCard
-              key={c.id}
-              id={c.id}
-              onEdit={() => openEdit(c.id)}
-              viewHref={`/premium/cursos/${c.slug}`}
-              isPublished={c.status === "published"}
-              onTogglePublish={() => handleTogglePublish(c, "course")}
-              onDelete={() => handleDelete(c, "course")}
-            >
-              <CourseRailCard
-                id={c.id}
-                title={c.title}
-                slug={c.slug}
-                description={c.description_short}
-                externalUrl={c.external_url}
-                tags={c.tags ?? []}
-                isSaved={isSaved(c.id)}
-                isToggling={isToggling(c.id)}
-                onToggleSave={() => toggleSave(c.id, { title: c.title, slug: c.slug })}
-                onOpen={() =>
-                  recordView({
-                    type: "course",
-                    id: c.id,
-                    title: c.title,
-                    slug: c.slug,
-                    externalUrl: c.external_url ?? undefined,
-                  })
-                }
-              />
-            </ManageableCard>
+        <nav aria-label="Acessos premium" className={styles.quickGrid}>
+          {quickAccess.map((item) => (
+            <Link key={item.href} href={item.href} className={styles.quick}>
+              <div className={styles.quickIcon}><item.icon size={27} /></div>
+              <div><strong>{item.title}</strong><p>{item.description}</p></div>
+              <ArrowRight size={19} />
+            </Link>
           ))}
-        </PremiumRail>
+        </nav>
 
         <PremiumRail
-          title="Vagas em destaque"
-          subtitle="Oportunidades selecionadas para assinantes"
-          viewMoreHref="/premium/vagas"
-          isLoading={loading.jobs}
-          isEmpty={!loading.jobs && jobs.length === 0}
-        >
-          {jobs.map((j) => (
-            <ManageableCard
-              key={j.id}
-              id={j.id}
-              onEdit={() => openEdit(j.id)}
-              viewHref={`/premium/vagas/${j.slug}`}
-              isPublished={j.status === "published"}
-              onTogglePublish={() => handleTogglePublish(j, "job")}
-              onDelete={() => handleDelete(j, "job")}
-            >
-              <JobRailCard
-                id={j.id}
-                title={j.title}
-                slug={j.slug}
-                description={j.description_short}
-                externalUrl={j.external_url}
-                tags={j.tags ?? []}
-                isSaved={isSaved(j.id)}
-                isToggling={isToggling(j.id)}
-                onToggleSave={() => toggleSave(j.id, { title: j.title, slug: j.slug })}
-                onOpen={() =>
-                  recordView({
-                    type: "job",
-                    id: j.id,
-                    title: j.title,
-                    slug: j.slug,
-                    externalUrl: j.external_url ?? undefined,
-                  })
-                }
-              />
-            </ManageableCard>
-          ))}
-        </PremiumRail>
-
-        <PremiumRail
+          className={styles.rail}
           title="Benefícios em destaque"
           subtitle="Vantagens selecionadas para assinantes"
           viewMoreHref="/premium/beneficios"
           isLoading={loading.benefits}
           isEmpty={!loading.benefits && benefits.length === 0}
+          emptyState={<div className="rounded-xl border border-border p-6 text-sm text-muted-foreground" role={loadError ? "alert" : "status"}>
+            {loadError ? <>Não foi possível carregar os benefícios. <button type="button" className="text-primary underline" onClick={() => setRetry((value) => value + 1)}>Tentar novamente</button></> : "Novos benefícios aparecerão aqui assim que estiverem disponíveis."}
+          </div>}
         >
           {benefits.map((b) => (
             <ManageableCard
               key={b.id}
+              className="shrink-0"
               id={b.id}
               onEdit={() => openEdit(b.id)}
               viewHref={`/premium/beneficios/${b.slug}`}
@@ -321,8 +197,7 @@ export default function PremiumHomeNext() {
               onTogglePublish={() => handleToggleBenefitPublish(b)}
               onDelete={() => handleBenefitDelete(b)}
             >
-              <BenefitRailCard
-                id={b.id}
+              <VisualBenefitCard
                 title={b.title}
                 slug={b.slug}
                 description={b.description_short}
@@ -344,14 +219,27 @@ export default function PremiumHomeNext() {
             </ManageableCard>
           ))}
         </PremiumRail>
+        <PremiumRail className={styles.rail} title="Rotas recomendadas" subtitle="Trilhas para você evoluir ainda mais" viewMoreHref="/premium/beneficios">
+          {recommendedRoutes.map((route) => (
+            <Link key={route.title} href={route.href} className={styles.route}>
+              <Image src={`/images/premium/${route.art}.webp`} alt="" fill sizes="(max-width: 767px) 82vw, 320px" />
+              <span>{route.tag}</span><h3>{route.title}</h3><p>{route.description}</p><ArrowRight />
+            </Link>
+          ))}
+        </PremiumRail>
       </main>
 
       <PremiumItemEditDialog
         open={editorOpen}
         onOpenChange={setEditorOpen}
         itemId={editingId}
+        defaultType="course"
+        lockType
+        hiddenTags={[PREMIUM_BENEFIT_TAG]}
+        itemKindLabel="benefício"
+        detailBasePath="/premium/beneficios"
         onSaved={handleSaved}
       />
-    </>
+    </div>
   );
 }

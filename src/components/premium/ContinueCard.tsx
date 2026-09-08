@@ -28,17 +28,17 @@ export function ContinueCard({ item }: { item: PremiumLastViewed | null }) {
           Sua jornada premium começa agora
         </h3>
         <p className="text-sm text-muted-foreground mb-5">
-          Explore cursos, vagas e benefícios curados para acelerar seus estudos.
+          Explore os benefícios disponíveis e encontre oportunidades no mapa.
         </p>
         <div className="mt-auto flex flex-col gap-2">
           <Button asChild size="sm">
-            <Link href="/premium/cursos">
-              Ver cursos em destaque
+            <Link href="/premium/beneficios">
+              Explorar benefícios
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
           <Button asChild size="sm" variant="outline">
-            <Link href="/premium/beneficios">Explorar benefícios</Link>
+            <Link href="/premium/mapa-beneficios">Abrir mapa de benefícios</Link>
           </Button>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface PremiumRailProps {
+  className?: string;
   title: string;
   subtitle?: string;
   viewMoreHref?: string;
@@ -18,6 +19,7 @@ interface PremiumRailProps {
 }
 
 export function PremiumRail({
+  className,
   title,
   subtitle,
   viewMoreHref,
@@ -40,7 +42,7 @@ export function PremiumRail({
   if (!isLoading && isEmpty && !emptyState) return null;
 
   return (
-    <section className="rounded-[1.2rem] border border-border bg-card/80 p-6 md:p-8 space-y-6 shadow-sm">
+    <section className={className ?? "rounded-[1.2rem] border border-border bg-card/80 p-6 md:p-8 space-y-6 shadow-sm"}>
       <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div className="min-w-0">
           <h2 className="text-xl md:text-2xl font-bold tracking-tight">{title}</h2>

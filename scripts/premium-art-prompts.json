@@ -1,0 +1,38 @@
+[
+  {
+    "name": "hero",
+    "path": "public/images/premium/hero.webp",
+    "prompt": "Use case: photorealistic-natural. Asset: premium education website hero background, wide landscape 1536x1024. Editorial cinematic photograph of a young adult Brazilian Black woman with natural curly hair in a dark purple hoodie and backpack, looking upward to the right with quiet hopeful smile. Half body portrait positioned in the right third, ample near-black navy negative space across left half for HTML title overlay. Strong violet and magenta rim light, softly blurred university evening background fading to almost black at all edges, realistic skin texture, sophisticated aspirational mood. No text, no letters, no logos, no watermark. Save the generated image as a local file and return its path.",
+    "generator": "Built-in image_gen"
+  },
+  {
+    "name": "work",
+    "path": "public/images/premium/work.webp",
+    "prompt": "Use case: photorealistic-natural. Asset: vertical editorial benefit card background for a premium Brazilian education website. Young adult Brazilian man with curly hair smiling looking upward outdoors in a modern city, hopeful career aspirations, blue sky and violet rim lighting. Portrait composition, main subject in upper half, bottom fading to dark navy for HTML text overlay. Authentic detailed photography, premium cinematic color grade. No text, letters, logos, watermark or UI.",
+    "generator": "Built-in image_gen"
+  },
+  {
+    "name": "education",
+    "path": "public/images/premium/education.webp",
+    "prompt": "Use case: photorealistic-natural. Asset: vertical editorial benefit card background for a premium Brazilian education website. Young adult Brazilian woman wearing glasses studying in a library, thoughtful confident expression, blue and violet cinematic light. Portrait composition, main subject in upper half, bottom fading to dark navy for HTML text overlay. Authentic detailed photography, premium cinematic color grade. No text, letters, logos, watermark or UI.",
+    "generator": "Built-in image_gen"
+  },
+  {
+    "name": "business",
+    "path": "public/images/premium/business.webp",
+    "prompt": "Use case: photorealistic-natural. Asset: vertical editorial benefit card background for a premium Brazilian education website. Young adult Brazilian entrepreneur with glasses in a creative small business workspace, warm natural light and subtle purple accents. Portrait composition, main subject in upper half, bottom fading to dark navy for HTML text overlay. Authentic detailed photography, premium cinematic color grade. No text, letters, logos, watermark or UI.",
+    "generator": "Built-in image_gen"
+  },
+  {
+    "name": "transport",
+    "path": "public/images/premium/transport.webp",
+    "prompt": "Use case: photorealistic-natural. Asset: vertical editorial benefit card background for a premium Brazilian education website. Brazilian intercity coach bus on a scenic road at sunset, warm amber horizon, cinematic travel photography, no brand. Portrait composition, main subject in upper half, bottom fading to dark navy for HTML text overlay. Authentic detailed photography, premium cinematic color grade. No text, letters, logos, watermark or UI.",
+    "generator": "Built-in image_gen"
+  },
+  {
+    "name": "culture",
+    "path": "public/images/premium/culture.webp",
+    "prompt": "Use case: photorealistic-natural. Asset: vertical editorial benefit card background for a premium Brazilian education website. Young adult Brazilian woman enjoying a concert, joyful expression, violet and magenta stage bokeh behind her. Portrait composition, main subject in upper half, bottom fading to dark navy for HTML text overlay. Authentic detailed photography, premium cinematic color grade. No text, letters, logos, watermark or UI.",
+    "generator": "Built-in image_gen"
+  }
+]
