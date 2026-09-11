@@ -164,7 +164,7 @@ export default function GuiasNext() {
 
   return (
     <>
-      <PageHero
+      <PageHero compactMobile
         title={ps.headerTitle || "Guias"}
         description={
           ps.headerDescription ||
@@ -172,7 +172,7 @@ export default function GuiasNext() {
         }
       />
 
-      <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 pb-16">
+      <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:py-14 pb-16">
         {!rolesLoading && isModerator && (
           <div className="mb-6 flex justify-end">
             <Button asChild><Link href="/moderador">Painel do moderador</Link></Button>

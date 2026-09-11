@@ -1,0 +1,19 @@
+.section { padding: 64px 0; overflow: hidden; }
+.heading { max-width: 780px; margin: 0 auto 36px; padding: 0 24px; text-align: center; }
+.heading h2 { font-size: clamp(26px, 3vw, 42px); line-height: 1.15; font-weight: 750; letter-spacing: -.035em; }
+.heading p { margin-top: 14px; color: hsl(var(--muted-foreground)); }
+.rows { display: grid; gap: 22px; mask-image: linear-gradient(90deg, transparent, black 4%, black 96%, transparent); }
+.row { overflow: hidden; cursor: grab; touch-action: pan-y; user-select: none; }
+.row[data-dragging=true], .row[data-dragging=true] a { cursor: grabbing; }
+.track { display: flex; width: max-content; will-change: transform; }
+.group { display: flex; align-items: center; gap: 24px; padding: 36px 24px 0 0; }
+.portrait { display: block; flex: 0 0 auto; position: relative; width: 150px; height: 150px; border-radius: 50%; }
+.photo { display: block; position: relative; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: hsl(var(--muted)); border: 2px solid hsl(var(--border)); transition: border-color .2s; }
+.portrait:hover .photo, .portrait:focus-visible .photo { border-color: hsl(var(--primary)); }
+.name { position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); max-width: calc(100% + 16px); padding: 4px 12px; border-radius: 999px; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); font-size: 12px; font-weight: 700; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity .15s; pointer-events: none; }
+.profileHint { position: absolute; inset: 0; display: grid; place-items: center; color: white; background: #0005; opacity: 0; transition: opacity .15s; pointer-events: none; }
+.portrait:hover .name, .portrait:hover .profileHint, .portrait:focus-visible .name, .portrait:focus-visible .profileHint { opacity: 1; }
+.row[data-dragging=true] .name, .row[data-dragging=true] .profileHint { opacity: 0; }
+.portrait img { width: 100%; height: 100%; object-fit: cover; }
+.portrait:focus-visible { outline: 3px solid hsl(var(--primary)); outline-offset: -4px; }
+@media (max-width: 640px) { .section { padding: 40px 0; } .heading { margin-bottom: 26px; } .portrait { width: 94px; height: 94px; } .group { gap: 14px; padding-right: 14px; } .rows { gap: 14px; } }

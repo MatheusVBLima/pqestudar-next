@@ -53,8 +53,8 @@ export default function FerramentasSalvos() {
     return (
       <div className="flex-1 flex flex-col bg-background">
         <main className="flex-1">
-          <PageHero title={SAVED_HERO_TITLE} description={SAVED_HERO_DESCRIPTION} />
-          <section className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 space-y-10 md:space-y-12">
+          <PageHero compactMobile title={SAVED_HERO_TITLE} description={SAVED_HERO_DESCRIPTION} />
+          <section className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10 md:py-14 space-y-10 md:space-y-12">
             <div className="space-y-10 md:space-y-12">
               <PremiumRail title="Ferramentas Salvas" subtitle="Sua seleção de ferramentas salvas" isLoading skeletonCount={3} />
               <PremiumRail title="Concursos Salvos" subtitle="Sua seleção de concursos salvos" isLoading skeletonCount={3} />
@@ -73,9 +73,9 @@ export default function FerramentasSalvos() {
   return (
     <div className="flex-1 flex flex-col bg-background">
       <main className="flex-1">
-        <PageHero title={SAVED_HERO_TITLE} description={SAVED_HERO_DESCRIPTION} isLoading={ps.isLoading} />
+        <PageHero compactMobile title={SAVED_HERO_TITLE} description={SAVED_HERO_DESCRIPTION} isLoading={ps.isLoading} />
 
-        <section className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 space-y-10 md:space-y-12">
+        <section className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10 md:py-14 space-y-10 md:space-y-12">
           <PremiumBackButton fallbackPath="/ferramentas" fallbackLabel="Ferramentas" />
 
           {loading ? (

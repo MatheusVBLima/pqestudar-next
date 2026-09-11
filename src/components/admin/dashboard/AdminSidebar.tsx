@@ -31,6 +31,7 @@ import {
 import { toast } from 'sonner';
 
 const insightsItems = [
+  { title: 'Mapa de calor', href: '/admin/insights/mapa-calor', icon: BarChart3 },
   { title: 'Ferramentas', href: '/admin/insights/ferramentas', icon: Wrench },
   { title: 'Concursos', href: '/admin/insights/concursos', icon: BookOpen },
   { title: 'Guias', href: '/admin/insights/guias', icon: BookOpen },

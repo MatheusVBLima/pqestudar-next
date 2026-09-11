@@ -264,12 +264,12 @@ export default function PremiumCursosNext() {
 
   return (
     <>
-      <PageHero
+      <PageHero compactMobile
         title={ps.headerTitle || "Cursos **Curados** para Acelerar Sua Evolução"}
         description={ps.headerDescription || "Uma seleção criteriosa de cursos para você estudar o que realmente importa."}
       />
 
-      <main className="mx-auto w-full min-w-0 max-w-[1504px] overflow-x-hidden px-4 py-10 sm:px-6 md:py-14 lg:px-8">
+      <main className="mx-auto w-full min-w-0 max-w-[1504px] overflow-x-hidden px-4 pt-6 pb-10 sm:px-6 md:py-14 lg:px-8">
         <ManagementToolbar
           createLabel="Novo curso"
           onCreate={openCreate}

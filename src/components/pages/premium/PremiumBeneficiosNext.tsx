@@ -285,12 +285,12 @@ export default function PremiumBeneficiosNext() {
 
   return (
     <>
-      <PageHero
+      <PageHero compactMobile
         title={ps.headerTitle || "Benefícios **Premium** para Aproveitar Mais"}
         description={ps.headerDescription || "Cupons, acessos, vantagens e recursos selecionados para assinantes."}
       />
 
-      <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+      <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10 md:py-14">
         <ManagementToolbar
           createLabel="Novo benefício"
           onCreate={openCreate}

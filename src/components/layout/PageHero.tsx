@@ -12,13 +12,14 @@ interface PageHeroProps {
   children?: ReactNode;
   /** When true, show skeletons instead of text to avoid flash of fallback content */
   isLoading?: boolean;
+  compactMobile?: boolean;
 }
 
-export function PageHero({ title, description, badge, children, isLoading }: PageHeroProps) {
+export function PageHero({ title, description, badge, children, isLoading, compactMobile = false }: PageHeroProps) {
   return (
     <section className="relative bg-gradient-to-br from-primary/10 via-background to-background border-b overflow-hidden px-4 sm:px-6 lg:px-8">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(var(--primary)/0.1),transparent_50%)]" />
-      <div className="w-full max-w-[1440px] mx-auto py-16 md:py-20 relative">
+      <div className={`w-full max-w-[1440px] mx-auto ${compactMobile ? 'py-8' : 'py-16'} md:py-20 relative`}>
         {isLoading ? (
           <div>
             {badge}
@@ -33,10 +34,10 @@ export function PageHero({ title, description, badge, children, isLoading }: Pag
             transition={{ duration: 0.5 }}
           >
             {badge}
-            <h1 className="max-w-full md:max-w-4xl lg:max-w-[1100px] text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+            <h1 className={`max-w-full md:max-w-4xl lg:max-w-[1100px] ${compactMobile ? 'text-3xl mb-4 md:mb-6' : 'text-4xl mb-6'} md:text-5xl lg:text-6xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70`}>
               {renderHighlightedTitle(title)}
             </h1>
-            <p className="max-w-full md:max-w-3xl lg:max-w-[900px] text-lg md:text-xl text-muted-foreground leading-relaxed">
+            <p className={`max-w-full md:max-w-3xl lg:max-w-[900px] ${compactMobile ? 'text-base' : 'text-lg'} md:text-xl text-muted-foreground leading-relaxed`}>
               {description}
             </p>
             {children}

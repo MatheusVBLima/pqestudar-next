@@ -422,9 +422,9 @@ export default function ConcursosNext() {
 
   return (
     <div className="flex-1 flex flex-col bg-background">
-      <PageHero title={ps.headerTitle} description={ps.headerDescription} isLoading={ps.isLoading} />
+      <PageHero compactMobile title={ps.headerTitle} description={ps.headerDescription} isLoading={ps.isLoading} />
 
-      <main className="flex-1 w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 pb-8">
+      <main className="flex-1 w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:py-14 pb-8">
         <div className="mb-8">
           {isAdmin && isManagementMode && (
             <ManagementToolbar

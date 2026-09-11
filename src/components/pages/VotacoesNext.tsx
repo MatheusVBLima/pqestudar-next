@@ -184,13 +184,13 @@ export default function VotacoesNext() {
 
   return (
     <>
-      <PageHero
+      <PageHero compactMobile
         title={ps.headerTitle}
         description={ps.headerDescription}
         isLoading={ps.isLoading}
       />
 
-      <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-16 pb-8">
+      <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-16 pb-8">
         {effectiveAdmin && !loadingRoles && isManagement && (
           <>
           <ManagementToolbar

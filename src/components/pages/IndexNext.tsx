@@ -29,6 +29,7 @@ const FinalCtaSectionNext = lazy(() =>
 
 // Standby: keep the products section wired for a future home update.
 const SHOW_HOME_PRODUCTS_SECTION = false;
+const HomePartnersSection = lazy(() => import("@/components/sections/home-partners-section").then(m => ({ default: m.HomePartnersSection })));
 
 function DeferredHomeSections() {
   const [shouldLoad, setShouldLoad] = useState(false);
@@ -61,6 +62,7 @@ function DeferredHomeSections() {
     <Suspense fallback={<div className="min-h-[200px]" aria-hidden="true" />}>
       <DualTrackSectionNext />
       {SHOW_HOME_PRODUCTS_SECTION && <HomeProductsSectionNext />}
+      <HomePartnersSection />
       <HomeFaqSectionNext />
       <SocialProofSection />
       <FinalCtaSectionNext />

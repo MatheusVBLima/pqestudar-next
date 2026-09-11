@@ -110,13 +110,13 @@ export default function PremiumSalvosNext() {
   return (
     <div className="flex-1 bg-background flex flex-col">
       <main className="flex-1">
-        <PageHero
+        <PageHero compactMobile
           title={ps.headerTitle}
           description={ps.headerDescription}
           isLoading={ps.isLoading}
         />
 
-        <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 space-y-10 md:space-y-12">
+        <div className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10 md:py-14 space-y-10 md:space-y-12">
           <PremiumBackButton fallbackPath="/premium" fallbackLabel="Premium" />
 
           {loading ? (

@@ -192,6 +192,12 @@
     "dynamic": false
   },
   {
+    "path": "/admin/insights/mapa-calor",
+    "name": "Mapa calor",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
     "path": "/admin/insights/premium-cursos",
     "name": "Premium cursos",
     "area": "Admin",

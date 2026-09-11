@@ -787,7 +787,7 @@ export default function Ferramentas() {
   return (
     <>
         <main className="flex-1">
-          <PageHero title={ps.headerTitle} description={ps.headerDescription} isLoading={ps.isLoading} />
+          <PageHero title={ps.headerTitle} description={ps.headerDescription} isLoading={ps.isLoading} compactMobile />
 
           {isManagementMode && effectiveAdmin && (
             <section className="px-4 sm:px-6 lg:px-8 pt-10">
@@ -865,7 +865,7 @@ export default function Ferramentas() {
 
           {/* Filtros (modo público) */}
           {!isManagementMode && showFilters &&
-          <section className="px-4 sm:px-6 lg:px-8 py-10 md:py-14 pb-8">
+          <section className="px-4 sm:px-6 lg:px-8 pt-6 md:pt-14 pb-8">
               <div className="w-full max-w-[1440px] mx-auto">
                 <motion.div
                 initial={{ opacity: 0, y: 20 }}

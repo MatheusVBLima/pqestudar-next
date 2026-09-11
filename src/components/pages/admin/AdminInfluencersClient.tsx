@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Eye, EyeOff, Filter, Pencil, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, Filter, House, Loader2, Pencil, Plus, Search, SlidersHorizontal, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -14,10 +14,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 
 type Influencer = Database["public"]["Tables"]["admin_influencers"]["Row"];
-type Fields = Pick<Influencer, "name" | "profile_url" | "email" | "phone" | "status">;
+type Fields = Pick<Influencer, "name" | "profile_url" | "email" | "phone" | "status" | "photo_url" | "show_on_home">;
 const labels = { pending: "Pendente", accepted: "Aceito", rejected: "Não aceito" };
 const colors = { pending: "text-amber-700 dark:text-amber-400", accepted: "text-emerald-700 dark:text-emerald-400", rejected: "text-rose-700 dark:text-rose-400" };
-const empty: Fields = { name: "", profile_url: "", email: "", phone: "", status: "pending" };
+const empty: Fields = { name: "", profile_url: "", email: "", phone: "", status: "pending", photo_url: "", show_on_home: false };
 const queryKey = ["admin-influencers"];
 
 function profileUrl(value: string) {
@@ -41,6 +41,8 @@ export default function AdminInfluencersClient() {
   const [deleting, setDeleting] = useState<Influencer | null>(null);
   const [fields, setFields] = useState<Fields>(empty);
   const [formError, setFormError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const photoInput = useRef<HTMLInputElement>(null);
   const query = useQuery({
     queryKey,
     queryFn: async () => {
@@ -55,45 +57,82 @@ export default function AdminInfluencersClient() {
     },
   });
   const mutation = useMutation({
-    mutationFn: async (action: { kind: "save"; id?: string; values: Fields } | { kind: "status"; id: string; status: Influencer["status"] } | { kind: "delete"; id: string }) => {
+    mutationFn: async (action: { kind: "save"; id?: string; values: Fields } | { kind: "status"; id: string; status: Influencer["status"] } | { kind: "home"; id: string; visible: boolean } | { kind: "delete"; id: string }) => {
       if (action.kind === "delete") {
         const { data, error } = await supabase.from("admin_influencers").delete().eq("id", action.id).select("id").single();
         if (error || !data) throw new Error("Não foi possível excluir o influenciador. Tente novamente.");
         return;
       }
-      const values = action.kind === "status" ? { status: action.status } : action.values;
+      if (action.kind === "home" && action.visible) {
+        const row = cache.getQueryData<Influencer[]>(queryKey)?.find(item => item.id === action.id);
+        if (!row?.photo_url?.trim() || row.status !== "accepted") {
+          throw new Error("Para exibir na home, cadastre uma foto e selecione a afiliação Aceito.");
+        }
+      }
+      const values = action.kind === "status" ? { status: action.status } : action.kind === "home" ? { show_on_home: action.visible } : action.values;
       const request = action.id
         ? supabase.from("admin_influencers").update(values).eq("id", action.id)
         : supabase.from("admin_influencers").insert(action.kind === "save" ? action.values : empty);
       const { data, error } = await request.select().single();
       if (error || !data) throw new Error("Não foi possível salvar. Confira sua conexão e tente novamente.");
+      return data;
     },
-    onSuccess: (_, action) => {
+    onSuccess: (saved, action) => {
+      if (saved) cache.setQueryData<Influencer[]>(queryKey, rows => rows?.map(row => row.id === saved.id ? saved : row));
       if (action.kind === "save") setOpen(false);
       if (action.kind === "delete") setDeleting(null);
-      toast.success(action.kind === "delete" ? "Influenciador excluído." : "Dados salvos.");
+      toast.success(action.kind === "delete" ? "Influenciador excluído." : action.kind === "home" ? action.visible ? "Exibição na home ativada." : "Exibição na home desativada." : "Dados salvos.");
       void cache.invalidateQueries({ queryKey });
+      void cache.invalidateQueries({ queryKey: ["home-influencer-partners"] });
     },
     onError: (error, action) => {
       if (action.kind === "save") setFormError(error.message);
       toast.error(error.message);
     },
   });
+  const busy = mutation.isPending || uploading;
+  async function uploadPhoto(file: File) {
+    const extensions: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+    setFormError("");
+    if (!extensions[file.type] || file.size === 0 || file.size > 5 * 1024 * 1024) {
+      setFormError("Selecione uma imagem JPG, PNG ou WebP de até 5 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const bitmap = await createImageBitmap(file);
+      bitmap.close();
+      const path = `portraits/${crypto.randomUUID()}.${extensions[file.type]}`;
+      const bucket = supabase.storage.from("influencer-photos");
+      const { error } = await bucket.upload(path, file, { contentType: file.type, cacheControl: "31536000", upsert: false });
+      if (error) throw error;
+      const { data } = bucket.getPublicUrl(path);
+      setFields(current => ({ ...current, photo_url: data.publicUrl }));
+      toast.success("Foto enviada. Salve o cadastro para aplicar a alteração.");
+    } catch {
+      setFormError("Não foi possível enviar a foto. Verifique se a imagem é válida e tente novamente.");
+    } finally {
+      setUploading(false);
+    }
+  }
   function startEdit(row: Influencer | null) {
     setEditing(row);
-    setFields(row ? { name: row.name, profile_url: row.profile_url, email: row.email ?? "", phone: row.phone ?? "", status: row.status } : empty);
+    setFields(row ? { name: row.name, profile_url: row.profile_url, email: row.email ?? "", phone: row.phone ?? "", status: row.status, photo_url: row.photo_url ?? "", show_on_home: row.show_on_home ?? false } : empty);
     setFormError("");
     setOpen(true);
   }
   function save(event: FormEvent) {
     event.preventDefault();
-    if (mutation.isPending) return;
+    if (busy) return;
     setFormError("");
     try {
       if (!fields.name.trim()) throw new Error("Informe o nome do influenciador.");
       const url = profileUrl(fields.profile_url);
       if (url.length > 2048) throw new Error("O link do perfil é muito longo.");
-      mutation.mutate({ kind: "save", id: editing?.id, values: { ...fields, name: fields.name.trim(), profile_url: url, email: fields.email?.trim() || null, phone: fields.phone?.trim() || null } });
+      const photo = fields.photo_url?.trim() ? profileUrl(fields.photo_url) : null;
+      if (photo && (!photo.startsWith("https://") || photo.length > 2048)) throw new Error("Use um link HTTPS válido para a foto.");
+      if (fields.show_on_home && (!photo || fields.status !== "accepted")) throw new Error("Para exibir na home, cadastre uma foto e selecione a afiliação Aceito.");
+      mutation.mutate({ kind: "save", id: editing?.id, values: { ...fields, photo_url: photo, name: fields.name.trim(), profile_url: url, email: fields.email?.trim() || null, phone: fields.phone?.trim() || null } });
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Confira o link do perfil.");
     }
@@ -146,7 +185,7 @@ export default function AdminInfluencersClient() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1000px] table-fixed text-left text-sm">
             <caption className="sr-only">Influenciadores prospectados e status da afiliação</caption>
-            <colgroup><col /><col /><col /><col className="w-[180px]" /><col className="w-[184px]" /><col className="w-[88px]" /></colgroup>
+            <colgroup><col /><col /><col /><col className="w-[180px]" /><col className="w-[184px]" /><col className="w-[128px]" /></colgroup>
             <thead className="border-b bg-muted/50 text-xs text-muted-foreground"><tr>{["Nome", "Perfil", "E-mail", "Telefone", "Afiliação", "Ações"].map(label => <th key={label} scope="col" className="px-3 py-3 font-medium">{label === "Telefone" ? <div className="flex items-center gap-2">Telefone<Button variant="ghost" size="icon" className="h-7 w-7" aria-label={showPhones ? "Ocultar telefones" : "Mostrar telefones"} title={showPhones ? "Ocultar telefones" : "Mostrar telefones"} aria-pressed={showPhones} onClick={() => setShowPhones(value => !value)}>{showPhones ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div> : label}</th>)}</tr></thead>
             <tbody className="divide-y">
               {query.isPending ? <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Carregando influenciadores…</td></tr> : rows.length === 0 ? <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{query.data?.length ? "Nenhum influenciador encontrado com esses filtros." : "Nenhum influenciador cadastrado. Cadastre seu primeiro contato."}</td></tr> : rows.map(row => (
@@ -163,19 +202,44 @@ export default function AdminInfluencersClient() {
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="px-2 py-2.5"><div className="flex"><Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${row.name}`} disabled={mutation.isPending} onClick={() => startEdit(row)}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" aria-label={`Excluir ${row.name}`} disabled={mutation.isPending} onClick={() => setDeleting(row)}><Trash2 className="h-4 w-4" /></Button></div></td>
+                  <td className="px-2 py-2.5"><div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon"
+                      className={`h-8 w-8 shrink-0 border ${row.show_on_home ? "border-primary/30 bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+                      aria-label={`${row.show_on_home ? "Ocultar" : "Exibir"} ${row.name} na home`}
+                      title={row.show_on_home ? "Ocultar da home" : "Exibir na home"}
+                      aria-pressed={!!row.show_on_home}
+                      disabled={mutation.isPending}
+                      onClick={() => mutation.mutate({ kind: "home", id: row.id, visible: !row.show_on_home })}>
+                      {mutation.isPending && mutation.variables?.kind === "home" && mutation.variables.id === row.id
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <House className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${row.name}`} disabled={mutation.isPending} onClick={() => startEdit(row)}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" aria-label={`Excluir ${row.name}`} disabled={mutation.isPending} onClick={() => setDeleting(row)}><Trash2 className="h-4 w-4" /></Button></div></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>}
       </div>
-      <Dialog open={open} onOpenChange={value => { if (!mutation.isPending) setOpen(value); }}>
+      <Dialog open={open} onOpenChange={value => { if (!busy) setOpen(value); }}>
         <DialogContent className="admin-radius rounded-[var(--admin-radius)] sm:max-w-lg sm:rounded-[var(--admin-radius)] [&_button]:rounded-[var(--admin-radius)]"><DialogHeader><DialogTitle>{editing ? "Editar influenciador" : "Cadastrar influenciador"}</DialogTitle><DialogDescription>Registre o contato e a situação da parceria.</DialogDescription></DialogHeader>
           <form onSubmit={save} className="space-y-4">
-            <fieldset disabled={mutation.isPending} className="space-y-4">
+            <fieldset disabled={busy} className="space-y-4">
               <div className="space-y-2"><Label htmlFor="influencer-name">Nome *</Label><Input id="influencer-name" required maxLength={150} value={fields.name} onChange={event => setFields({ ...fields, name: event.target.value })} /></div>
               <div className="space-y-2"><Label htmlFor="influencer-profile">Link do perfil *</Label><Input id="influencer-profile" required maxLength={2048} placeholder="https://instagram.com/perfil" value={fields.profile_url} onChange={event => setFields({ ...fields, profile_url: event.target.value })} /></div>
+              <div className="space-y-2">
+                <Label htmlFor="influencer-photo-upload">Foto do influenciador</Label>
+                <div className="flex items-center gap-3 rounded-[var(--admin-radius)] border border-border p-3">
+                  {fields.photo_url && <img src={fields.photo_url} alt="Foto do influenciador" className="h-16 w-16 shrink-0 rounded-full object-cover" width={64} height={64} />}
+                  <div className="min-w-0 space-y-1">
+                    <input ref={photoInput} id="influencer-photo-upload" type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file && !busy) void uploadPhoto(file); }} />
+                    <Button type="button" variant="outline" disabled={busy} onClick={() => photoInput.current?.click()}><Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando foto…" : fields.photo_url ? "Trocar foto" : "Enviar foto"}</Button>
+                    <p className="text-xs text-muted-foreground">JPG, PNG ou WebP. Até 5 MB.</p>
+                  </div>
+                </div>
+                <details className="text-xs text-muted-foreground"><summary className="cursor-pointer">Usar link de uma imagem</summary><Input aria-label="Link da foto" type="url" className="mt-2" maxLength={2048} placeholder="https://.../foto.jpg" value={fields.photo_url ?? ""} onChange={event => setFields({ ...fields, photo_url: event.target.value })} /></details>
+              </div>
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={fields.show_on_home} onChange={event => setFields({ ...fields, show_on_home: event.target.checked })} className="h-4 w-4 accent-primary" />Exibir na home como parceiro do PqEstudar</label>
               <div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="influencer-email">E-mail (opcional)</Label><Input id="influencer-email" type="email" maxLength={254} value={fields.email ?? ""} onChange={event => setFields({ ...fields, email: event.target.value })} /></div><div className="space-y-2"><Label htmlFor="influencer-phone">Telefone (opcional)</Label><Input id="influencer-phone" type="tel" maxLength={40} value={fields.phone ?? ""} onChange={event => setFields({ ...fields, phone: event.target.value })} /></div></div>
               <div className="space-y-2">
                 <Label htmlFor="influencer-status">Status de afiliação</Label>
@@ -188,7 +252,7 @@ export default function AdminInfluencersClient() {
               </div>
             </fieldset>
             {formError && <p role="alert" className="text-sm text-destructive">{formError}</p>}
-            <div className="flex justify-end gap-2"><Button type="button" variant="outline" disabled={mutation.isPending} onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? "Salvando…" : "Salvar"}</Button></div>
+            <div className="flex justify-end gap-2"><Button type="button" variant="outline" disabled={busy} onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" disabled={busy}>{uploading ? "Enviando foto…" : mutation.isPending ? "Salvando…" : "Salvar"}</Button></div>
           </form>
         </DialogContent>
       </Dialog>

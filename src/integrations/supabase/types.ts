@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       admin_influencers: {
         Row: {
+          photo_url: string | null
+          show_on_home: boolean
           id: string
           name: string
           profile_url: string
@@ -25,6 +27,8 @@ export type Database = {
           created_at: string
         }
         Insert: {
+          photo_url?: string | null
+          show_on_home?: boolean
           id?: string
           name: string
           profile_url: string
@@ -34,6 +38,8 @@ export type Database = {
           created_at?: string
         }
         Update: {
+          photo_url?: string | null
+          show_on_home?: boolean
           name?: string
           profile_url?: string
           email?: string | null
@@ -4349,6 +4355,12 @@ export type Database = {
       }
     }
     Functions: {
+      record_page_heatmap: { Args: { p_visit: string; p_path: string; p_device: string; p_clicks: Json }; Returns: undefined }
+      admin_page_heatmap: { Args: { p_path?: string; p_device?: string; p_days?: number }; Returns: Json }
+      get_home_influencer_partners: {
+        Args: Record<PropertyKey, never>
+        Returns: { id: string; name: string; profile_url: string; photo_url: string }[]
+      }
       moderator_authors: {
         Args: Record<PropertyKey, never>
         Returns: { user_id: string; display_name: string; email: string }[]
