@@ -2,7 +2,7 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Eye, EyeOff, Filter, House, Loader2, Pencil, Plus, Search, SlidersHorizontal, Trash2, Upload } from "lucide-react";
+import { Check, Clock, ExternalLink, Eye, EyeOff, Filter, House, Loader2, Pencil, Plus, Search, SlidersHorizontal, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -16,7 +16,11 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 type Influencer = Database["public"]["Tables"]["admin_influencers"]["Row"];
 type Fields = Pick<Influencer, "name" | "profile_url" | "email" | "phone" | "status" | "photo_url" | "show_on_home">;
 const labels = { pending: "Pendente", accepted: "Aceito", rejected: "Não aceito" };
-const colors = { pending: "text-amber-700 dark:text-amber-400", accepted: "text-emerald-700 dark:text-emerald-400", rejected: "text-rose-700 dark:text-rose-400" };
+const affiliationOptions = [
+  { value: "accepted", Icon: Check, color: "text-emerald-700 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-400", active: "border-emerald-500/40 bg-emerald-500/15 hover:bg-emerald-500/20" },
+  { value: "pending", Icon: Clock, color: "text-amber-700 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-400", active: "border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/20" },
+  { value: "rejected", Icon: X, color: "text-red-700 dark:text-red-400 hover:text-red-700 dark:hover:text-red-400", active: "border-red-500/40 bg-red-500/15 hover:bg-red-500/20" },
+] as const;
 const empty: Fields = { name: "", profile_url: "", email: "", phone: "", status: "pending", photo_url: "", show_on_home: false };
 const queryKey = ["admin-influencers"];
 
@@ -185,7 +189,7 @@ export default function AdminInfluencersClient() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1000px] table-fixed text-left text-sm">
             <caption className="sr-only">Influenciadores prospectados e status da afiliação</caption>
-            <colgroup><col /><col /><col /><col className="w-[180px]" /><col className="w-[184px]" /><col className="w-[128px]" /></colgroup>
+            <colgroup><col /><col /><col /><col className="w-[180px]" /><col className="w-[148px]" /><col className="w-[128px]" /></colgroup>
             <thead className="border-b bg-muted/50 text-xs text-muted-foreground"><tr>{["Nome", "Perfil", "E-mail", "Telefone", "Afiliação", "Ações"].map(label => <th key={label} scope="col" className="px-3 py-3 font-medium">{label === "Telefone" ? <div className="flex items-center gap-2">Telefone<Button variant="ghost" size="icon" className="h-7 w-7" aria-label={showPhones ? "Ocultar telefones" : "Mostrar telefones"} title={showPhones ? "Ocultar telefones" : "Mostrar telefones"} aria-pressed={showPhones} onClick={() => setShowPhones(value => !value)}>{showPhones ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div> : label}</th>)}</tr></thead>
             <tbody className="divide-y">
               {query.isPending ? <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Carregando influenciadores…</td></tr> : rows.length === 0 ? <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{query.data?.length ? "Nenhum influenciador encontrado com esses filtros." : "Nenhum influenciador cadastrado. Cadastre seu primeiro contato."}</td></tr> : rows.map(row => (
@@ -195,12 +199,19 @@ export default function AdminInfluencersClient() {
                   <td className="px-3 py-2.5">{row.email ? <a className="block truncate hover:underline" title={row.email} href={`mailto:${row.email}`}>{row.email}</a> : <span className="text-muted-foreground">—</span>}</td>
                   <td className="px-3 py-2.5">{row.phone ? showPhones ? <a className="block truncate hover:underline" title={row.phone} href={`tel:${row.phone.replace(/[^+\d]/g, "")}`}>{row.phone}</a> : <span className="text-muted-foreground" aria-label="Telefone oculto">••••••••••</span> : <span className="text-muted-foreground">—</span>}</td>
                   <td className="px-3 py-2.5">
-                    <Select value={row.status} disabled={mutation.isPending} onValueChange={value => mutation.mutate({ kind: "status", id: row.id, status: value as Influencer["status"] })}>
-                      <SelectTrigger aria-label={`Status de afiliação de ${row.name}`} className={`h-10 w-[160px] gap-3 px-4 font-medium [&>svg]:shrink-0 [&:focus:not(:focus-visible)]:ring-0 [&:focus:not(:focus-visible)]:ring-offset-0 ${colors[row.status]}`}><SelectValue /></SelectTrigger>
-                      <SelectContent className="admin-radius rounded-[var(--admin-radius)] [&_[role=option]]:rounded-[calc(var(--admin-radius)-0.2rem)]">
-                        {Object.entries(labels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <div role="group" aria-label={`Afiliação de ${row.name}`} className="flex items-center gap-1">
+                      {affiliationOptions.map(({ value, Icon, color, active }) => (
+                        <Button key={value} variant="ghost" size="icon"
+                          className={`h-9 w-9 shrink-0 border ${color} ${row.status === value ? active : "border-transparent opacity-60 hover:opacity-100"}`}
+                          title={labels[value]} aria-label={`${labels[value]}: ${row.name}`}
+                          aria-pressed={row.status === value} disabled={mutation.isPending}
+                          onClick={() => { if (row.status !== value) mutation.mutate({ kind: "status", id: row.id, status: value }); }}>
+                          {mutation.isPending && mutation.variables?.kind === "status" && mutation.variables.id === row.id && mutation.variables.status === value
+                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                            : <Icon className="h-4 w-4" />}
+                        </Button>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-2 py-2.5"><div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon"
