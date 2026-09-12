@@ -1,6 +1,26 @@
 import { requireAdminApi } from '@/lib/admin-api';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
+export async function DELETE(request: Request) {
+  const auth = await requireAdminApi();
+  if (auth.error) return auth.error;
+  if (request.headers.get('origin') !== new URL(request.url).origin) {
+    return Response.json({ error: 'Origem inválida.' }, { status: 403 });
+  }
+  const id = new URL(request.url).searchParams.get('id');
+  if (!id || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id)) {
+    return Response.json({ error: 'Mensagem inválida.' }, { status: 400 });
+  }
+  try {
+    const { data, error } = await createSupabaseAdminClient().rpc('delete_support_message', { p_id: id });
+    if (error) throw error;
+    if (!data) return Response.json({ error: 'Esta mensagem não foi encontrada. Atualize a lista.' }, { status: 404 });
+    return new Response(null, { status: 204 });
+  } catch {
+    return Response.json({ error: 'Não foi possível excluir. Tente novamente.' }, { status: 503 });
+  }
+}
+
 export async function GET(request: Request) {
   const auth = await requireAdminApi();
   if (auth.error) return auth.error;

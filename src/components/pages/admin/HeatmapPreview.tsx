@@ -10,7 +10,6 @@ export default function HeatmapPreview({path,width,points,show}:{path:string;wid
   const dispose = useRef<() => void>(()=>{});
   const [available,setAvailable] = useState(width);
   const [height,setHeight] = useState(viewportHeight);
-  const [scroll,setScroll] = useState(0);
   const [error,setError] = useState(false);
   const scale = Math.min(1,available/width);
   const maximum = Math.max(1,...points.map(point=>point.count));
@@ -31,7 +30,6 @@ export default function HeatmapPreview({path,width,points,show}:{path:string;wid
     const syncScroll=()=>{
       const y=element.scrollTop/scale;
       frame.current?.contentWindow?.scrollTo(0,y);
-      setScroll(y);
     };
     element.addEventListener('scroll',syncScroll,{passive:true});
     syncScroll();
@@ -65,12 +63,14 @@ export default function HeatmapPreview({path,width,points,show}:{path:string;wid
         <div style={{position:'sticky',top:0,width:'100%',height:viewportHeight*scale,overflow:'hidden'}}>
           <div style={{width,height:viewportHeight,transform:`scale(${scale})`,transformOrigin:'top left',position:'relative'}}>
             <iframe ref={frame} src={path} title={`Prévia de ${path}`} onLoad={loaded} tabIndex={-1} style={{display:'block',width,height:viewportHeight,pointerEvents:'none',border:0}} />
-            {show&&<svg className="absolute inset-0 pointer-events-none" width={width} height={viewportHeight} role="img" aria-label="Distribuição dos cliques na área visível">
-              <defs><radialGradient id="heat-point"><stop offset="0" stopColor="#ff2200" stopOpacity=".9"/><stop offset=".3" stopColor="#ffcc00" stopOpacity=".7"/><stop offset=".65" stopColor="#00caff" stopOpacity=".45"/><stop offset="1" stopColor="#0088ff" stopOpacity="0"/></radialGradient></defs>
-              {points.map((point,i)=><circle key={i} cx={Math.min(1,point.x/10000)*width} cy={Math.min(1,point.y/10000)*height-scroll} r={18+25*Math.sqrt(point.count/maximum)} fill="url(#heat-point)" opacity={.3+.7*point.count/maximum} />)}
-            </svg>}
           </div>
         </div>
+        {/* Heat belongs to the scrollable document, not the sticky iframe viewport.
+            Native scrolling moves it immediately, including touch/momentum scroll. */}
+        {show&&<svg className="absolute left-0 top-0 pointer-events-none" width={width*scale} height={height*scale} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Distribuição dos cliques na área visível">
+          <defs><radialGradient id="heat-point"><stop offset="0" stopColor="#ff2200" stopOpacity=".9"/><stop offset=".3" stopColor="#ffcc00" stopOpacity=".7"/><stop offset=".65" stopColor="#00caff" stopOpacity=".45"/><stop offset="1" stopColor="#0088ff" stopOpacity="0"/></radialGradient></defs>
+          {points.map((point,i)=><circle key={i} cx={Math.min(1,point.x/10000)*width} cy={Math.min(1,point.y/10000)*height} r={18+25*Math.sqrt(point.count/maximum)} fill="url(#heat-point)" opacity={.3+.7*point.count/maximum} />)}
+        </svg>}
       </div>
     </div>
     </div>

@@ -4,6 +4,10 @@ O botão do FAQ abre `SupportDialog` e envia para `POST /api/support`.
 As mensagens estão no menu **Suporte** do admin (`/admin/suporte`), com busca
 por assunto, paginação e leitura completa. Também podem ser consultadas em
 **Supabase > Table Editor > support_messages**.
+O botão de lixeira pede confirmação e exclui permanentemente pela API protegida
+do admin. A migração `20260912000200` invalida os códigos vinculados antes de
+excluir, impedindo que a confirmação antiga recrie a mensagem. As cotas de
+solicitação de códigos são preservadas.
 Somente admin/developer podem consultar pelo cliente autenticado; visitantes não
 podem consultar nem inserir diretamente. O formulário envia um código de
 confirmação por e-mail via Resend, sem criar uma conta de usuário.

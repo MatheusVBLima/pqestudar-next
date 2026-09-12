@@ -27,9 +27,16 @@ try {
   const position=await page.locator('iframe').evaluate(el=>({y:el.contentWindow.scrollY,height:el.contentDocument.documentElement.scrollHeight,viewport:el.contentWindow.innerHeight}));
   assert.equal(position.viewport,700,'Iframe viewport remains fixed');
   assert.ok(position.y>900,`Preview scroll synchronized: ${JSON.stringify({position,initial,host:await host.evaluate(el=>({top:el.scrollTop,height:el.clientHeight,style:el.getAttribute('style')})),errors})}`);
-  const cy=Number(await page.locator('circle').getAttribute('cy'));
-  assert.ok(Math.abs(cy-(position.height/2-position.y))<3,'Heat follows document scroll');
-  assert.ok(cy>0&&cy<700,'Known point visible in viewport');
+  async function assertHeatAlignment(width) {
+    const state=await page.locator('iframe').evaluate(el=>({y:el.contentWindow.scrollY,height:el.contentDocument.documentElement.scrollHeight}));
+    const bounds=await host.boundingBox();
+    const scale=await host.evaluate((el,width)=>el.clientWidth/width,width);
+    const circle=await page.locator('circle').boundingBox();
+    const screenY=circle.y+circle.height/2;
+    assert.ok(Math.abs(screenY-(bounds.y+(state.height/2-state.y)*scale))<3,'Heat stays aligned with the same document location');
+    return screenY;
+  }
+  await assertHeatAlignment(1440);
   await page.setViewportSize({width:390,height:844});
   await page.waitForTimeout(200);
   assert.ok(await host.evaluate(el=>el.scrollWidth<=el.clientWidth),'Mobile has no horizontal overflow');
@@ -41,12 +48,24 @@ try {
     const bounds=await host.boundingBox();
     assert.equal(bounds.width,width,'Device preview is constrained to its reference width');
     assert.ok(Math.abs(bounds.x-(1200-width)/2)<2,'Device preview is centered');
-    await host.evaluate(el=>el.scrollTop=400);
+    const before=await assertHeatAlignment(width);
+    await host.evaluate(el=>el.scrollTop=900);
+    await page.screenshot();
     await page.waitForTimeout(150);
-    assert.ok(await page.locator('iframe').evaluate(el=>el.contentWindow.scrollY>=400),'Device frame owns its scroll');
+    const after=await assertHeatAlignment(width);
+    assert.ok(Math.abs(before-after-900)<3,'Mobile/tablet heat moves by the scrolled distance instead of staying fixed');
+    await host.evaluate(el=>el.scrollTop=650);
+    await page.screenshot();
+    await page.waitForTimeout(150);
+    const back=await assertHeatAlignment(width);
+    assert.ok(Math.abs(back-after-250)<3,'Heat returns with upward scrolling');
     await page.setViewportSize({width:320,height:844});
     await page.waitForTimeout(200);
     assert.ok(await host.evaluate(el=>el.scrollWidth<=el.clientWidth),'Small screens scale without horizontal overflow');
+    await host.evaluate(el=>el.scrollTop=500);
+    await page.screenshot();
+    await page.waitForTimeout(150);
+    await assertHeatAlignment(width);
   }
   assert.deepEqual(errors,[]);
   console.log('PASS: fixed viewport, stable height, centered mobile/tablet frames, no horizontal overflow, synchronized heat point, mobile resize, no browser errors');
