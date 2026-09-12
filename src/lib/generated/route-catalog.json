@@ -282,6 +282,12 @@
     "dynamic": false
   },
   {
+    "path": "/admin/suporte",
+    "name": "Suporte",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
     "path": "/bonus/[slug]",
     "name": "Bonus · [slug]",
     "area": "Site",

@@ -8,6 +8,7 @@ const routeTitles: Record<string, string> = {
   '/admin/rotas': 'Catálogo de páginas',
   '/admin/insights/mapa-calor': 'Mapa de calor',
   '/admin/influenciadores': 'Influenciadores',
+  '/admin/suporte': 'Suporte',
   '/admin': 'Visão geral',
   '/admin/insights/ferramentas': 'Análises — Ferramentas',
   '/admin/insights/concursos': 'Análises — Concursos',

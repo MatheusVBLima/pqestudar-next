@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  ArrowRight,
   BookOpen,
   Bookmark,
   CheckCircle2,
@@ -26,6 +25,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import { SupportDialog } from "@/components/support/SupportDialog";
 
 const faqs = [
   {
@@ -270,8 +270,8 @@ export function HomeFaqSectionNext() {
               })}
             </Accordion>
 
-            <div className="mt-5 flex flex-col gap-4 rounded-xl border border-border/60 bg-background/60 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-3">
+            <div className="mt-5 flex flex-col gap-4 rounded-xl border border-border/60 bg-background/60 px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="flex min-w-0 items-center gap-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Mail className="h-4 w-4" />
                 </span>
@@ -284,13 +284,7 @@ export function HomeFaqSectionNext() {
                   </p>
                 </div>
               </div>
-              <Link
-                href="mailto:pqestudar.suporte@gmail.com"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Falar com suporte
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              <SupportDialog />
             </div>
           </motion.div>
         </div>

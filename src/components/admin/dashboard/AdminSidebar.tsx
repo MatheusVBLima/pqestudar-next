@@ -554,6 +554,18 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        <SidebarGroup className={groupClass}>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/admin/suporte')} data-hover-label="Suporte" className={itemClass(isActive('/admin/suporte'))}>
+                  <Link href="/admin/suporte"><Mail className="h-4 w-4" /><span>Suporte</span></Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         {/* Afiliados */}
         <SidebarGroup className={groupClass}>
           <SidebarGroupContent>
