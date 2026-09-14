@@ -682,8 +682,33 @@
   background:radial-gradient(ellipse at 50% 0,#b455b315,transparent 65%);
 }
 .offerIntro .eyebrow {
-  justify-content:center;
+  justify-content:flex-start;
 }
+.offerLayout { display:grid; grid-template-columns:1fr 1.2fr .9fr; gap:34px; align-items:center; text-align:left; }
+.offerLayout > * { min-width:0; }
+.offer .offerIntro h2 { font-size:clamp(28px,2.5vw,36px); line-height:1.2; }
+.offerLifetime { display:flex; align-items:center; gap:9px; margin-top:24px; font-size:12px; color:#d991d7; }
+.offerCard { position:relative; overflow:hidden; padding:38px 26px 30px; text-align:center; border:1px solid #cc6dd54d; border-radius:26px; background:radial-gradient(ellipse at 50% 0,#b455b326,transparent 65%),linear-gradient(#ffffff03 1px,transparent 1px),linear-gradient(90deg,#ffffff03 1px,transparent 1px),#1d1624; background-size:auto,44px 44px,44px 44px,auto; box-shadow:0 20px 60px #0003; }
+.offerCard::before { content:""; position:absolute; top:0; left:25%; width:50%; height:3px; background:#ed65ed; box-shadow:0 0 30px 7px #e54be04d; }
+.offerBadge { display:inline-block; padding:7px 12px; border:1px solid #e56ce42b; border-radius:30px; color:#e4ace4; font-size:9px; font-weight:700; letter-spacing:.12em; }
+.offerProduct { display:flex; justify-content:center; align-items:center; gap:12px; margin:26px 0 15px; }
+.offerProduct svg { color:var(--pink); flex-shrink:0; }
+.offerProduct strong { font-size:24px; line-height:1.2; letter-spacing:-.035em; text-align:left; }
+.offerCard .offerCardDescription { max-width:240px; margin:0 auto; font-size:12px; line-height:1.7; color:var(--muted); }
+.offerCard .primary { width:100%; padding-inline:12px; font-size:13px; gap:10px; }
+.offerCard .primary:not(:disabled) { animation:offerPulse 2.8s ease-in-out infinite; }
+.offerCard .primary:is(:hover,:focus-visible,:active) { animation:none; }
+@keyframes offerPulse {
+  0%,100% { box-shadow:0 0 0 0 #e54be000; }
+  45% { box-shadow:0 0 0 6px #e54be020,0 0 24px #e54be030; }
+  75% { box-shadow:0 0 0 11px #e54be000; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .offerCard .primary:not(:disabled) { animation:none; }
+}
+.offerPayment { display:flex; align-items:center; justify-content:center; gap:7px; margin-top:22px; color:#cebdd2; font-size:11px; }
+.offerPayment svg { color:#96c4aa; }
+.offerAccess { display:block; margin-top:12px; font-size:10px; line-height:1.6; color:var(--muted); }
 .offerIntro>p {
   color:var(--muted);
   font-size:15px;
@@ -693,16 +718,13 @@
 }
 .offerFeatures {
   display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:18px;
-  margin:35px 30px;
+  grid-template-columns:1fr;
+  gap:28px;
+  margin:0;
 }
 .offerFeatures>div {
   text-align:left;
-  background:#211a24;
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:26px;
+  padding:0;
 }
 .offerFeatures svg {
   color:#d991d7;
@@ -1135,15 +1157,18 @@
   }
   .offerFeatures {
     grid-template-columns:1fr;
-    margin:28px 0;
-    gap:12px;
+    margin:0;
+    gap:20px;
   }
   .offerFeatures>div {
-    padding:21px;
+    padding:0;
+    display:grid;
+    grid-template-columns:25px 1fr;
+    column-gap:13px;
   }
   .offerFeatures svg {
-    float:left;
-    margin:0 16px 45px 0;
+    margin:0;
+    grid-row:span 2;
   }
   .offerFeatures h3 {
     font-size:15px;
@@ -1229,9 +1254,22 @@
   .faqContent { animation:none !important; }
 }
 
+@media (max-width:1050px) {
+  .offerLayout { grid-template-columns:1.15fr 1fr; gap:32px; }
+  .offerIntro { grid-column:1 / -1; }
+  .offerIntro>p { margin-left:0; }
+}
+@media (max-width:760px) {
+  .offerLayout { grid-template-columns:minmax(0,1fr); gap:30px; }
+  .offerIntro { grid-column:auto; }
+  .offerFeatures { grid-row:2; }
+  .offerCard { padding:32px 20px 26px; }
+}
 .checkoutPrice { display:flex; flex-direction:column; gap:10px; margin:28px 0 22px; }
 .checkoutPrice strong { font-size:42px; letter-spacing:-.04em; }
 .checkoutPrice span { font-size:12px; color:var(--muted); }
+.checkoutOriginalPrice { align-self:center; width:100%; max-width:280px; padding:8px 20px; border:1px solid rgba(232,69,224,.2); border-radius:999px; background:rgba(12,10,24,.65); font-size:16px; font-weight:600; }
+.checkoutOriginalPrice s { text-decoration-color:#f87171; text-decoration-thickness:2px; }
 .primary:disabled { opacity:.7; cursor:wait; transform:none; }
 .checkoutError { color:#f5a9b5; font-size:13px; margin-top:15px !important; }
 .checkoutSpinner { animation:checkoutSpin 1s linear infinite; }

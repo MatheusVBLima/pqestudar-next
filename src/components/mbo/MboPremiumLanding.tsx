@@ -108,9 +108,19 @@ export default function MboPremiumLanding() {
       </section>
 
       <section id="premium" className={`${styles.section} ${styles.offer}`}>
-        <div className={styles.offerIntro}><span className={styles.eyebrow}><Sparkles size={16} /> CONTINUE COM O MBO</span><h2>Você encontrou um começo.<br /><em>Tenha mais caminhos para explorar.</em></h2><p>Leve essa experiência para sua rotina com a área de benefícios do PqEstudar Premium.</p></div>
+        <div className={styles.offerLayout}>
+        <div className={styles.offerIntro}><span className={styles.eyebrow}><Sparkles size={16} /> CONTINUE COM O MBO</span><h2>Sua próxima descoberta<br /><em>começa por aqui.</em></h2><p>Você experimentou uma parte do MBO. Continue explorando benefícios, regiões e caminhos para começar com o PqEstudar Premium.</p><span className={styles.offerLifetime}><CheckCheck size={18} /> Um pagamento. Acesso vitalício.</span></div>
+        <div className={styles.offerCard}>
+          <span className={styles.offerBadge}>PQESTUDAR PREMIUM</span>
+          <div className={styles.offerProduct}><Compass size={32} /><strong>Mapa dos<br />Benefícios Ocultos</strong></div>
+          <p className={styles.offerCardDescription}>Informação organizada para a sua próxima oportunidade.</p>
+          <div className={styles.checkoutPrice}><span>Acesso vitalício por</span><div className={styles.checkoutOriginalPrice}>De <s>R$ 480,00</s></div><strong>R$ 59,90</strong><span>Pagamento único · sem mensalidade</span></div>
+          <PremiumCheckoutButton />
+          <div className={styles.offerPayment}><ShieldCheck size={17} /><span>Pagamento seguro via Stripe</span></div>
+          <small className={styles.offerAccess}>Acesso após a confirmação do pagamento.</small>
+        </div>
         <div className={styles.offerFeatures}>{[{ icon: Layers3, title: "Benefícios organizados", text: "Explore a biblioteca e encontre informações reunidas por benefício." }, { icon: Map, title: "Uma visão por região", text: "Consulte a abrangência dos programas no mapa da área Premium." }, { icon: Compass, title: "Fontes e próximos passos", text: "Entenda o contexto e encontre os canais responsáveis pelo atendimento." }].map(({ icon: Icon, title, text }) => <div key={title}><Icon size={25} /><h3>{title}</h3><p>{text}</p></div>)}</div>
-        <div className={styles.checkoutPrice}><strong>R$ 59,90</strong><span>Acesso vitalício · pagamento único · sem mensalidade</span></div><PremiumCheckoutButton /><small className={styles.offerNote}>Você contrata a curadoria do PqEstudar. Os benefícios públicos seguem as regras dos órgãos responsáveis e não exigem a compra do MBO.</small>
+        </div><small className={styles.offerNote}>Você contrata a curadoria do PqEstudar. Os benefícios públicos seguem as regras dos órgãos responsáveis e não exigem a compra do MBO.</small>
       </section>
       <section className={`${styles.section} ${styles.faq}`}><h2>Antes de continuar</h2><Accordion.Root type="multiple">{[["O MBO garante que eu receba um benefício?", "Não. O MBO ajuda a descobrir e organizar informações. A análise, os critérios e a concessão pertencem ao órgão responsável por cada programa."], ["Preciso pagar para solicitar os benefícios públicos?", "A compra do MBO não é requisito para acessar benefícios públicos. Você pode consultar as fontes oficiais diretamente; o Premium oferece a curadoria e a organização das informações."], ["Esses são todos os benefícios disponíveis?", "Não. Esta página apresenta quatro exemplos para experimentar a navegação. A ausência de um resultado na amostra não significa ausência de programas na sua cidade."], ["O checklist envia meus dados para algum órgão?", "Não. Ele é uma ferramenta de organização durante esta visita. Nenhuma solicitação é enviada, e as marcações são apagadas ao recarregar a página."]].map(([title, answer]) => <Accordion.Item key={title} value={title} className={styles.faqItem}><Accordion.Header><Accordion.Trigger className={styles.faqTrigger}>{title}<span aria-hidden="true">+</span></Accordion.Trigger></Accordion.Header><Accordion.Content className={styles.faqContent}><p>{answer}</p></Accordion.Content></Accordion.Item>)}</Accordion.Root></section>
     </main>
