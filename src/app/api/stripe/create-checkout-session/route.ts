@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getServerSession } from "@/lib/supabase-server";
+import { createServerSupabaseClientWithAuth } from "@/lib/supabase-server";
+import { PREMIUM_PRODUCT_KEY, PREMIUM_AMOUNT, premiumPriceId, stripeGet } from "@/lib/stripe-premium";
 
 export const runtime = "nodejs";
 
@@ -7,6 +8,7 @@ const CHECKOUT_UNAVAILABLE_MESSAGE =
   "Não foi possível abrir o checkout agora. Tente novamente em instantes.";
 
 const PRODUCT_CATALOG = {
+  [PREMIUM_PRODUCT_KEY]: { name: "PqEstudar Premium", description: "Acesso vitalicio. Pagamento unico, sem mensalidade.", unitAmount: PREMIUM_AMOUNT, currency: "brl" },
   "certificado-que-conta": {
     name: "Certificado que Conta",
     description: "Acesso à ferramenta de análise de cursos",
@@ -28,15 +30,12 @@ type StripeCheckoutResponse = {
 };
 
 function isProductKey(value: unknown): value is ProductKey {
-  return typeof value === "string" && value in PRODUCT_CATALOG;
+  return typeof value === "string" && Object.hasOwn(PRODUCT_CATALOG, value);
 }
 
 function getSiteUrl(request: NextRequest) {
   const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL;
   if (configuredUrl) return configuredUrl.replace(/\/$/, "");
-
-  const origin = request.headers.get("origin");
-  if (origin) return origin.replace(/\/$/, "");
 
   return request.nextUrl.origin.replace(/\/$/, "");
 }
@@ -58,13 +57,21 @@ function buildCheckoutParams({
   const params = new URLSearchParams();
 
   params.append("mode", "payment");
-  params.append("success_url", `${siteUrl}/certificado-que-conta/sucesso?session_id={CHECKOUT_SESSION_ID}`);
-  params.append("cancel_url", `${siteUrl}/certificado-que-conta`);
+  const landing = productKey === PREMIUM_PRODUCT_KEY ? "/mbo-premium" : "/certificado-que-conta";
+  params.append("success_url", `${siteUrl}${landing}/sucesso?session_id={CHECKOUT_SESSION_ID}`);
+  params.append("cancel_url", `${siteUrl}${landing}${productKey === PREMIUM_PRODUCT_KEY ? "?checkout=cancelado#premium" : ""}`);
   params.append("line_items[0][quantity]", "1");
+  if (productKey === PREMIUM_PRODUCT_KEY) {
+    params.append("line_items[0][price]", premiumPriceId());
+    params.append("custom_text[submit][message]", "Use o e-mail da sua conta Google para acessar o Premium depois do pagamento.");
+    params.append("metadata[plan_type]", "lifetime");
+    params.append("metadata[plan_tier]", "premium");
+  } else {
   params.append("line_items[0][price_data][currency]", product.currency);
   params.append("line_items[0][price_data][unit_amount]", String(product.unitAmount));
   params.append("line_items[0][price_data][product_data][name]", product.name);
   params.append("line_items[0][price_data][product_data][description]", product.description);
+  }
   params.append("metadata[product_key]", productKey);
   params.append("metadata[source]", "pqestudar-sales-page");
 
@@ -99,6 +106,7 @@ async function createStripeCheckoutSession({
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: params.toString(),
+    signal: AbortSignal.timeout(15000),
   });
 
   const data = (await response.json().catch(() => ({}))) as StripeCheckoutResponse;
@@ -113,6 +121,8 @@ function shouldRetryWithoutPix(data: StripeCheckoutResponse) {
 }
 
 export async function POST(request: NextRequest) {
+  if (request.headers.get("origin") !== request.nextUrl.origin) return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
+  try {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
   if (!stripeSecretKey) {
@@ -127,12 +137,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Produto inválido." }, { status: 400 });
   }
 
-  const { user } = await getServerSession();
+  if (productKey === PREMIUM_PRODUCT_KEY) {
+    const price = await stripeGet(`prices/${encodeURIComponent(premiumPriceId())}`);
+    if (!price.active || price.type !== "one_time" || price.currency !== "brl" || price.unit_amount !== PREMIUM_AMOUNT) {
+      throw new Error("Premium price does not match the configured offer");
+    }
+  }
+  const auth = await createServerSupabaseClientWithAuth();
+  const { data: { user } } = await auth.auth.getUser();
   const siteUrl = getSiteUrl(request);
-  const sharedParams = {
+  const sharedParams: Omit<Parameters<typeof buildCheckoutParams>[0], "paymentMethodTypes"> = {
     productKey,
     siteUrl,
-    userId: user?.id,
+    userId: user?.email_confirmed_at ? user.id : undefined,
     userEmail: user?.email,
   };
 
@@ -181,4 +198,8 @@ export async function POST(request: NextRequest) {
     { error: CHECKOUT_UNAVAILABLE_MESSAGE },
     { status: firstAttempt.response.status || 500 }
   );
+  } catch {
+    console.error("[stripe] Checkout unavailable");
+    return NextResponse.json({ error: CHECKOUT_UNAVAILABLE_MESSAGE }, { status: 503 });
+  }
 }

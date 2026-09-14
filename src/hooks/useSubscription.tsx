@@ -36,17 +36,13 @@ export const useSubscription = () => {
     queryKey: ['subscription', user?.id ?? 'anon'],
     queryFn: async (): Promise<Subscription | null> => {
       if (!user) return null;
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('get_effective_subscription');
 
       if (error) {
         console.error('Error fetching subscription:', error);
         return null;
       }
-      return data as Subscription | null;
+      return data as unknown as Subscription | null;
     },
     enabled: !!user && !isAdminRoute,
     ...SUB_CACHE,

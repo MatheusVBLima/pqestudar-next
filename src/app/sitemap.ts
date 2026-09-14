@@ -20,6 +20,7 @@ const STATIC_INDEXABLE: Array<{ path: string; changeFrequency: MetadataRoute.Sit
   { path: "/votacoes", changeFrequency: "weekly", priority: 0.6 },
   { path: "/sobre-pqestudar", changeFrequency: "monthly", priority: 0.5 },
   { path: "/mapa-dos-beneficios", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/mbo-premium", changeFrequency: "monthly", priority: 0.7 },
   { path: "/ranking-comunidade", changeFrequency: "weekly", priority: 0.4 },
   { path: "/termos", changeFrequency: "yearly", priority: 0.3 },
   { path: "/privacidade", changeFrequency: "yearly", priority: 0.3 },

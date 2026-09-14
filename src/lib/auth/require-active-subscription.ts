@@ -48,14 +48,13 @@ export async function requireActiveSubscription(
     redirect(isCoursesPath ? "/pqestudar-premium" : `/login?from=${encodeURIComponent(pathname)}`);
   }
 
-  const [{ data: isAdmin }, { data: sub }] = await Promise.all([
+  const [{ data: isAdmin }, { data: effectiveSub, error: subscriptionError }] = await Promise.all([
     supabase.rpc("is_admin"),
-    supabase
-      .from("subscriptions")
-      .select("id, plan_type, plan_tier, status, ends_at")
-      .eq("user_id", user.id)
-      .maybeSingle(),
+    supabase.rpc("get_effective_subscription"),
   ]);
+
+  if (subscriptionError) throw new Error("Unable to check Premium access");
+  const sub = effectiveSub as unknown as ActiveSubscriptionGuardResult["subscription"];
 
   const isActive =
     !!sub && sub.status === "active" && new Date(sub.ends_at).getTime() > Date.now();

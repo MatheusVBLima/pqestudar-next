@@ -408,6 +408,18 @@
     "dynamic": true
   },
   {
+    "path": "/mbo-premium",
+    "name": "Mbo premium",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/mbo-premium/sucesso",
+    "name": "Sucesso",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
     "path": "/meu-perfil",
     "name": "Meu perfil",
     "area": "Site",

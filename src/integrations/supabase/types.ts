@@ -4355,6 +4355,7 @@ export type Database = {
       }
     }
     Functions: {
+      get_effective_subscription: { Args: Record<PropertyKey, never>; Returns: Json }
       record_page_heatmap: { Args: { p_visit: string; p_path: string; p_device: string; p_clicks: Json }; Returns: undefined }
       admin_page_heatmap: { Args: { p_path?: string; p_device?: string; p_days?: number }; Returns: Json }
       get_home_influencer_partners: {

@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/footer-next";
 import { DiscoveryTour } from "@/components/onboarding/discovery-tour";
 
 function shouldShowFooter(pathname: string) {
+  if ((pathname === "/mbo-premium" || pathname.startsWith("/mbo-premium/"))) return false;
   if (pathname === "/pqestudar-premium") return false;
   if (pathname === "/carteirinha") return false;
   if (pathname === "/certificado-que-conta") return false;
@@ -27,6 +28,7 @@ function shouldShowFooter(pathname: string) {
 }
 
 function shouldShowNavbar(pathname: string) {
+  if ((pathname === "/mbo-premium" || pathname.startsWith("/mbo-premium/"))) return false;
   if (pathname === "/pqestudar-premium") return false;
   if (pathname === "/carteirinha") return false;
   if (pathname === "/certificado-que-conta") return false;

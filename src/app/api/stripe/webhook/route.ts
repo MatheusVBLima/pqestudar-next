@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import { PREMIUM_PRODUCT_KEY, PREMIUM_AMOUNT, premiumPriceId, stripeGet } from "@/lib/stripe-premium";
 
 export const runtime = "nodejs";
 
@@ -105,6 +106,27 @@ function statusFromSession(session: StripeCheckoutSession, fallbackStatus: Purch
 }
 
 async function upsertPurchaseFromSession(session: StripeCheckoutSession, status: PurchaseStatus) {
+  if (session.metadata?.product_key === PREMIUM_PRODUCT_KEY) {
+    const items = await stripeGet(`checkout/sessions/${encodeURIComponent(session.id)}/line_items?limit=2`);
+    const line = items.data?.[0];
+    if (items.data?.length !== 1 || items.has_more || line.quantity !== 1 || line.price?.id !== premiumPriceId()
+      || line.price?.unit_amount !== PREMIUM_AMOUNT || line.price?.currency !== "brl"
+      || session.amount_total !== PREMIUM_AMOUNT || session.currency !== "brl") {
+      throw new Error("Premium checkout price mismatch");
+    }
+    const admin = createSupabaseAdminClient();
+    const { error } = await admin.rpc("record_stripe_premium_purchase", { p_purchase: {
+      product_key: PREMIUM_PRODUCT_KEY, session_id: session.id,
+      payment_intent: session.payment_intent, customer_id: session.customer,
+      user_id: session.metadata.user_id || session.client_reference_id || null,
+      email: session.customer_details?.email || session.customer_email || null,
+      // Pending Pix must never grant access just because checkout is complete.
+      status: session.payment_status === "paid" ? "paid" : status === "paid" ? "pending" : status,
+      amount_total: session.amount_total, currency: session.currency, verified_price_id: line.price.id,
+    } });
+    if (error) throw error;
+    return;
+  }
   const admin = createSupabaseAdminClient();
   const metadata = session.metadata ?? {};
   const productKey = metadata.product_key || "certificado-que-conta";
@@ -175,6 +197,12 @@ async function updatePurchaseFromCharge(
     return;
   }
 
+  if (paymentIntentId) {
+    const { error } = await admin.rpc("revoke_stripe_premium_payment", {
+      p_payment_intent: paymentIntentId, p_reason: revokedReason,
+    });
+    if (error) throw error;
+  }
   const payload = {
     status,
     stripe_charge_id: charge.id,
@@ -188,7 +216,7 @@ async function updatePurchaseFromCharge(
     updated_at: new Date().toISOString(),
   };
 
-  const query = admin.from("product_purchases").update(payload);
+  const query = admin.from("product_purchases").update(payload).neq("product_key", PREMIUM_PRODUCT_KEY);
 
   const { error } = paymentIntentId
     ? await query.eq("stripe_payment_intent_id", paymentIntentId)
@@ -202,7 +230,15 @@ async function updatePurchaseFromCharge(
 async function updatePurchaseFromDispute(dispute: StripeDispute) {
   const admin = createSupabaseAdminClient();
   const chargeId = typeof dispute.charge === "string" ? dispute.charge : dispute.charge?.id ?? null;
-  const paymentIntentId = dispute.payment_intent ?? (typeof dispute.charge === "object" ? dispute.charge?.payment_intent : null);
+  let paymentIntentId = dispute.payment_intent ?? (typeof dispute.charge === "object" ? dispute.charge?.payment_intent : null);
+  if (!paymentIntentId && chargeId) {
+    const charge = await stripeGet(`charges/${encodeURIComponent(chargeId)}`);
+    paymentIntentId = charge.payment_intent;
+  }
+  if (paymentIntentId) {
+    const { error } = await admin.rpc("revoke_stripe_premium_payment", { p_payment_intent: paymentIntentId, p_reason: "dispute" });
+    if (error) throw error;
+  }
 
   if (!paymentIntentId && !chargeId) {
     return;
@@ -223,7 +259,7 @@ async function updatePurchaseFromDispute(dispute: StripeDispute) {
     updated_at: new Date().toISOString(),
   };
 
-  const query = admin.from("product_purchases").update(payload);
+  const query = admin.from("product_purchases").update(payload).neq("product_key", PREMIUM_PRODUCT_KEY);
 
   const { error } = paymentIntentId
     ? await query.eq("stripe_payment_intent_id", paymentIntentId)
@@ -235,6 +271,7 @@ async function updatePurchaseFromDispute(dispute: StripeDispute) {
 }
 
 export async function POST(request: NextRequest) {
+  try {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
@@ -285,4 +322,8 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ received: true, ignored: true });
+  } catch {
+    console.error("[stripe] Webhook processing failed; delivery must be retried");
+    return NextResponse.json({ error: "Falha ao processar pagamento." }, { status: 500 });
+  }
 }

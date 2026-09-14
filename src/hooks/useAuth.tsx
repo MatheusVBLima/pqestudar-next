@@ -117,6 +117,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async (): AuthActionResult => {
     try {
+      const from = new URLSearchParams(window.location.search).get('from')
+      if (from && /^\/mbo-premium\/sucesso\?session_id=cs_[A-Za-z0-9_]+$/.test(from)) {
+        window.sessionStorage.setItem(ACCOUNT_SWITCH_RETURN_PATH_KEY, from)
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
