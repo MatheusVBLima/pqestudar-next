@@ -116,7 +116,7 @@ export default function MboPremiumLanding() {
           <p className={styles.offerCardDescription}>Informação organizada para a sua próxima oportunidade.</p>
           <div className={styles.checkoutPrice}><span>Acesso vitalício por</span><div className={styles.checkoutOriginalPrice}>De <s>R$ 480,00</s></div><strong>R$ 59,90</strong><span>Pagamento único · sem mensalidade</span></div>
           <PremiumCheckoutButton />
-          <div className={styles.offerPayment}><ShieldCheck size={17} /><span>Pagamento seguro via Stripe</span></div>
+          <div className={styles.offerPayment}><ShieldCheck size={17} /><span>Pagamento seguro via Mercado Pago</span></div>
           <small className={styles.offerAccess}>Acesso após a confirmação do pagamento.</small>
         </div>
         <div className={styles.offerFeatures}>{[{ icon: Layers3, title: "Benefícios organizados", text: "Explore a biblioteca e encontre informações reunidas por benefício." }, { icon: Map, title: "Uma visão por região", text: "Consulte a abrangência dos programas no mapa da área Premium." }, { icon: Compass, title: "Fontes e próximos passos", text: "Entenda o contexto e encontre os canais responsáveis pelo atendimento." }].map(({ icon: Icon, title, text }) => <div key={title}><Icon size={25} /><h3>{title}</h3><p>{text}</p></div>)}</div>
