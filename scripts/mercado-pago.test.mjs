@@ -43,10 +43,11 @@ const admin = {
   },
 };
 const cache = new Map();
+const logs = [];
 function load(path) {
   if (cache.has(path)) return cache.get(path);
   const code = ts.transpileModule(fs.readFileSync(path, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const sandbox = { exports: {}, Response, Request, URL, Buffer, AbortSignal, Date, console: { error() {} }, process: { env },
+  const sandbox = { exports: {}, Response, Request, URL, Buffer, AbortSignal, Date, console: { error(...args) { logs.push(args); } }, process: { env },
     fetch: async (url, options) => {
       apiCalls.push({ url, options });
       if (failApi) return { ok: false, status: 503 };
@@ -138,4 +139,17 @@ user = null;
 assert.equal((await status.GET(get())).status, 401);
 env.MERCADO_PAGO_ACCESS_TOKEN = '';
 assert.equal((await checkout.POST(post({ requestId: reference }))).status, 503);
+assert.equal(logs.at(-1)[1].stage, 'configuration');
+assert.equal(logs.at(-1)[1].code, 'mp_not_configured');
+env.MERCADO_PAGO_ACCESS_TOKEN = 'test-only';
+user = { id: userId, email: 'buyer@example.test', email_confirmed_at: '2026-01-01' };
+failApi = true;
+await checkout.POST(post({ requestId: reference }));
+assert.equal(logs.at(-1)[1].stage, 'seller_lookup');
+assert.equal(logs.at(-1)[1].code, 'mp_api_503');
+failApi = false; failDb = true;
+await checkout.POST(post({ requestId: reference }));
+assert.equal(logs.at(-1)[1].stage, 'prepare_order');
+assert.equal(logs.at(-1)[1].code, 'unexpected_error');
+for (const secret of ['test-only', 'test-secret', 'buyer@example.test', 'db failed']) assert.equal(JSON.stringify(logs).includes(secret), false);
 console.log('PASS: fixed amount, verified owner, login, idempotency, URL validation, HMAC/tampering, API-authoritative fulfillment, amount/product/seller/environment, refund/dispute, retries, test isolation and private status.');
