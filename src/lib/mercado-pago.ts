@@ -97,9 +97,9 @@ export function verifyMercadoPagoSignature(request: Request, secret: string) {
   const ts = signature.match(/(?:^|,)\s*ts=(\d+)\s*(?:,|$)/)?.[1];
   const hash = signature.match(/(?:^|,)\s*v1=([a-f0-9]{64})\s*(?:,|$)/)?.[1];
   if (!secret || !id || !MP_ORDER_ID.test(id.toUpperCase()) || !requestId || !ts || !hash) return false;
-  // IDs in the signed manifest are lowercase, per the Mercado Pago HMAC specification.
+  // Preserve data.id case, matching the official SDK (sdk-nodejs PR #439).
   // Retries can arrive much later; replay safety is enforced by database state transitions.
-  const expected = createHmac("sha256", secret).update(`id:${id.toLowerCase()};request-id:${requestId};ts:${ts};`).digest();
+  const expected = createHmac("sha256", secret).update(`id:${id};request-id:${requestId};ts:${ts};`).digest();
   return timingSafeEqual(expected, Buffer.from(hash, "hex"));
 }
 

@@ -94,12 +94,20 @@ const post = (body, origin = 'https://example.test') => new Request('https://exa
 });
 function event(valid = true, queryId = id) {
   const ts = '1789398000000';
-  const hash = createHmac('sha256', env.MERCADO_PAGO_WEBHOOK_SECRET).update(`id:${id.toLowerCase()};request-id:request-123;ts:${ts};`).digest('hex');
+  const hash = createHmac('sha256', env.MERCADO_PAGO_WEBHOOK_SECRET).update(`id:${id};request-id:request-123;ts:${ts};`).digest('hex');
   return new Request(`https://example.test/api/mercado-pago/webhook?data.id=${queryId}&type=order`, {
     method: 'POST', headers: { 'x-request-id': 'request-123', 'x-signature': `ts=${ts},v1=${valid ? hash : '0'.repeat(64)}` },
     body: JSON.stringify({ data: { status: 'paid', total_amount: 1 }, live_mode: true }),
   });
 }
+// The official SDK preserves data.id case (mercadopago/sdk-nodejs PR #439).
+assert.equal(core.verifyMercadoPagoSignature(event(), env.MERCADO_PAGO_WEBHOOK_SECRET), true);
+assert.equal(core.verifyMercadoPagoSignature(event(true, id.toLowerCase()), env.MERCADO_PAGO_WEBHOOK_SECRET), false,
+  'Changing the signed ID case must invalidate the signature');
+assert.equal(core.verifyMercadoPagoSignature(event(), 'wrong-secret'), false);
+const missingSignature = event();
+missingSignature.headers.delete('x-signature');
+assert.equal(core.verifyMercadoPagoSignature(missingSignature, env.MERCADO_PAGO_WEBHOOK_SECRET), false);
 assert.equal(core.moneyCents('59.90'), 5990);
 for (const v of [59.9, '59.901', '-59.90', '5.99e1', null, '']) assert.equal(core.moneyCents(v), -1);
 assert.equal(core.isMercadoPagoCheckoutUrl(order.checkout_url), true);
