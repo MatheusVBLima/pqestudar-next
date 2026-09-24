@@ -9,6 +9,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (!MP_REFERENCE.test(body?.requestId || "")) return reply({ error: "Pedido inválido." }, 400);
   let stage = "configuration";
+  let databaseStatus: number | undefined;
   try {
     const config = mercadoPagoConfig();
     stage = "authentication";
@@ -24,10 +25,11 @@ export async function POST(request: Request) {
     if (String(seller.id) !== config.seller || seller.site_id !== "MLB"
       || (seller.tags || []).includes("test_user") === config.live) throw new Error("mp_seller_mismatch");
     stage = "prepare_order";
-    const { data: intent, error } = await admin.rpc("prepare_mercado_pago_order", {
+    const { data: intent, error, status } = await admin.rpc("prepare_mercado_pago_order", {
       p_reference: body.requestId, p_user: user.id, p_email: user.email,
       p_live: config.live, p_seller: config.seller, p_site: config.site,
     });
+    databaseStatus = status;
     if (error) throw error;
     if (["paid", "refunded", "canceled", "failed"].includes(intent.status)) return reply({ status: "finished", reference: intent.id });
     stage = "provider_order";
@@ -48,9 +50,18 @@ export async function POST(request: Request) {
       "mp_order_mismatch", "invalid_checkout_owner", "checkout_owner_mismatch", "checkout_expired", "checkout_rate_limit"]);
     const message = error && typeof error === "object" && "message" in error && typeof error.message === "string" ? error.message : "";
     const dbCode = error && typeof error === "object" && "code" in error ? error.code : null;
+    const databaseReason = /invalid api key/i.test(message) ? "invalid_api_key"
+      : /invalid.*jwt|jwt.*expired|invalid.*signature/i.test(message) ? "invalid_jwt"
+      : /permission denied/i.test(message) ? "permission_denied"
+      : /fetch failed|network/i.test(message) ? "connection_failed"
+      : /timeout|timed out/i.test(message) ? "timeout"
+      : /schema cache|could not find.*function/i.test(message) ? "rpc_not_found"
+      : "unclassified";
     const code = known.has(message) || /^mp_api_[1-5]\d{2}$/.test(message) ? message
       : typeof dbCode === "string" && /^(?:[A-Z0-9]{5}|PGRST\d{3})$/.test(dbCode) ? dbCode : "unexpected_error";
-    console.error("[mercado-pago] Checkout failed", { stage, code });
+    console.error("[mercado-pago] Checkout failed", { stage, code,
+      ...(stage === "prepare_order" ? { databaseStatus, databaseReason } : {}),
+    });
     return reply({ error: "Não foi possível abrir o pagamento. Tente novamente em instantes." }, 503);
   }
 }

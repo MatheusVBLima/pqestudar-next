@@ -173,5 +173,18 @@ failApi = false; failDb = true;
 await checkout.POST(post({ requestId: reference }));
 assert.equal(logs.at(-1)[1].stage, 'prepare_order');
 assert.equal(logs.at(-1)[1].code, 'unexpected_error');
+for (const [message, httpStatus, reason] of [
+  ['Invalid API key test-only', 401, 'invalid_api_key'],
+  ['permission denied for function secret-function', 403, 'permission_denied'],
+  ['TypeError: fetch failed', 0, 'connection_failed'],
+]) {
+  admin.rpc = async () => ({ error: { message }, status: httpStatus });
+  const result = await checkout.POST(post({ requestId: reference }));
+  assert.equal(result.status, 503);
+  assert.equal(logs.at(-1)[1].databaseStatus, httpStatus);
+  assert.equal(logs.at(-1)[1].databaseReason, reason);
+  assert.equal(JSON.stringify(logs.at(-1)).includes(message), false);
+  assert.equal(JSON.stringify(await result.json()).includes(reason), false);
+}
 for (const secret of ['test-only', 'test-secret', 'buyer@example.test', 'db failed']) assert.equal(JSON.stringify(logs).includes(secret), false);
 console.log('PASS: fixed amount, verified owner, login, idempotency, URL validation, HMAC/tampering, API-authoritative fulfillment, amount/product/seller/environment, refund/dispute, retries, test isolation and private status.');
