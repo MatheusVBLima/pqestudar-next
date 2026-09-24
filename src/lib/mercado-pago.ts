@@ -32,9 +32,41 @@ export function buildMercadoPagoOrder(reference: string, email: string, site: st
     external_reference: reference, expiration_time: "P1D", payer: { email },
     items: [{ external_code: MP_PRODUCT_KEY, title: "PqEstudar Premium — Acesso vitalício",
       description: "Mapa dos Benefícios Ocultos. Compra única, sem mensalidade.", quantity: 1, unit_price: MP_AMOUNT }],
-    config: { notification_url: `${site}/api/mercado-pago/webhook`,
+    // Orders notifications are configured in the application Webhooks panel.
+    config: {
       online: { success_url: back, pending_url: back, failure_url: back, auto_return: "approved" } },
   };
+}
+
+// Select diagnostic fields only; never print the complete provider response.
+export function mercadoPagoErrorDetails(payload: unknown, requestBody?: unknown) {
+  const hidden = Object.entries(process.env)
+    .filter(([key]) => /TOKEN|SECRET|KEY|SELLER_ID/.test(key))
+    .map(([, value]) => value).filter((value): value is string => !!value);
+  const collect = (value: unknown): void => {
+    if (typeof value === "string" && value.length >= 3) hidden.push(value);
+    else if (Array.isArray(value)) value.forEach(collect);
+    else if (value && typeof value === "object") Object.values(value).forEach(collect);
+  };
+  collect(requestBody);
+  const clean = (value: unknown) => {
+    if (typeof value !== "string" && typeof value !== "number") return undefined;
+    let text = String(value);
+    for (const secret of hidden.sort((a, b) => b.length - a.length)) text = text.split(secret).join("[redacted]");
+    return text.replace(/https?:\/\/\S+|[\w.+-]+@[\w.-]+\.[a-z]{2,}|(?:APP_USR|TEST)-[\w-]+|Bearer\s+\S+|\b\d{6,}\b/gi, "[redacted]")
+      .replace(/[\r\n\t\x00-\x1f\x7f]/g, " ").slice(0, 400);
+  };
+  const fields = (value: unknown) => {
+    if (!value || typeof value !== "object") return {};
+    const record = value as Record<string, unknown>;
+    return Object.fromEntries(["code", "error", "message", "description"].flatMap(key => {
+      const text = clean(record[key]);
+      return text === undefined ? [] : [[key, text]];
+    }));
+  };
+  const record = payload && typeof payload === "object" ? payload as Record<string, unknown> : {};
+  const causes = [record.cause, record.errors].flatMap(value => Array.isArray(value) ? value : []).slice(0, 5).map(fields);
+  return { ...fields(record), causes };
 }
 
 export async function mercadoPagoFetch(path: string, body?: unknown, idempotencyKey?: string) {
@@ -45,7 +77,16 @@ export async function mercadoPagoFetch(path: string, body?: unknown, idempotency
       ...(idempotencyKey ? { "X-Idempotency-Key": idempotencyKey } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
-  if (!response.ok) throw new Error(`mp_api_${response.status}`);
+  if (!response.ok) {
+    let payload: unknown;
+    try { payload = await response.json(); } catch { /* HTML/empty errors have no safe diagnostic fields. */ }
+    console.error("[mercado-pago] API rejected request", JSON.stringify({
+      status: response.status,
+      operation: path === "/users/me" ? "seller_lookup" : body ? "create_order" : "get_order",
+      details: mercadoPagoErrorDetails(payload, body),
+    }, null, 2));
+    throw new Error(`mp_api_${response.status}`);
+  }
   return response.json();
 }
 
@@ -78,11 +119,26 @@ export function moneyCents(value: unknown) {
 }
 
 export function validateMercadoPagoOrder(order: MercadoPagoOrder, reference: string, seller: string, live: boolean) {
-  if (!MP_ORDER_ID.test(order.id || "") || order.id.startsWith("ORDTST") === live
-    || order.type !== "online" || order.external_reference !== reference || String(order.user_id) !== seller
-    || order.currency !== "BRL" || order.country_code !== "BR" || moneyCents(order.total_amount) !== 5990
-    || order.items?.length !== 1 || order.items[0].external_code !== MP_PRODUCT_KEY
-    || order.items[0].quantity !== 1 || moneyCents(order.items[0].unit_price) !== 5990) throw new Error("mp_order_mismatch");
+  const checks = {
+    id: MP_ORDER_ID.test(order.id || ""),
+    environment: typeof order.id === "string" && order.id.startsWith("ORDTST") !== live,
+    type: order.type === "online",
+    external_reference: order.external_reference === reference,
+    seller: String(order.user_id) === seller,
+    currency: order.currency === "BRL",
+    country_code: order.country_code === "BRA" || order.country_code === "BR",
+    total_amount: moneyCents(order.total_amount) === 5990,
+    items_count: order.items?.length === 1,
+    product: order.items?.[0]?.external_code === MP_PRODUCT_KEY,
+    quantity: order.items?.[0]?.quantity === 1,
+    unit_price: moneyCents(order.items?.[0]?.unit_price) === 5990,
+  };
+  const failedFields = Object.entries(checks).filter(([, valid]) => !valid).map(([field]) => field);
+  if (failedFields.length) {
+    // Field names only: no order identifiers, payer data or raw provider response.
+    console.error("[mercado-pago] Order validation failed", JSON.stringify({ failedFields }));
+    throw new Error("mp_order_mismatch");
+  }
 }
 
 export function mercadoPagoOrderStatus(order: MercadoPagoOrder) {

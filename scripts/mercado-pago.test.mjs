@@ -12,7 +12,7 @@ const otherUser = randomUUID();
 const id = 'ORDTST01KS5AJ6HTK2HRQ3XJ3C2JCKP9';
 const env = { MERCADO_PAGO_ACCESS_TOKEN: 'test-only', MERCADO_PAGO_WEBHOOK_SECRET: 'test-secret',
   MERCADO_PAGO_MODE: 'test', MERCADO_PAGO_SELLER_ID: '123', MERCADO_PAGO_SITE_URL: 'https://example.test' };
-const fixture = () => ({ id, type: 'online', external_reference: reference, user_id: '123', currency: 'BRL', country_code: 'BR',
+const fixture = () => ({ id, type: 'online', external_reference: reference, user_id: '123', currency: 'BRL', country_code: 'BRA',
   total_amount: '59.90', total_paid_amount: '59.90', status: 'processed', status_detail: 'accredited',
   last_updated_date: '2026-09-14T12:00:00Z', checkout_url: `https://www.mercadopago.com.br/checkout/v1/redirect?order_id=${id}`,
   items: [{ external_code: 'pqestudar-premium-lifetime', quantity: 1, unit_price: '59.90' }],
@@ -22,6 +22,7 @@ let user = { id: userId, email: 'buyer@example.test', email_confirmed_at: '2026-
 let intent = { id: reference, user_id: userId, customer_email: user.email, live_mode: false, seller_id: '123',
   site_url: 'https://example.test', status: 'pending', order_id: null };
 let apiCalls = [], rpcCalls = [], failApi = false, failDb = false;
+let providerFailure = null;
 const admin = {
   rpc: async (name, args) => {
     rpcCalls.push({ name, args });
@@ -50,6 +51,7 @@ function load(path) {
   const sandbox = { exports: {}, Response, Request, URL, Buffer, AbortSignal, Date, console: { error(...args) { logs.push(args); } }, process: { env },
     fetch: async (url, options) => {
       apiCalls.push({ url, options });
+      if (providerFailure) return providerFailure;
       if (failApi) return { ok: false, status: 503 };
       return { ok: true, json: async () => url.endsWith('/users/me') ? { id: '123', site_id: 'MLB', tags: ['test_user'] } : order };
     },
@@ -65,6 +67,25 @@ function load(path) {
   return sandbox.exports;
 }
 const core = load('src/lib/mercado-pago.ts');
+for (const country_code of ['BRA', 'BR']) assert.doesNotThrow(() => core.validateMercadoPagoOrder({ ...fixture(), country_code }, reference, '123', false));
+for (const country_code of ['ARG', 'USA', '', undefined]) assert.throws(() => core.validateMercadoPagoOrder({ ...fixture(), country_code }, reference, '123', false), /mp_order_mismatch/);
+providerFailure = { ok: false, status: 400, json: async () => ({
+  error: 'bad_request', message: 'Invalid config',
+  errors: [{ code: 'invalid_field', description: 'config.online.auto_return is invalid' }],
+  cause: [{ code: 123, description: 'test-only test-secret buyer@example.test https://private.test/callback Alice Example' }],
+  payer: { email: 'never-log@example.test' }, access_token: 'never-log-token',
+}) };
+await assert.rejects(core.mercadoPagoFetch('/v1/orders', { payer: { name: 'Alice Example' } }), /mp_api_400/);
+const diagnostic = JSON.stringify(logs.at(-1));
+assert.equal(typeof logs.at(-1)[1], 'string', 'Nested causes must render fully in the terminal');
+assert.equal(JSON.parse(logs.at(-1)[1]).details.causes[1].code, 'invalid_field');
+assert.ok(diagnostic.includes('config.online.auto_return is invalid'));
+assert.ok(diagnostic.includes('invalid_field'));
+for (const secret of ['test-only', 'test-secret', 'buyer@example.test', 'private.test', 'Alice Example', 'never-log']) assert.equal(diagnostic.includes(secret), false);
+providerFailure = { ok: false, status: 502, json: async () => { throw new SyntaxError('HTML'); } };
+await assert.rejects(core.mercadoPagoFetch('/users/me'), /mp_api_502/);
+providerFailure = null;
+apiCalls = [];
 const checkout = load('src/app/api/mercado-pago/create-checkout/route.ts');
 const webhook = load('src/app/api/mercado-pago/webhook/route.ts');
 const status = load('src/app/api/mercado-pago/premium-status/route.ts');
@@ -97,6 +118,7 @@ assert.equal(created.options.headers['X-Idempotency-Key'], reference);
 assert.equal(rpcCalls[0].args.p_user, userId);
 assert.equal(JSON.parse(created.options.body).config.online.success_url, `https://example.test/mbo-premium/sucesso?provider=mercadopago&reference=${reference}`);
 assert.equal(JSON.parse(created.options.body).config.payment_method, undefined, 'Do not silently subsidize installments');
+assert.equal(JSON.parse(created.options.body).config.notification_url, undefined, 'Orders does not accept notification_url in config; use application Webhooks');
 await checkout.POST(post({ requestId: reference }));
 assert.equal(apiCalls.filter(c => c.options.method === 'POST').length, 1, 'Reuse persisted order on retry');
 let before = rpcCalls.length;
