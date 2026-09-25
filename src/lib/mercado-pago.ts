@@ -91,16 +91,27 @@ export async function mercadoPagoFetch(path: string, body?: unknown, idempotency
 }
 
 export function verifyMercadoPagoSignature(request: Request, secret: string) {
+  return mercadoPagoSignatureFailure(request, secret) === null;
+}
+
+// Return only fixed diagnostic codes; never expose headers, hashes or secrets.
+export function mercadoPagoSignatureFailure(request: Request, secret: string) {
   const id = new URL(request.url).searchParams.get("data.id");
   const requestId = request.headers.get("x-request-id");
   const signature = request.headers.get("x-signature") || "";
   const ts = signature.match(/(?:^|,)\s*ts=(\d+)\s*(?:,|$)/)?.[1];
   const hash = signature.match(/(?:^|,)\s*v1=([a-f0-9]{64})\s*(?:,|$)/)?.[1];
-  if (!secret || !id || !MP_ORDER_ID.test(id.toUpperCase()) || !requestId || !ts || !hash) return false;
+  if (!secret) return "missing_secret";
+  if (!id) return "missing_order_id";
+  if (!MP_ORDER_ID.test(id.toUpperCase())) return "invalid_order_id";
+  if (!requestId) return "missing_request_id";
+  if (!signature) return "missing_signature";
+  if (!ts) return "invalid_timestamp";
+  if (!hash) return "invalid_signature_format";
   // Preserve data.id case, matching the official SDK (sdk-nodejs PR #439).
   // Retries can arrive much later; replay safety is enforced by database state transitions.
   const expected = createHmac("sha256", secret).update(`id:${id};request-id:${requestId};ts:${ts};`).digest();
-  return timingSafeEqual(expected, Buffer.from(hash, "hex"));
+  return timingSafeEqual(expected, Buffer.from(hash, "hex")) ? null : "signature_mismatch";
 }
 
 type Payment = { status?: string; status_detail?: string; amount?: string; paid_amount?: string };

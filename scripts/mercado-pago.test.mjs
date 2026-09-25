@@ -108,6 +108,17 @@ assert.equal(core.verifyMercadoPagoSignature(event(), 'wrong-secret'), false);
 const missingSignature = event();
 missingSignature.headers.delete('x-signature');
 assert.equal(core.verifyMercadoPagoSignature(missingSignature, env.MERCADO_PAGO_WEBHOOK_SECRET), false);
+assert.equal(core.mercadoPagoSignatureFailure(missingSignature, env.MERCADO_PAGO_WEBHOOK_SECRET), 'missing_signature');
+assert.equal(core.mercadoPagoSignatureFailure(event(), 'wrong-secret'), 'signature_mismatch');
+assert.equal(core.mercadoPagoSignatureFailure(event(true, '12345'), env.MERCADO_PAGO_WEBHOOK_SECRET), 'invalid_order_id');
+for (const [header, reason] of [['x-request-id', 'missing_request_id'], ['x-signature', 'missing_signature']]) {
+  const request = event();
+  request.headers.delete(header);
+  const before = apiCalls.length;
+  assert.equal((await webhook.POST(request)).status, 401);
+  assert.equal(apiCalls.length, before);
+  assert.equal(logs.at(-1)[1], JSON.stringify({ reason }));
+}
 assert.equal(core.moneyCents('59.90'), 5990);
 for (const v of [59.9, '59.901', '-59.90', '5.99e1', null, '']) assert.equal(core.moneyCents(v), -1);
 assert.equal(core.isMercadoPagoCheckoutUrl(order.checkout_url), true);
