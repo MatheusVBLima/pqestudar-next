@@ -1,4 +1,4 @@
-import { mercadoPagoConfig, mercadoPagoSignatureFailure, mercadoPagoSignatureDiagnostics } from "@/lib/mercado-pago";
+import { mercadoPagoConfig, mercadoPagoSignatureFailure } from "@/lib/mercado-pago";
 import { syncMercadoPagoOrder } from "@/lib/mercado-pago-fulfillment";
 
 export const runtime = "nodejs";
@@ -7,10 +7,7 @@ export async function POST(request: Request) {
     const config = mercadoPagoConfig();
     const reason = mercadoPagoSignatureFailure(request, config.secret);
     if (reason) {
-      console.error("[mercado-pago] Webhook rejected", JSON.stringify({ reason,
-        ...(reason === "signature_mismatch" && process.env.VERCEL_ENV === "preview"
-          ? { diagnosticVersion: 1, diagnostics: mercadoPagoSignatureDiagnostics(request, config.secret) } : {}),
-      }));
+      console.error("[mercado-pago] Webhook rejected", JSON.stringify({ reason }));
       return Response.json({ error: "invalid_signature" }, { status: 401 });
     }
     const id = new URL(request.url).searchParams.get("data.id")!.toUpperCase();
