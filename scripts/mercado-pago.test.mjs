@@ -105,6 +105,21 @@ assert.equal(core.verifyMercadoPagoSignature(event(), env.MERCADO_PAGO_WEBHOOK_S
 assert.equal(core.verifyMercadoPagoSignature(event(true, id.toLowerCase()), env.MERCADO_PAGO_WEBHOOK_SECRET), false,
   'Changing the signed ID case must invalidate the signature');
 assert.equal(core.verifyMercadoPagoSignature(event(), 'wrong-secret'), false);
+const lowerSigned = event();
+lowerSigned.headers.set('x-signature', `ts=1789398000000,v1=${createHmac('sha256', env.MERCADO_PAGO_WEBHOOK_SECRET).update(`id:${id.toLowerCase()};request-id:request-123;ts:1789398000000;`).digest('hex')}`);
+env.VERCEL_ENV = 'preview';
+const beforeDiagnosticCalls = apiCalls.length;
+assert.equal((await webhook.POST(lowerSigned)).status, 401, 'Diagnostic matches must never authorize');
+assert.equal(apiCalls.length, beforeDiagnosticCalls);
+const signatureDiagnostic = JSON.parse(logs.at(-1)[1]);
+assert.equal(signatureDiagnostic.diagnostics.lowercaseIdMatches, true);
+assert.equal(signatureDiagnostic.diagnostics.trimmedSecretMatches, false);
+const whitespaceDiagnostic = core.mercadoPagoSignatureDiagnostics(event(), ' test-secret\n');
+assert.equal(whitespaceDiagnostic.secretHasOuterWhitespace, true);
+assert.equal(whitespaceDiagnostic.trimmedSecretMatches, true);
+assert.equal(core.mercadoPagoSignatureDiagnostics(event(), 'wrong-secret').trimmedSecretMatches, false);
+for (const privateValue of [id, 'request-123', '1789398000000', 'test-secret']) assert.equal(JSON.stringify(signatureDiagnostic).includes(privateValue), false);
+delete env.VERCEL_ENV;
 const missingSignature = event();
 missingSignature.headers.delete('x-signature');
 assert.equal(core.verifyMercadoPagoSignature(missingSignature, env.MERCADO_PAGO_WEBHOOK_SECRET), false);

@@ -114,6 +114,25 @@ export function mercadoPagoSignatureFailure(request: Request, secret: string) {
   return timingSafeEqual(expected, Buffer.from(hash, "hex")) ? null : "signature_mismatch";
 }
 
+// Diagnostic only. Never use alternative matches to authorize a notification.
+// Return booleans only; keep signed values, signatures and secrets out of logs.
+export function mercadoPagoSignatureDiagnostics(request: Request, secret: string) {
+  const url = new URL(request.url);
+  const id = url.searchParams.get("data.id") || "";
+  const lowerUrl = new URL(url);
+  lowerUrl.searchParams.set("data.id", id.toLowerCase());
+  const lowerRequest = new Request(lowerUrl, { headers: request.headers });
+  return {
+    secretHasOuterWhitespace: secret !== secret.trim(),
+    duplicateOrderId: url.searchParams.getAll("data.id").length > 1,
+    duplicateSignatureTimestamp: (request.headers.get("x-signature")?.match(/(?:^|,)\s*ts=/g) || []).length > 1,
+    duplicateSignatureHash: (request.headers.get("x-signature")?.match(/(?:^|,)\s*v1=/g) || []).length > 1,
+    lowercaseIdMatches: mercadoPagoSignatureFailure(lowerRequest, secret) === null,
+    trimmedSecretMatches: mercadoPagoSignatureFailure(request, secret.trim()) === null,
+    lowercaseIdAndTrimmedSecretMatch: mercadoPagoSignatureFailure(lowerRequest, secret.trim()) === null,
+  };
+}
+
 type Payment = { status?: string; status_detail?: string; amount?: string; paid_amount?: string };
 export type MercadoPagoOrder = {
   id: string; type?: string; external_reference?: string; user_id?: string | number;
