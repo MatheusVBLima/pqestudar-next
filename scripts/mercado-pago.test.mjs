@@ -171,6 +171,18 @@ assert.equal(core.mercadoPagoOrderStatus({ ...order, status: 'action_required', 
 for (const detail of ['refunded', 'partially_refunded']) assert.equal(core.mercadoPagoOrderStatus({ ...order, status_detail: detail }), 'refunded');
 assert.equal(core.mercadoPagoOrderStatus({ ...order, status: 'charged_back' }), 'canceled');
 assert.equal(core.mercadoPagoOrderStatus({ ...order, status: 'failed', status_detail: 'high_risk' }), 'failed');
+// Exercise provider states through the signed webhook, not only the status mapper.
+for (const [patch, expected] of [
+  [{ status_detail: 'refunded' }, 'refunded'],
+  [{ status_detail: 'partially_refunded' }, 'refunded'],
+  [{ status: 'canceled' }, 'canceled'],
+  [{ status: 'charged_back' }, 'canceled'],
+]) {
+  order = { ...fixture(), ...patch };
+  assert.equal((await webhook.POST(event())).status, 200);
+  assert.equal(rpcCalls.at(-1).args.p_status, expected);
+}
+order = fixture();
 failDb = true;
 assert.equal((await webhook.POST(event())).status, 503);
 failDb = false; failApi = true;

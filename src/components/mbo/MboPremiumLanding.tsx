@@ -7,6 +7,7 @@ import * as Accordion from "@radix-ui/react-accordion";
 import { ArrowDown, ArrowRight, ArrowUpRight, Check, CheckCheck, Compass, ExternalLink, Layers3, List, Map, MapPin, ShieldCheck, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { filterMboBenefits, MBO_BENEFITS, MBO_REVIEWED_AT, MBO_STATES, type MboBenefit } from "@/lib/mbo-preview";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import styles from "./mbo.module.css";
 
 type Boundary = { features: { geometry: { type: string; coordinates: number[][][][] } }[] };
@@ -63,20 +64,26 @@ export default function MboPremiumLanding() {
     focusChecklist.current = true;
     setDetail(null);
   }
-  return <div className={styles.page}>
+  return <div className={styles.page}
+    onPointerDownCapture={(event) => { event.currentTarget.dataset.input = "pointer"; }}
+    onKeyDownCapture={(event) => { event.currentTarget.dataset.input = "keyboard"; }}
+  >
     <header className={styles.nav}><a href="/" className={styles.brand} aria-label="PqEstudar, página inicial"><span>Pq</span>Estudar <i /> <small>MBO</small></a><nav aria-label="Nesta página"><a href="#descobrir">Explorar</a><a href="#preparar">Meu próximo passo</a></nav><a className={styles.navCta} href="#premium">Conhecer o Premium <ArrowUpRight size={16} /></a></header>
 
     <main>
+      <div className={styles.intro}>
       <section className={`${styles.section} ${styles.hero}`}>
         <div><span className={styles.eyebrow}><Compass size={15} /> MAPA DOS BENEFÍCIOS OCULTOS</span><h1>Uma oportunidade<br />pode estar mais perto<br /><em>do que você imagina.</em></h1><p>Descubra benefícios, entenda as regras e encontre seu próximo passo. Experimente uma parte do MBO, agora.</p><a className={styles.primary} href="#descobrir">Explorar benefícios <ArrowDown size={18} /></a><small className={styles.heroNote}><ShieldCheck size={15} /> Amostra gratuita. Sem cadastro.</small></div>
       </section>
 
       <div className={styles.trustStrip}><span><Compass size={18} /> Descubra</span><ArrowRight size={15} /><span><Layers3 size={18} /> Entenda</span><ArrowRight size={15} /><span><CheckCheck size={18} /> Prepare-se</span></div>
 
+      </div>
+
       <section id="descobrir" className={styles.section}>
-        <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>01 / EXPERIMENTE</span><h2>O que você quer<br /><em>descobrir hoje?</em></h2></div><p>Escolha um interesse e uma região.<br />Abra um benefício para entender como começar.</p></div>
+        <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>01 / EXPERIMENTE</span><h2>O que você quer <em>descobrir hoje?</em></h2></div><p>Escolha um interesse e uma região.<br />Abra um benefício para entender como começar.</p></div>
         <div className={styles.explorer}>
-          <div className={styles.filters}><label>Estado<select aria-label="Estado" value={state} onChange={(event) => { setState(event.target.value); setCity(""); }}><option value="">Todo o Brasil</option>{MBO_STATES.map((uf) => <option key={uf}>{uf}</option>)}</select></label><label>Cidade<select aria-label="Cidade" value={city} disabled={state !== "CE"} onChange={(event) => setCity(event.target.value)}><option value="">{state === "CE" ? "Todo o estado" : "Abrangência nacional"}</option>{state === "CE" && <option>Fortaleza</option>}</select></label><div className={styles.sampleLabel}><Sparkles size={17} /><span>Uma amostra do MBO<small>4 exemplos para explorar</small></span></div></div>
+          <div className={styles.filters}><label>Estado<Select value={state || "all"} onValueChange={(value) => { setState(value === "all" ? "" : value); setCity(""); }}><SelectTrigger aria-label="Estado"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Todo o Brasil</SelectItem>{MBO_STATES.map((uf) => <SelectItem value={uf} key={uf}>{uf}</SelectItem>)}</SelectContent></Select></label><label>Cidade<Select value={city || "all"} disabled={state !== "CE"} onValueChange={(value) => setCity(value === "all" ? "" : value)}><SelectTrigger aria-label="Cidade"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{state === "CE" ? "Todo o estado" : "Abrangência nacional"}</SelectItem>{state === "CE" && <SelectItem value="Fortaleza">Fortaleza</SelectItem>}</SelectContent></Select></label><div className={styles.sampleLabel}><Sparkles size={17} /><span>Uma amostra do MBO<small>4 exemplos para explorar</small></span></div></div>
           <div className={styles.categoryRow} aria-label="Interesse"><button aria-pressed={!category} onClick={() => setCategory("")}>Todos</button>{categories.map((item) => <button key={item} aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}</div>
           <div className={styles.mobileViews}><button aria-pressed={view === "list"} onClick={() => setView("list")}><List size={17} /> Lista</button><button aria-pressed={view === "map"} onClick={() => setView("map")}><Map size={17} /> Mapa</button></div>
           <div className={styles.explorerBody}>
@@ -90,7 +97,7 @@ export default function MboPremiumLanding() {
       </section>
 
       <section id="entender" className={`${styles.section} ${styles.comparison}`}>
-        <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>02 / VEJA A DIFERENÇA</span><h2>Saber que existe<br /><em>é só o começo.</em></h2></div><p>O mesmo benefício, em três formas de encontrar a informação. Toque para comparar.</p></div>
+        <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>02 / VEJA A DIFERENÇA</span><h2>Saber que existe <em>é só o começo.</em></h2></div><p>O mesmo benefício, em três formas de encontrar a informação. Toque para comparar.</p></div>
         <div className={styles.compareTabs}>{["Informação solta", "Informação organizada", "Orientação para agir"].map((label, index) => <button key={label} aria-pressed={comparison === index} onClick={() => setComparison(index)}><span>0{index + 1}</span>{label}{comparison === index && <Check size={18} />}</button>)}</div>
         <div className={styles.compareContent}>
           <div className={styles.compareVisual}>
@@ -100,10 +107,10 @@ export default function MboPremiumLanding() {
       </section>
 
       <section id="preparar" tabIndex={-1} aria-label="Seu próximo passo" className={styles.section}>
-        <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>03 / SEU PRÓXIMO PASSO</span><h2>Transforme descoberta<br /><em>em preparação.</em></h2></div><p>Marque o que você já conferiu.<br />Seu checklist vale para esta visita.</p></div>
+        <div className={styles.sectionHeading}><div><span className={styles.eyebrow}>03 / SEU PRÓXIMO PASSO</span><h2>Transforme descoberta <em>em preparação.</em></h2></div><p>Marque o que você já conferiu.<br />Seu checklist vale para esta visita.</p></div>
         <div className={styles.checklist}>
           <div className={`${styles.preparation} ${complete ? styles.completed : ""}`}><span className={styles.progressIcon}>{complete ? <CheckCheck size={32} /> : <Compass size={32} />}</span><span className={styles.progressNumber}>{checked.length}<small> / {prepared.steps.length}</small></span><h3 aria-live="polite">{complete ? "Checklist concluído" : checked.length ? "Faltam conferências" : "Vamos começar?"}</h3><div className={styles.progressTrack} role="progressbar" aria-label="Preparação" aria-valuenow={checked.length} aria-valuemin={0} aria-valuemax={prepared.steps.length}><span style={{ width: `${checked.length / prepared.steps.length * 100}%` }} /></div><p>{complete ? "Tudo marcado. Agora siga as orientações do canal oficial." : "Uma conferência de cada vez. Você escolhe por onde começar."}</p><small>Preparação pessoal, não confirmação de elegibilidade ou aprovação.</small></div>
-          <div className={styles.checkItems}><label>Quero me preparar para<select value={preparedId} onChange={(event) => setPreparedId(event.target.value)} aria-label="Benefício do checklist">{MBO_BENEFITS.map((benefit) => <option value={benefit.id} key={benefit.id}>{benefit.title}</option>)}</select></label>{prepared.steps.map((step, index) => <label key={`${prepared.id}-${index}`} className={styles.checkRow}><input type="checkbox" checked={checked.includes(index)} onChange={() => setChecks((current) => ({ ...current, [preparedId]: checked.includes(index) ? checked.filter((item) => item !== index) : [...checked, index] }))} /><span>{step}</span></label>)}<a className={styles.textLink} href={prepared.source} target="_blank" rel="noopener noreferrer">Consultar o canal oficial <ExternalLink size={16} /></a></div>
+          <div className={styles.checkItems}><label>Quero me preparar para<Select value={preparedId} onValueChange={setPreparedId}><SelectTrigger aria-label="Benefício do checklist"><SelectValue /></SelectTrigger><SelectContent>{MBO_BENEFITS.map((benefit) => <SelectItem value={benefit.id} key={benefit.id}>{benefit.title}</SelectItem>)}</SelectContent></Select></label>{prepared.steps.map((step, index) => <label key={`${prepared.id}-${index}`} className={styles.checkRow}><input type="checkbox" checked={checked.includes(index)} onChange={() => setChecks((current) => ({ ...current, [preparedId]: checked.includes(index) ? checked.filter((item) => item !== index) : [...checked, index] }))} /><span>{step}</span></label>)}<a className={styles.textLink} href={prepared.source} target="_blank" rel="noopener noreferrer">Consultar o canal oficial <ExternalLink size={16} /></a></div>
         </div>
       </section>
 

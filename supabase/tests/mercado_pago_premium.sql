@@ -52,3 +52,36 @@ begin
 end;
 $$;
 reset role;
+
+-- Repeat paid/canceled deliveries and attempt restoration after cancellation.
+-- Synthetic live-mode rows exist only inside the isolated test transaction.
+do $$
+declare
+  u uuid:=gen_random_uuid(); ref uuid:=gen_random_uuid();
+  stamp timestamptz:=now(); revoked timestamptz; mail text;
+begin
+  mail:='mp-repeat-'||u||'@example.test';
+  insert into auth.users(id,email,email_confirmed_at) values(u,mail,now());
+  perform set_config('request.jwt.claim.sub',u::text,true);
+  perform public.prepare_mercado_pago_order(ref,u,mail,true,'456','https://example.test');
+  perform public.record_mercado_pago_order(ref,'ORD01KS5AJ6HTK2HRQ3XJ3C2JCKP7','paid',stamp);
+  perform public.record_mercado_pago_order(ref,'ORD01KS5AJ6HTK2HRQ3XJ3C2JCKP7','paid',stamp);
+  if (select count(*) from public.mercado_pago_orders where user_id=u)<>1
+    or not public.has_active_subscription()
+    or (public.get_effective_subscription()->>'id')::uuid is distinct from ref then
+    raise exception 'Repeated paid delivery changed entitlement';
+  end if;
+  perform public.record_mercado_pago_order(ref,'ORD01KS5AJ6HTK2HRQ3XJ3C2JCKP7','canceled',stamp+interval '1 minute');
+  select revoked_at into revoked from public.mercado_pago_orders where id=ref;
+  if revoked is null or public.has_active_subscription() or public.get_effective_subscription() is not null then
+    raise exception 'Cancellation failed to revoke paid access';
+  end if;
+  perform public.record_mercado_pago_order(ref,'ORD01KS5AJ6HTK2HRQ3XJ3C2JCKP7','canceled',stamp+interval '1 minute');
+  perform public.record_mercado_pago_order(ref,'ORD01KS5AJ6HTK2HRQ3XJ3C2JCKP7','paid',stamp+interval '2 minutes');
+  if public.has_active_subscription() or public.get_effective_subscription() is not null
+    or (select status from public.mercado_pago_orders where id=ref)<>'canceled'
+    or (select revoked_at from public.mercado_pago_orders where id=ref) is distinct from revoked then
+    raise exception 'Repeated or newer event restored canceled access';
+  end if;
+end;
+$$;
