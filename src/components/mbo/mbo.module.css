@@ -689,9 +689,8 @@
 .offerCard { position:relative; overflow:hidden; padding:38px 26px 30px; text-align:center; border:1px solid #cc6dd54d; border-radius:26px; background:radial-gradient(ellipse at 50% 0,#b455b326,transparent 65%),linear-gradient(#ffffff03 1px,transparent 1px),linear-gradient(90deg,#ffffff03 1px,transparent 1px),#1d1624; background-size:auto,44px 44px,44px 44px,auto; box-shadow:0 20px 60px #0003; }
 .offerCard::before { content:""; position:absolute; top:0; left:25%; width:50%; height:3px; background:#ed65ed; box-shadow:0 0 30px 7px #e54be04d; }
 .offerBadge { display:inline-block; padding:7px 12px; border:1px solid #e56ce42b; border-radius:30px; color:#e4ace4; font-size:9px; font-weight:700; letter-spacing:.12em; }
-.offerProduct { display:flex; justify-content:center; align-items:center; gap:12px; margin:26px 0 15px; }
-.offerProduct svg { color:var(--pink); flex-shrink:0; }
-.offerProduct strong { font-size:24px; line-height:1.2; letter-spacing:-.035em; text-align:left; }
+.offerProduct { margin:20px 0 15px; text-align:center; }
+.offerProduct strong { font-size:24px; line-height:1.2; letter-spacing:-.035em; }
 .offerCard .offerCardDescription { max-width:240px; margin:0 auto; font-size:12px; line-height:1.7; color:var(--muted); }
 .offerCard .primary { width:100%; padding-inline:12px; font-size:13px; gap:10px; }
 .offerCard .primary:not(:disabled) { animation:offerPulse 2.8s ease-in-out infinite; }

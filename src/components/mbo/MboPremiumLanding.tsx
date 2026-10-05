@@ -119,7 +119,7 @@ export default function MboPremiumLanding() {
         <div className={styles.offerIntro}><span className={styles.eyebrow}><Sparkles size={16} /> CONTINUE COM O MBO</span><h2>Sua próxima descoberta<br /><em>começa por aqui.</em></h2><p>Você experimentou uma parte do MBO. Continue explorando benefícios, regiões e caminhos para começar com o PqEstudar Premium.</p><span className={styles.offerLifetime}><CheckCheck size={18} /> Um pagamento. Acesso vitalício.</span></div>
         <div className={styles.offerCard}>
           <span className={styles.offerBadge}>PQESTUDAR PREMIUM</span>
-          <div className={styles.offerProduct}><Compass size={32} /><strong>Mapa dos<br />Benefícios Ocultos</strong></div>
+          <div className={styles.offerProduct}><strong>Mapa dos<br />Benefícios Ocultos</strong></div>
           <p className={styles.offerCardDescription}>Informação organizada para a sua próxima oportunidade.</p>
           <div className={styles.checkoutPrice}><span>Acesso vitalício por</span><div className={styles.checkoutOriginalPrice}>De <s>R$ 480,00</s></div><strong>R$ 59,90</strong><span>Pagamento único · sem mensalidade</span></div>
           <PremiumCheckoutButton />
