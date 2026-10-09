@@ -1,0 +1,74 @@
+.journey { width:100%; max-width:550px; min-width:0; justify-self:center; color:#f4eef6; }
+.art { position:relative; height:490px; isolation:isolate; background:radial-gradient(ellipse at 50% 45%,#a137b522,transparent 65%); }
+.map { position:absolute; width:100%; height:100%; inset:0; overflow:visible; }
+.map path { fill:#9c55b015; stroke:#ae75c15c; stroke-width:1; }
+.map circle { fill:#f078ed; stroke:#ee65ea26; stroke-width:13; }
+.beacon { position:absolute; top:24%; left:71%; width:18px; height:18px; border-radius:50%; background:#ee65ea; animation:beacon 9s ease-out infinite; }
+.benefit { position:absolute; width:55%; top:5%; left:7%; border:1px solid #e7a2ed40; border-radius:19px; overflow:hidden; background:#241c2b; box-shadow:0 22px 60px #0006; transform:rotate(-5deg); animation:float 9s ease-in-out infinite; }
+.photo { position:relative; height:190px; }
+.photo img { object-fit:cover; object-position:center 35%; }
+.photo::after { content:""; position:absolute; inset:0; background:linear-gradient(transparent 45%,#17101fd9); }
+.photo>span { position:absolute; bottom:14px; left:14px; z-index:1; display:flex; align-items:center; gap:6px; font-size:11px; color:#fff; }
+.benefitTitle { padding:17px; display:flex; justify-content:space-between; align-items:center; }
+.benefitTitle small { display:block; color:#c898cd; font-size:8px; letter-spacing:.12em; }
+.benefitTitle strong { display:block; font-size:25px; letter-spacing:-.035em; margin-top:4px; }
+.benefitTitle>svg { color:#e890df; }
+.checklist { position:absolute; right:1%; top:65%; width:57%; padding:20px; border:1px solid #e7a2ed38; border-radius:17px; background:#251f2df5; box-shadow:0 18px 45px #0005; transform:rotate(3deg); }
+.checklist>strong { display:block; font-size:13px; margin-bottom:16px; }
+.row { display:flex; align-items:center; gap:10px; font-size:11px; color:#d0c4d6; margin-top:12px; }
+.tick { width:20px; height:20px; flex-shrink:0; display:grid; place-items:center; border:1px solid #ee65ea66; background:#ee65ea15; color:#ee91eb; border-radius:5px; animation:tick 9s ease-in-out infinite; }
+.mapLabel { position:absolute; bottom:5px; left:7%; font-size:8px; letter-spacing:.13em; color:#967e9f; }
+.footer { display:flex; align-items:center; justify-content:space-between; padding:18px 7% 0; font-size:11px; color:#b4aabb; }
+.footer button { display:grid; place-items:center; width:29px; height:29px; background:transparent; color:#b4aabb; border:1px solid #ffffff20; border-radius:50%; }
+.journey[data-paused="true"] * { animation-play-state:paused; }
+@keyframes beacon { 0%,100% { box-shadow:0 0 0 0 #ee65ea40; } 50% { box-shadow:0 0 0 18px #ee65ea00; } }
+@keyframes float { 0%,100% { transform:translateY(0) rotate(-5deg); } 50% { transform:translateY(-9px) rotate(-3deg); } }
+@keyframes tick { 0%,18% { color:transparent; background:transparent; } 30%,90% { color:#ee91eb; background:#ee65ea20; } 100% { color:transparent; } }
+@media(max-width:1000px) { .photo { height:155px; } .art { height:470px; } .checklist { padding:15px; width:65%; } }
+@media(max-width:760px) { .art { height:470px; } .benefit { width:62%; left:4%; } .checklist { top:62%; right:2%; width:65%; } .photo { height:160px; } .mapLabel { font-size:7px; } }
+.art { animation:sceneReveal 10s linear infinite; }
+.map path { stroke-dasharray:2400; animation:mapDraw 10s ease-out infinite; }
+.map circle { transform-box:fill-box; transform-origin:center; animation:pointReveal 10s ease-out infinite; }
+.beacon { animation:pointReveal 10s ease-out infinite,beacon 2.2s ease-out infinite; }
+.benefit { animation:cardReveal 10s cubic-bezier(.2,.9,.25,1) infinite; }
+.checklist { animation:checklistReveal 10s cubic-bezier(.2,.9,.25,1) infinite; }
+.tick { animation:checkReveal 10s ease infinite; }
+.tick svg { stroke-dasharray:26; animation:checkDraw 10s ease infinite; animation-delay:inherit; }
+@keyframes sceneReveal { 0%,100% { opacity:0; } 3%,92% { opacity:1; } }
+@keyframes mapDraw { 0% { stroke-dashoffset:2400; fill-opacity:0; } 18%,100% { stroke-dashoffset:0; fill-opacity:1; } }
+@keyframes pointReveal { 0%,10% { opacity:0; scale:0; } 18%,100% { opacity:1; scale:1; } }
+@keyframes cardReveal { 0%,29% { opacity:0; transform:translateY(40px) rotate(-9deg) scale(.9); } 41%,100% { opacity:1; transform:translateY(0) rotate(-3.5deg) scale(1); } }
+@keyframes checklistReveal { 0%,56% { opacity:0; transform:translate(30px,35px) rotate(8deg) scale(.92); } 66%,100% { opacity:1; transform:translate(0,0) rotate(3deg) scale(1); } }
+@keyframes checkReveal { 0%,67% { color:transparent; background:transparent; transform:scale(1); } 70% { transform:scale(1.15); } 74%,100% { color:#ee91eb; background:#ee65ea30; transform:scale(1); } }
+@keyframes checkDraw { 0%,68% { stroke-dashoffset:26; } 74%,100% { stroke-dashoffset:0; } }
+@media (min-width:761px) and (max-height:760px) {
+  .journey { zoom:.85; }
+}
+@media (min-width:761px) and (max-height:650px) {
+  .journey { zoom:.72; }
+}
+.steps { display:flex; align-items:center; gap:8px; font-weight:600; }
+.steps>span { color:#ffffff38; }
+.steps .stepArrow { font-size:10px; color:#ffffff38; }
+.stepDiscover { animation:discoverLabel 10s linear infinite; }
+.stepUnderstand { animation:understandLabel 10s linear infinite; }
+.stepPrepare { animation:prepareLabel 10s linear infinite; }
+@keyframes discoverLabel { 0%,3%,100% { color:#ffffff38; } 14%,92% { color:#f4eef6; } }
+@keyframes understandLabel { 0%,29%,100% { color:#ffffff38; } 41%,92% { color:#f4eef6; } }
+@keyframes prepareLabel { 0%,56%,100% { color:#ffffff38; } 66%,92% { color:#f4eef6; } }
+/* Keep the original reveal timing, then hold the completed scene for four more seconds. */
+.art,.map path,.map circle,.benefit,.checklist,.tick,.tick svg,
+.stepDiscover,.stepUnderstand,.stepPrepare { animation-duration:14s; }
+.beacon { animation-duration:14s,2.2s; }
+@keyframes sceneReveal { 0%,100% { opacity:0; } 2.14%,94.29% { opacity:1; } }
+@keyframes mapDraw { 0% { stroke-dashoffset:2400; fill-opacity:0; } 12.86%,100% { stroke-dashoffset:0; fill-opacity:1; } }
+@keyframes pointReveal { 0%,7.14% { opacity:0; scale:0; } 12.86%,100% { opacity:1; scale:1; } }
+@keyframes cardReveal { 0%,20.71% { opacity:0; transform:translateY(40px) rotate(-9deg) scale(.9); } 29.29%,100% { opacity:1; transform:translateY(0) rotate(-3.5deg) scale(1); } }
+@keyframes checklistReveal { 0%,40% { opacity:0; transform:translate(30px,35px) rotate(8deg) scale(.92); } 47.14%,100% { opacity:1; transform:translate(0,0) rotate(3deg) scale(1); } }
+@keyframes checkReveal { 0%,47.86% { color:transparent; background:transparent; transform:scale(1); } 50% { transform:scale(1.15); } 52.86%,100% { color:#ee91eb; background:#ee65ea30; transform:scale(1); } }
+@keyframes checkDraw { 0%,48.57% { stroke-dashoffset:26; } 52.86%,100% { stroke-dashoffset:0; } }
+@keyframes discoverLabel { 0%,2.14%,100% { color:#ffffff38; } 10%,94.29% { color:#f4eef6; } }
+@keyframes understandLabel { 0%,20.71%,100% { color:#ffffff38; } 29.29%,94.29% { color:#f4eef6; } }
+@keyframes prepareLabel { 0%,40%,100% { color:#ffffff38; } 47.14%,94.29% { color:#f4eef6; } }
+@media(prefers-reduced-motion:reduce) { .steps>span { color:#f4eef6; } }
+@media(prefers-reduced-motion:reduce) { .journey * { animation:none !important; } .footer button { display:none; } }

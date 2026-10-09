@@ -1,0 +1,21 @@
+.trail { position:absolute; inset:0; pointer-events:none; z-index:2; }
+.lines { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+.path,.completed { fill:none; stroke-width:1.5; stroke-linecap:round; stroke-dasharray:2 9; }
+.path { stroke:#af84b530; }
+.completed { stroke:#df7bda99; opacity:0; transition:opacity .6s ease; }
+.completed[data-complete="true"] { opacity:1; }
+.flow { fill:none; stroke:#f4a0ef; stroke-width:2.5; stroke-linecap:round; stroke-dasharray:7 93; filter:drop-shadow(0 0 4px #ee65ea) drop-shadow(0 0 9px #ee65ea80); pointer-events:none; animation:trailFlow 4s linear infinite; }
+@keyframes trailFlow {
+  0% { stroke-dashoffset:7; opacity:0; }
+  8% { opacity:1; }
+  85% { opacity:1; }
+  95%,100% { stroke-dashoffset:-100; opacity:0; }
+}
+.checkpoint { position:absolute; transform:translate(-50%,-50%); display:grid; place-items:center; width:40px; height:40px; padding:0; border:0; background:transparent; pointer-events:auto; border-radius:50%; color:#a38da9; }
+.checkpoint span { display:grid; place-items:center; width:28px; height:28px; border:1px solid #76537b; border-radius:50%; background:#19141d; font-size:9px; font-weight:600; transition:background .3s,border-color .3s,box-shadow .3s,color .3s; }
+.checkpoint[data-state="visited"] span { border-color:#c76bc2; color:#ecace7; }
+.checkpoint[data-state="current"] span { border-color:#ee65ea; color:#f8d8f5; background:#422045; box-shadow:0 0 0 5px #ee65ea12,0 0 22px #ee65ea20; }
+.checkpoint:hover span { color:#fff; border-color:#ee65ea; background:#422045; }
+@media(max-width:1300px) { .checkpoint { width:28px; height:32px; } .checkpoint span { width:20px; height:20px; font-size:8px; } }
+@media(max-width:760px) { .checkpoint { width:18px; height:32px; } .checkpoint span { width:9px; height:9px; font-size:0; } .path,.completed { stroke-width:1; stroke-dasharray:1 7; } .checkpoint[data-state="current"] span { box-shadow:0 0 0 3px #ee65ea18; } }
+@media(prefers-reduced-motion:reduce) { .completed,.checkpoint span { transition:none; } .flow { animation:none; display:none; } }

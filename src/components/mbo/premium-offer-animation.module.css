@@ -1,0 +1,171 @@
+/* Existing offer markup remains the source of truth for prices and checkout. */
+:global(div):has(>.intro) { position:relative; display:grid; grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); gap:32px 48px; align-items:center; }
+.intro { grid-column:1/-1; grid-row:2; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; align-self:center; pointer-events:none; z-index:1; }
+.tile { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; min-height:240px; padding:28px 18px; text-align:center; border:1px solid #ffffff20; border-radius:28px; background:linear-gradient(165deg,#2b1f33,#1f1725); box-shadow:0 30px 60px -30px #0009; animation:tileOne 18s cubic-bezier(.2,.9,.3,1) both; animation-play-state:paused; }
+.tile svg { color:#f0a8f0; }
+.tile strong { font-size:20px; line-height:1.25; font-weight:600; }
+.tile1 { animation-name:tileTwo; }.tile2 { animation-name:tileThree; }
+:global(div):has(>.intro)>:global([class*="offerIntro"]) { grid-column:1/-1; grid-row:1; max-width:none; }
+:global(div):has(>.intro)>:global([class*="offerIntro"])>p,
+:global(div):has(>.intro)>:global([class*="offerIntro"])>:global([class*="offerLifetime"]) { display:none; }
+:global(div):has(>.intro)>:global([class*="offerFeatures"]) { grid-column:1; grid-row:2; margin:0; animation:featuresIn 18s ease both; animation-play-state:paused; }
+:global(div):has(>.intro)>:global([class*="offerFeatures"])>div { display:grid; grid-template-columns:42px 1fr; gap:8px 14px; align-items:center; }
+:global(div):has(>.intro)>:global([class*="offerFeatures"])>div>p { grid-column:2; font-size:12px; }
+:global(div):has(>.intro)>:global([class*="offerFeatures"])>div>svg { color:#f0a8f0; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) { grid-column:2; grid-row:2; width:100%; max-width:460px; justify-self:center; animation:cardIn 18s cubic-bezier(.2,.9,.3,1) both; animation-play-state:paused; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="checkoutPrice"]) { animation:priceIn 18s cubic-bezier(.3,1.3,.5,1) both; animation-play-state:paused; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="primary"]) { animation:purchaseIn 18s ease both !important; animation-play-state:paused !important; }
+:global(div[data-offer-state="started"]):has(>.intro) .tile,
+:global(div[data-offer-state="started"]):has(>.intro)>:global([class*="offerFeatures"]),
+:global(div[data-offer-state="started"]):has(>.intro)>:global([class*="offerCard"]),
+:global(div[data-offer-state="started"]):has(>.intro)>:global([class*="offerCard"]) :global([class*="checkoutPrice"]) { animation-play-state:running; }
+:global(div[data-offer-state="started"]):has(>.intro)>:global([class*="offerCard"]) :global([class*="primary"]) { animation-play-state:running !important; }
+@keyframes tileOne { 0%,2% { opacity:0; visibility:hidden; transform:translateY(30px) scale(.9); } 5%,28% { opacity:1; visibility:visible; transform:none; } 34%,100% { opacity:0; visibility:hidden; transform:translate(-60px,25px) scale(.45); } }
+@keyframes tileTwo { 0%,9% { opacity:0; visibility:hidden; transform:translateY(30px) scale(.9); } 12%,28% { opacity:1; visibility:visible; transform:none; } 34%,100% { opacity:0; visibility:hidden; transform:translate(-100px,25px) scale(.45); } }
+@keyframes tileThree { 0%,16% { opacity:0; visibility:hidden; transform:translateY(30px) scale(.9); } 19%,28% { opacity:1; visibility:visible; transform:none; } 34%,100% { opacity:0; visibility:hidden; transform:translate(-140px,25px) scale(.45); } }
+@keyframes featuresIn { 0%,35% { opacity:0; visibility:hidden; transform:translateX(-25px); } 42%,100% { opacity:1; visibility:visible; transform:none; } }
+@keyframes cardIn { 0%,32% { opacity:0; visibility:hidden; transform:translateX(40px) scale(.96); } 38%,100% { opacity:1; visibility:visible; transform:none; } }
+@keyframes priceIn { 0%,46% { opacity:0; visibility:hidden; transform:translateY(12px) scale(.85); } 56.5%,100% { opacity:1; visibility:visible; transform:none; } }
+@keyframes purchaseIn { 0%,70% { opacity:0; visibility:hidden; transform:translateY(16px); } 74%,100% { opacity:1; visibility:visible; transform:none; } }
+@media(max-width:760px) {
+  :global(div):has(>.intro) { grid-template-columns:minmax(0,1fr); gap:24px; }
+  .intro { grid-row:2; grid-column:1; gap:8px; align-self:start; padding-top:24px; }
+  .tile { min-height:160px; padding:16px 8px; gap:14px; border-radius:16px; }.tile svg { width:38px; height:38px; }.tile strong { font-size:12px; }
+  :global(div):has(>.intro)>:global([class*="offerFeatures"]) { grid-column:1; grid-row:3; }
+  :global(div):has(>.intro)>:global([class*="offerCard"]) { grid-column:1; grid-row:2; }
+}
+@media(min-width:761px) {
+  :global(section):has(.intro) { padding-block:clamp(20px,4svh,40px); }
+  :global(div):has(>.intro) { grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto 1fr; gap:24px 48px; align-items:start; }
+  .intro { grid-row:1/3; }
+  :global(div):has(>.intro)>:global([class*="offerIntro"]) { grid-column:1; grid-row:1; align-self:start; animation:featuresIn 18s ease both; animation-play-state:paused; }
+  :global(div[data-offer-state="started"]):has(>.intro)>:global([class*="offerIntro"]) { animation-play-state:running; }
+  :global(div):has(>.intro)>:global([class*="offerFeatures"]) { grid-column:1; grid-row:2; align-self:start; gap:24px; }
+  :global(div):has(>.intro)>:global([class*="offerFeatures"])>div>p { margin-block:4px 0; }
+  :global(div):has(>.intro)>:global([class*="offerCard"]) { grid-column:2; grid-row:1/3; align-self:start; padding:clamp(24px,3.8dvh,36px) 24px clamp(20px,3dvh,28px); }
+  :global(div):has(>.intro)>:global([class*="offerProduct"]) { margin-block:16px 10px; }
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="offerProduct"]) { margin-block:clamp(16px,2.6dvh,24px) 12px; }
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="checkoutPrice"]) { margin-block:clamp(18px,3dvh,28px) clamp(16px,2.6dvh,24px); gap:10px; }
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="offerPayment"]) { margin-top:16px; }
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="offerAccess"]) { margin-top:8px; }
+}
+@media(min-width:761px) {
+  :global(div):has(>.intro) {
+    width:100%;
+    max-width:none;
+    margin-inline:0;
+    grid-template-columns:minmax(0,1fr) minmax(0,460px);
+    column-gap:clamp(32px,5vw,72px);
+    row-gap:28px;
+  }
+  :global(div):has(>.intro)>:global([class*="offerIntro"]) h2 {
+    font-size:clamp(30px,2.8vw,40px);
+    line-height:1.17;
+    margin-top:20px;
+  }
+  :global(div):has(>.intro)>:global([class*="offerFeatures"]) {
+    align-self:stretch;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-evenly;
+    gap:18px;
+    padding-bottom:12px;
+  }
+  :global(div):has(>.intro)>:global([class*="offerFeatures"])>div {
+    grid-template-columns:44px minmax(0,1fr);
+    align-items:start;
+    gap:8px 16px;
+    padding:16px 0;
+    border-bottom:1px solid #ffffff0d;
+  }
+  :global(div):has(>.intro)>:global([class*="offerFeatures"])>div:last-child { border-bottom:0; }
+  :global(div):has(>.intro)>:global([class*="offerFeatures"])>div>svg {
+    grid-row:1/3;
+    margin:0;
+    width:38px;
+    height:38px;
+    padding:7px;
+    border-radius:11px;
+    background:#ee65ea0d;
+  }
+  :global(div):has(>.intro)>:global([class*="offerFeatures"])>div>h3 {
+    grid-column:2;
+    margin:0;
+    font-size:17px;
+    line-height:1.4;
+  }
+  :global(div):has(>.intro)>:global([class*="offerFeatures"])>div>p {
+    grid-column:2;
+    margin:0;
+    font-size:13px;
+    line-height:1.6;
+    max-width:380px;
+  }
+}
+/* Keep the offer's visual hierarchy proportional within the shared card width. */
+:global(div):has(>.intro)>:global([class*="offerCard"]) { padding:28px 24px 24px; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="offerProduct"]) { margin:20px 0 14px; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="checkoutPrice"]) { margin:22px 0;gap:12px; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="checkoutOriginalPrice"]) { max-width:100%;font-size:17px;padding:9px 20px; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="installmentPrice"]) { margin-top:6px;gap:10px; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="installmentPrice"])>strong { font-size:clamp(44px,3.6vw,54px); }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="installmentPrice"])>span { font-size:17px; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="cashPrice"]) { font-size:16px; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global(button[class*="primary"]) { min-height:54px;font-size:16px;padding:14px 12px; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="offerPayment"]) { margin-top:16px;font-size:12px; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="offerAccess"]) { margin-top:10px;font-size:11px;line-height:1.5;text-wrap:balance; }
+@media(max-width:400px) {
+  :global(div):has(>.intro)>:global([class*="offerCard"]) { padding-inline:20px; }
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="installmentPrice"]) { gap:8px; }
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="installmentPrice"])>span { font-size:14px; }
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global(button[class*="primary"]) { font-size:14px; }
+}
+/* Loading follows the real checkout button's disabled state and reverses on error. */
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global(button[class*="primary"]) {
+  background-image:linear-gradient(105deg,#20a653 0%,#20a653 33%,#199447 67%,#199447 100%);
+  background-size:300% 100%;
+  background-position:0% 50%;
+  transition:background-position 1.2s ease,color .4s ease,box-shadow .4s ease;
+}
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global(button[class*="primary"]:disabled) {
+  background-position:100% 50%;
+  color:#fff;
+  opacity:1;
+  cursor:progress;
+  box-shadow:0 0 0 4px #6fd8a818;
+}
+/* A separate halo preserves the checkout button's entrance and loading animation. */
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global(button[class*="primary"])::before {
+  content:"";
+  position:absolute;
+  inset:-4px;
+  border-radius:inherit;
+  pointer-events:none;
+  border:1px solid #a855f733;
+  animation:purchaseHalo 2.6s ease-out infinite;
+}
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global(button[class*="primary"]:is(:disabled,:active))::before { animation:none;opacity:0; }
+@keyframes purchaseHalo {
+  0%,100% { box-shadow:0 0 0 0 #a855f700,0 0 8px 0 #8b5cf610;opacity:.35; }
+  35% { box-shadow:0 0 0 5px #a855f71a,0 0 24px 8px #8b5cf64d;opacity:1; }
+  75% { box-shadow:0 0 0 12px #a855f700,0 0 32px 12px #8b5cf600;opacity:0; }
+}
+@media(prefers-reduced-motion:reduce) {
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global(button[class*="primary"])::before { animation:none;opacity:0; }
+}
+/* Share a shorter timeline so the tiles, price and real CTA stay synchronized. */
+.tile,
+:global(div):has(>.intro)>:global([class*="offerIntro"]),
+:global(div):has(>.intro)>:global([class*="offerFeatures"]),
+:global(div):has(>.intro)>:global([class*="offerCard"]),
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="checkoutPrice"]) { animation-duration:5s; }
+:global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="primary"]) { animation-duration:5s !important; }
+@media(prefers-reduced-motion:reduce) {
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global(button[class*="primary"]) { transition:none; }
+  :global(div):has(>.intro)>:global([class*="offerIntro"]) { animation:none !important; }
+  .intro { display:none; }
+  :global(div):has(>.intro)>:global([class*="offerFeatures"]),
+  :global(div):has(>.intro)>:global([class*="offerCard"]),
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="checkoutPrice"]),
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="primary"]) { animation:none !important; }
+}

@@ -1,0 +1,67 @@
+.animation { position:relative; isolation:isolate; width:100%; min-width:0; border-radius:20px; overflow:hidden; background:transparent; color:#f6f0f8; touch-action:pan-y; user-select:none; cursor:grab; }
+.animation::before { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(ellipse 48% 46% at 50% 48%,#e052e012 0%,#e052e008 45%,#e052e000 100%); }
+.stage { display:block; width:100%; height:auto; }
+.stage text { fill:#f6f0f8; font-family:inherit; }
+.scene { animation:scene 15s linear infinite; }
+.tangle { fill:none; stroke:#e052e066; stroke-width:2; stroke-dasharray:4 9; animation:tangle 15s infinite; }
+.fragment { animation:fragment 15s ease-in-out infinite; }
+.fragment rect { fill:#2a2031; stroke:#ffffff20; }
+.fragment svg { color:#e9a9ea; }
+.burst { fill:none; stroke:#e052e0; transform-origin:480px 255px; animation:burst 15s ease-out infinite; }
+.card { transform-origin:480px 255px; animation:card 15s cubic-bezier(.3,.9,.3,1) infinite; }
+.card>rect { fill:#2a2031; stroke:#ffffff25; }
+.card>svg { color:#f3b4f3; }
+.small { font-size:13px; letter-spacing:2px; }
+.title { font-size:27px; font-weight:600; }
+.tag { animation:tag 15s infinite; }
+.tag rect { fill:#ffffff12; }
+.tag text { font-size:13px; }
+.tag1 { animation-name:tagTwo; }.tag2 { animation-name:tagThree; }
+.connection,.route { fill:none; stroke:#e052e0; stroke-width:3; stroke-linecap:round; stroke-dasharray:100; }
+.connection { animation:connect 15s infinite; }.route { animation:route 15s linear infinite; }
+.traveler { fill:white; filter:drop-shadow(0 0 7px #e052e0); animation:travel 15s linear infinite; }
+.step { animation:step 15s infinite; color:#f3b4f3; }
+.step1 { animation-name:stepTwo; }.step2 { animation-name:stepThree; }
+.node { fill:#2a2031; stroke:#e052e080; stroke-width:1.5; }
+.step text { font-size:21px; }.check { animation:check 15s infinite; }.check circle { fill:#4ade80; }.check svg { color:#102b1b; }
+.step1 .check { animation-name:checkTwo; }.step2 .check { animation-name:checkThree; }
+.tab rect { fill:#e052e000; stroke:#ffffff1a; }.tab text { font-size:15px; }
+.tab0 rect { animation:tabOne 15s infinite; }.tab1 rect { animation:tabTwo 15s infinite; }.tab2 rect { animation:tabThree 15s infinite; }
+.mobile { display:none; }
+/* The animation replaces the old comparison panel and its duplicate controls. */
+:global(section):has(.animation)>:not(:first-child):not(:has(.animation)) { display:none; }
+:global(section):has(.animation)>:first-child>p { display:none; }
+:global(section):has(.animation) :global(div):has(.animation) { display:contents; }
+:global(section):has(.animation) :global(div):has(.animation)>:not(:has(.animation)):not(.animation) { display:none; }
+.animation { max-width:1100px; margin-inline:auto; }
+.actButton { display:flex; align-items:center; gap:12px; width:100%; height:44px; padding:0 18px; border:1px solid #ffffff1a; border-radius:14px; background:transparent; color:#a99fb0; font-family:inherit; font-size:15px; font-weight:500; cursor:pointer; }
+.actButton span { font-size:12px; opacity:.7; }
+.actButton:focus-visible { outline:2px solid #f4a0ef; outline-offset:-3px; }
+.tab0 .actButton { animation:buttonOne 15s ease infinite; }
+.tab1 .actButton { animation:buttonTwo 15s ease infinite; }
+.tab2 .actButton { animation:buttonThree 15s ease infinite; }
+@keyframes buttonOne { 0%,31% { background:#e052e029; border-color:#e052e08c; color:#fff; } 33.5%,100% { background:transparent; border-color:#ffffff1a; color:#a99fb0; } }
+@keyframes buttonTwo { 0%,32%,62.5%,100% { background:transparent; border-color:#ffffff1a; color:#a99fb0; } 34.5%,60% { background:#e052e029; border-color:#e052e08c; color:#fff; } }
+@keyframes buttonThree { 0%,61% { background:transparent; border-color:#ffffff1a; color:#a99fb0; } 63.5%,100% { background:#e052e029; border-color:#e052e08c; color:#fff; } }
+@keyframes scene { 0%,100% { opacity:0; } 3%,97% { opacity:1; } }
+@keyframes tangle { 0%,4%,33%,100% { opacity:0; } 8%,26% { opacity:1; } }
+@keyframes fragment { 0% { opacity:0; transform:scale(.5); } 4%,27% { opacity:1; transform:translate(0,0); } 34% { opacity:1; transform:translate(var(--dx),var(--dy)) scale(.85); } 37%,100% { opacity:0; transform:translate(var(--dx),var(--dy)) scale(.3); } }
+@keyframes burst { 0%,36% { opacity:0; transform:scale(.4); } 37.5% { opacity:.85; transform:scale(.5); } 46%,100% { opacity:0; transform:scale(1.6); } }
+@keyframes card { 0%,36% { opacity:0; transform:scale(.7); } 41% { opacity:1; transform:scale(1.05); } 44%,60% { opacity:1; transform:none; } 67%,100% { opacity:1; transform:translateX(-235px) scale(.88); } }
+@keyframes tag { 0%,43% { opacity:0; } 46%,100% { opacity:1; } }
+@keyframes tagTwo { 0%,46% { opacity:0; } 49%,100% { opacity:1; } }
+@keyframes tagThree { 0%,49% { opacity:0; } 52%,100% { opacity:1; } }
+@keyframes connect { 0%,66% { stroke-dashoffset:100; } 70%,100% { stroke-dashoffset:0; } }
+@keyframes route { 0%,71% { stroke-dashoffset:100; } 88%,100% { stroke-dashoffset:0; } }
+@keyframes travel { 0%,70% { opacity:0; transform:translateY(0); } 71% { opacity:1; transform:translateY(0); } 88% { opacity:1; transform:translateY(240px); } 90%,100% { opacity:0; transform:translateY(240px); } }
+@keyframes step { 0%,67% { opacity:0; } 70%,100% { opacity:1; } }
+@keyframes stepTwo { 0%,69% { opacity:0; } 72%,100% { opacity:1; } }
+@keyframes stepThree { 0%,71% { opacity:0; } 74%,100% { opacity:1; } }
+@keyframes check { 0%,72% { opacity:0; } 76%,100% { opacity:1; } }
+@keyframes checkTwo { 0%,80.5% { opacity:0; } 84.5%,100% { opacity:1; } }
+@keyframes checkThree { 0%,89% { opacity:0; } 93%,100% { opacity:1; } }
+@keyframes tabOne { 0%,31% { fill:#e052e029; stroke:#e052e08c; } 33.5%,100% { fill:transparent; stroke:#ffffff1a; } }
+@keyframes tabTwo { 0%,32%,62.5%,100% { fill:transparent; stroke:#ffffff1a; } 34.5%,60% { fill:#e052e029; stroke:#e052e08c; } }
+@keyframes tabThree { 0%,61% { fill:transparent; stroke:#ffffff1a; } 63.5%,100% { fill:#e052e029; stroke:#e052e08c; } }
+@media(max-width:600px) { .stage { display:none; } .mobile { display:grid; gap:16px; padding:24px 18px; }.mobile>span { color:#e9a9ea; font-size:10px; letter-spacing:.12em; }.mobileCard { padding:20px; border:1px solid #e052e050; border-radius:18px; background:#2a2031; }.mobileCard>strong { display:block; margin:10px 0; }.mobileCard p { font-size:17px; margin-bottom:14px !important; }.mobileCard small { font-size:11px; color:#bca8c3; }.mobileStep { display:flex; align-items:center; gap:10px; font-size:12px; }.mobileStep>small { margin-left:auto; color:#e9a9ea; }.mobile svg { color:#e9a9ea; } }
+@media(prefers-reduced-motion:reduce) { .animation * { animation:none !important; }.fragment,.tangle,.burst,.traveler { display:none; }.card { transform:translateX(-235px) scale(.88); } }
