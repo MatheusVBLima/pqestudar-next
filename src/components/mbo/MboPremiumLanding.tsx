@@ -87,16 +87,28 @@ export default function MboPremiumLanding() {
             <span className={styles.cashPrice}>ou <b>R$ 59,90</b> à vista</span>
           </div>
           <PremiumCheckoutButton />
-          <PaymentMethods />
           <div className={styles.offerPayment}><ShieldCheck size={17} /><span>Pagamento seguro via Mercado Pago</span></div>
+          <PaymentMethods />
           <small className={styles.offerAccess}>Pagamento Vitalício | Acesso imediato após a compra</small>
         </div>
         <div className={styles.offerFeatures}>{[{ icon: Layers3, title: "Benefícios organizados", text: "Explore a biblioteca e encontre informações reunidas por benefício." }, { icon: Map, title: "Uma visão por região", text: "Consulte a abrangência dos programas no mapa da área Premium." }, { icon: Compass, title: "Fontes e próximos passos", text: "Entenda o contexto e encontre os canais responsáveis pelo atendimento." }].map(({ icon: Icon, title, text }) => <div key={title}><Icon size={25} /><h3>{title}</h3><p>{text}</p></div>)}</div>
         </div><small className={styles.offerNote}>Você contrata a curadoria do PqEstudar. Os benefícios públicos seguem as regras dos órgãos responsáveis e não exigem a compra do MBO.</small>
       </section>
       <section className={`${styles.section} ${styles.faq}`}><h2>Antes de continuar</h2><Accordion.Root type="multiple">{[["O MBO garante que eu receba um benefício?", "Não. O MBO ajuda a descobrir e organizar informações. A análise, os critérios e a concessão pertencem ao órgão responsável por cada programa."], ["Preciso pagar para solicitar os benefícios públicos?", "A compra do MBO não é requisito para acessar benefícios públicos. Você pode consultar as fontes oficiais diretamente; o Premium oferece a curadoria e a organização das informações."], ["Esses são todos os benefícios disponíveis?", "Não. Esta página apresenta quatro exemplos para experimentar a navegação. A ausência de um resultado na amostra não significa ausência de programas na sua cidade."], ["O checklist envia meus dados para algum órgão?", "Não. Ele é uma ferramenta de organização durante esta visita. Nenhuma solicitação é enviada, e as marcações são apagadas ao recarregar a página."]].map(([title, answer]) => <Accordion.Item key={title} value={title} className={styles.faqItem}><Accordion.Header><Accordion.Trigger className={styles.faqTrigger}>{title}<span aria-hidden="true">+</span></Accordion.Trigger></Accordion.Header><Accordion.Content className={styles.faqContent}><p>{answer}</p></Accordion.Content></Accordion.Item>)}</Accordion.Root></section>
+      <section className={styles.support} aria-labelledby="mbo-support-title">
+        <a href="https://wa.me/5585989613799" target="_blank" rel="noopener noreferrer" className={styles.supportLink}>
+          <svg className={styles.supportIcon} viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 .8A15.1 15.1 0 0 0 2.9 23.4L.8 31.2l8-2.1A15.2 15.2 0 1 0 16 .8Zm0 27.7a12.6 12.6 0 0 1-6.4-1.8l-.5-.3-4.7 1.2 1.3-4.6-.3-.5A12.6 12.6 0 1 1 16 28.5Zm7-9.4c-.4-.2-2.3-1.1-2.6-1.2-.4-.1-.6-.2-.9.2-.2.4-1 1.2-1.2 1.4-.2.3-.4.3-.8.1-.4-.2-1.6-.6-3.1-1.9-1.2-1.1-1.9-2.4-2.1-2.8-.2-.4 0-.6.2-.8l.6-.7.4-.7c.1-.3.1-.5 0-.7-.1-.2-.9-2.1-1.2-2.9-.3-.7-.6-.6-.8-.6h-.7c-.3 0-.7.1-1 .5-.4.4-1.3 1.3-1.3 3.2s1.4 3.7 1.6 4c.2.2 2.8 4.3 6.8 6 .9.4 1.7.6 2.3.8 1 .3 1.9.3 2.6.2.8-.1 2.3-1 2.6-1.9.3-.9.3-1.7.2-1.9-.1-.2-.4-.3-.8-.5Z"/></svg>
+          <h2 id="mbo-support-title">Dúvidas? Fale com o nosso suporte.</h2>
+          <span>Clique aqui para ter suporte <ArrowUpRight size={20} aria-hidden="true" /></span>
+        </a>
+        <div className={styles.legalNotice}>
+          <p><strong>Aviso legal:</strong> O Mapa dos Benefícios Ocultos (MBO) reúne informações para ajudar você a descobrir benefícios e organizar seus próximos passos. O conteúdo não garante elegibilidade, aprovação, concessão de benefícios ou qualquer resultado específico. Os critérios, prazos e decisões são definidos pelos órgãos responsáveis e podem mudar. Consulte sempre as informações atualizadas nos canais oficiais. A compra do MBO não é necessária para solicitar benefícios públicos e não substitui os procedimentos oficiais.</p>
+          <p>Copyright © 2026 PqEstudar. Todos os direitos reservados.</p>
+          <nav aria-label="Informações legais"><a href="/privacidade">Política de Privacidade</a><span aria-hidden="true">|</span><a href="/termos">Termos de Uso</a></nav>
+        </div>
+        <p className={styles.offerValidity}>*Oferta válida somente até fevereiro.</p>
+      </section>
     </main>
-    <footer className={styles.footer}><a href="/" className={styles.brand}><span>Pq</span>Estudar</a><p>Informação que abre caminhos.</p><div><a href="/termos">Termos</a><a href="/privacidade">Privacidade</a></div></footer>
 
     <Dialog open={!!detail} onOpenChange={(open) => { if (!open) setDetail(null); }}><DialogContent className={styles.detail} onCloseAutoFocus={(event) => {
       event.preventDefault();

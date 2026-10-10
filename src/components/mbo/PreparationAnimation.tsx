@@ -16,6 +16,8 @@ const steps = [
 export default function PreparationAnimation({ requestedBenefit }: { requestedBenefit?: { id: string; request: number } | null }) {
   const experienceRef = useRef<HTMLDivElement>(null);
   const [started, setStarted] = useState(false);
+  const remainingDemo = useRef(9000);
+  const timedReplay = useRef(0);
   const [showDemo, setShowDemo] = useState(true);
   const [showHandoff, setShowHandoff] = useState(false);
   const [replay, setReplay] = useState(0);
@@ -29,9 +31,22 @@ export default function PreparationAnimation({ requestedBenefit }: { requestedBe
   useEffect(() => {
     const element = experienceRef.current;
     if (!element) return;
+    // Reserve the largest rendered state so the following section never jumps up.
+    let height = 0;
+    const observer = new ResizeObserver(() => {
+      const next = Math.ceil(element.getBoundingClientRect().height);
+      if (next > height) { height = next; element.style.minHeight = `${height}px`; }
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const element = experienceRef.current;
+    if (!element) return;
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) { setStarted(true); observer.disconnect(); }
-    }, { threshold: .2 });
+      setStarted(entry.isIntersecting && entry.intersectionRatio >= .35);
+    }, { threshold: [0,.35] });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
@@ -49,8 +64,10 @@ export default function PreparationAnimation({ requestedBenefit }: { requestedBe
 
   useEffect(() => {
     if (!showDemo || !started) return;
-    const timer = window.setTimeout(() => { setShowDemo(false); setShowHandoff(true); }, 9000);
-    return () => window.clearTimeout(timer);
+    if (timedReplay.current !== replay) { remainingDemo.current = 9000; timedReplay.current = replay; }
+    const began = performance.now();
+    const timer = window.setTimeout(() => { setShowDemo(false); setShowHandoff(true); }, remainingDemo.current);
+    return () => { window.clearTimeout(timer); remainingDemo.current = Math.max(0, remainingDemo.current - (performance.now() - began)); };
   }, [showDemo, replay, started]);
 
   useEffect(() => {
@@ -67,9 +84,10 @@ export default function PreparationAnimation({ requestedBenefit }: { requestedBe
   }
 
   return <div ref={experienceRef} className={styles.experience} data-started={started}>
-    <div className={styles.toolbar}><span role="status">{showDemo ? "Veja como funciona" : showHandoff ? "" : "Agora é a sua vez"}</span><div><button type="button" onClick={() => { setShowHandoff(false); setReplay((current) => current + 1); setShowDemo(true); }}><Play size={15} aria-hidden="true"/>{showDemo ? "Reiniciar demonstração" : "Rever demonstração"}</button>{showDemo && <button type="button" onClick={() => { setShowDemo(false); setShowHandoff(true); }}>Usar checklist</button>}</div></div>
-    {showDemo ? <PreparationDemo key={replay} active={started}/> : showHandoff ? <div className={styles.handoff} role="status"><span>Sua vez</span><p>Escolha um benefício e prepare seu próximo passo.</p></div> : <div className={`${styles.demo} ${styles.live}`}>
-      <div className={styles.scene}>
+    <div className={styles.toolbar}><span role="status">{showDemo ? "Veja como funciona" : showHandoff ? "" : "Agora é a sua vez"}</span><div><button type="button" onClick={() => { remainingDemo.current = 9000; setShowHandoff(false); setReplay((current) => current + 1); setShowDemo(true); }}><Play size={15} aria-hidden="true"/>{showDemo ? "Reiniciar demonstração" : "Rever demonstração"}</button>{showDemo && <button type="button" onClick={() => { setShowDemo(false); setShowHandoff(true); }}>Usar checklist</button>}</div></div>
+    {showDemo ? <PreparationDemo key={replay} active={started}/> : <div className={`${styles.demo} ${styles.live}`} data-handoff={showHandoff}>
+      {showHandoff && <div className={styles.handoff} role="status"><span>Sua vez</span><p>Escolha um benefício e prepare seu próximo passo.</p></div>}
+      <div className={styles.scene} inert={showHandoff} aria-hidden={showHandoff || undefined}>
         <div className={styles.progress}>
           <div className={styles.ring} role="progressbar" aria-label="Preparação pessoal" aria-valuemin={0} aria-valuemax={benefit.steps.length} aria-valuenow={checked.length}>
             <svg viewBox="0 0 240 240" className={styles.ringSvg} aria-hidden="true"><circle className={styles.track} cx="120" cy="120" r="105"/><circle className={styles.fill} cx="120" cy="120" r="105" pathLength="100" style={{ strokeDashoffset:100 - progress * 100, stroke:complete ? "#6fd8a8" : "#e052e0", filter:"none" }}/></svg>
@@ -92,18 +110,20 @@ export default function PreparationAnimation({ requestedBenefit }: { requestedBe
 
 function PreparationDemo({ active }: { active: boolean }) {
   const demoRef = useRef<HTMLDivElement>(null);
+  const openingRemaining = useRef(3380);
   useEffect(() => {
     if (!active) return;
     // Preserve the select and first-click timing (26% of the 13s source).
     // Compress only the remaining sequence so the demonstration ends at 9s.
     const openingMs = 3380;
     const remainingRate = (13000 - openingMs) / (9000 - openingMs);
+    const began = performance.now();
     const timer = window.setTimeout(() => {
       demoRef.current?.getAnimations({ subtree: true }).forEach((animation) => {
         animation.updatePlaybackRate(remainingRate);
       });
-    }, openingMs);
-    return () => window.clearTimeout(timer);
+    }, openingRemaining.current);
+    return () => { window.clearTimeout(timer); openingRemaining.current = Math.max(0, openingRemaining.current - (performance.now() - began)); };
   }, [active]);
   const drag = useHorizontalDrag();
   return <div ref={demoRef} className={styles.demo} {...drag} role="img" aria-label="Demonstração animada do checklist do ID Jovem: seleção do benefício, conferência de critérios, organização de documentos e consulta ao canal oficial. O progresso vai de zero a três. Preparação pessoal não confirma elegibilidade nem aprovação.">
@@ -124,6 +144,7 @@ function PreparationDemo({ active }: { active: boolean }) {
         <div className={styles.dropdown}>{[{Icon:Ticket,text:"ID Jovem"},{Icon:Pill,text:"Farmácia Popular"},{Icon:Briefcase,text:"Escola do Trabalhador 4.0"},{Icon:Bus,text:"Passe Livre Todo Dia"}].map(({Icon,text},i)=><div key={text} className={i === 0 ? styles.selected : undefined}><Icon size={20}/><span>{text}</span>{i===0 && <Check size={20}/>}</div>)}</div>
         <div className={styles.rows}>{steps.map(({Icon,text},i)=><div key={text} className={`${styles.row} ${styles[`row${i}`]}`}><span className={styles.box}><Check size={20}/></span><span className={styles.rowIcon}><Icon size={22}/></span><span className={styles.rowText}>{text}</span></div>)}</div>
         <div className={styles.link}>Consultar o canal oficial <ExternalLink size={19}/></div>
+        <svg className={styles.mobileCursor} viewBox="0 0 30 30" aria-hidden="true"><path d="M3 3 L3 24 L8.5 19 L12 27 L15.2 25.6 L11.7 17.8 L19 17.8 Z" fill="#fff" stroke="#16101a" strokeWidth="1.6" strokeLinejoin="round"/></svg>
       </div>
       <svg className={styles.cursor} viewBox="0 0 30 30"><path d="M3 3 L3 24 L8.5 19 L12 27 L15.2 25.6 L11.7 17.8 L19 17.8 Z" fill="#fff" stroke="#16101a" strokeWidth="1.6" strokeLinejoin="round"/></svg>
     </div>

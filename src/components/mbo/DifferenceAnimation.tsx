@@ -23,7 +23,7 @@ export default function DifferenceAnimation() {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    const observer = new IntersectionObserver(([entry]) => { root.dataset.running = String(entry.isIntersecting); }, { threshold: .15 });
+    const observer = new IntersectionObserver(([entry]) => { root.dataset.running = String(entry.isIntersecting && entry.intersectionRatio >= .35); }, { threshold: [0,.35] });
     observer.observe(root);
     return () => observer.disconnect();
   }, []);
@@ -55,6 +55,15 @@ export default function DifferenceAnimation() {
         {["Informação solta", "Informação organizada", "Orientação para agir"].map((label, i) => <foreignObject key={label} x={76 + i * 274} y="442" width="260" height="48" className={`${styles.tab} ${styles[`tab${i}`]}`}><button type="button" className={styles.actButton} onClick={() => replayAct(i)} aria-label={`Rever etapa ${i + 1}: ${label}`}><span>0{i + 1}</span>{label}</button></foreignObject>)}
       </g>
     </svg>
-    <div className={styles.mobile}><span>DA DESCOBERTA À AÇÃO</span><div className={styles.mobileFragments} aria-hidden="true">{[Ticket, CalendarDays, FileText, MapPin, Clock, Percent].map((Icon, index) => <span key={index}><Icon size={28}/></span>)}</div><div className={styles.mobileCard}><Ticket size={26}/><strong>ID Jovem</strong><p>Cultura e viagens, com um caminho mais claro.</p><small>15–29 anos · CadÚnico · Renda familiar</small></div>{steps.map(({label, Icon}, i) => <div className={`${styles.mobileStep} ${styles[`mobileStep${i}`]}`} key={label}><Icon size={22}/><span>{label}</span><Check size={17}/><small>0{i + 1}</small></div>)}<div className={styles.mobileControls}>{["Informação solta", "Organizada", "Como agir"].map((label,i)=><button key={label} type="button" onClick={()=>replayAct(i)} aria-label={`Rever etapa ${i+1}: ${label}`}>{label}</button>)}</div></div>
+    <div className={styles.mobile}>
+      <div className={styles.mobileScene}>
+        <svg className={styles.mobileTangle} viewBox="0 0 320 400" aria-hidden="true"><path d="M50 110 C95 45 210 55 265 110 S230 235 160 195 S75 145 50 195 S215 275 265 195 S115 65 50 110" /></svg>
+        <div className={styles.mobileFragments} aria-hidden="true">{[Ticket, CalendarDays, FileText, MapPin, Clock, Percent].map((Icon, index) => <span key={index} style={{ "--dx": `${[85, 0, -85, 85, 0, -85][index]}px`, "--dy": `${index < 3 ? 55 : -55}px` } as CSSProperties}><Icon size={28}/></span>)}</div>
+        <div className={styles.mobileCard}><div className={styles.mobileCardHeading}><Ticket size={24}/><strong>ID Jovem</strong><ArrowUpRight size={20}/></div><p>Cultura e viagens, com um caminho mais claro.</p><div className={styles.mobileTags}>{["15–29 anos", "CadÚnico", "Renda familiar"].map((label,i)=><span key={label} className={styles[`tag${i}`]}>{label}</span>)}</div></div>
+        <div className={styles.mobileRoute} aria-hidden="true" />
+        <div className={styles.mobileSteps}>{steps.map(({label, Icon}, i) => <div className={`${styles.mobileStep} ${styles[`mobileStep${i}`]}`} key={label}><span className={styles.mobileNode}><Icon size={21}/><Check className={styles.check} size={14}/></span><span>{label}</span></div>)}</div>
+      </div>
+      <div className={styles.mobileControls}>{["Informação solta", "Organizada", "Como agir"].map((label,i)=><button className={styles[`tab${i}`]} key={label} type="button" onClick={()=>replayAct(i)} aria-label={`Rever etapa ${i+1}: ${label}`}>{label}</button>)}</div>
+    </div>
   </div>;
 }

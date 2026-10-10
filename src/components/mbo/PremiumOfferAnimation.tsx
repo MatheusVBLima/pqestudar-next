@@ -13,10 +13,8 @@ export default function PremiumOfferAnimation() {
     if (!layout) return;
     layout.dataset.offerState = "waiting";
     const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
-      layout.dataset.offerState = "started";
-      observer.disconnect();
-    }, { threshold: 0.15 });
+      layout.dataset.offerState = entry.isIntersecting && entry.intersectionRatio >= .25 ? "started" : "waiting";
+    }, { threshold: [0,.25] });
     observer.observe(layout);
     // Focusing the real purchase control must never leave it waiting offscreen.
     const start = () => { layout.dataset.offerState = "started"; observer.disconnect(); };

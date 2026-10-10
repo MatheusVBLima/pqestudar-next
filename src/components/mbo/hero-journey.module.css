@@ -90,3 +90,5 @@
 
 /* Play once and keep the completed illustration until the page reloads. */
 .journey * { animation-iteration-count:1 !important; animation-fill-mode:forwards !important; }
+
+.journey:not([data-running="true"]) * { animation-play-state:paused !important; }
