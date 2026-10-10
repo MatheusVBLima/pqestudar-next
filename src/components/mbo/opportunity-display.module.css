@@ -29,3 +29,9 @@
 @media(max-width:1000px) { .inner { padding-inline:105px; } .message strong { font-size:17px; } .subline { flex-wrap:wrap; gap:3px 10px; } }
 @media(max-width:760px) { .inner { padding:14px 0; gap:7px; } .messages { grid-column:1; } .message strong { font-size:18px; } .icon { display:none; } .subline { flex-direction:column; gap:5px; } .controls { position:static; transform:none; grid-column:1; grid-row:3; } .link { grid-column:auto; grid-row:auto; } }
 @media(prefers-reduced-motion:reduce) { .message,.dots button>span,.link svg { transition:none; } }
+@media(max-width:760px) {
+ .inner { margin-inline:20px;min-height:68px;padding:10px 0;gap:2px; }
+ .message strong { font-size:14px; }
+ .controls { grid-row:2; }
+ .dots button { height:24px; }
+}

@@ -45,9 +45,6 @@ export default function OpportunityDisplay() {
           <div><strong>{title.slice(0, -emphasis.length)}<em>{emphasis}</em></strong></div>
         </div>)}
       </div>
-      <div className={styles.controls}>
-        <div className={styles.dots} role="group" aria-label="Escolher oportunidade">{opportunities.map(({ title }, index) => <button type="button" key={title} aria-label={title} aria-pressed={active === index} onClick={() => setActive(index)}><span /></button>)}</div>
-      </div>
     </div>
   </section>;
 }

@@ -28,6 +28,19 @@
 .tab rect { fill:#e052e000; stroke:#ffffff1a; }.tab text { font-size:15px; }
 .tab0 rect { animation:tabOne 15s infinite; }.tab1 rect { animation:tabTwo 15s infinite; }.tab2 rect { animation:tabThree 15s infinite; }
 .mobile { display:none; }
+.animation:not([data-running="true"]) * { animation-play-state:paused; }
+.mobileFragments { position:absolute;inset:65px 24px auto;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;animation:mobileFragments 15s ease-in-out infinite; }
+.mobileFragments>span { display:grid;place-items:center;aspect-ratio:1;border:1px solid #ffffff20;border-radius:18px;background:#2a2031; }
+.mobileControls { display:flex;gap:6px;margin-top:10px; }
+.mobileControls button { flex:1;min-height:44px;border:1px solid #e052e055;border-radius:10px;color:#efb3ed;font-size:10px;padding:8px 5px; }
+@keyframes mobileFragments { 0%,27% { opacity:1;transform:none; } 36%,100% { opacity:0;transform:translateY(35px) scale(.2);visibility:hidden; } }
+@keyframes mobileCard { 0%,35% { opacity:0;transform:scale(.75); } 43%,100% { opacity:1;transform:none; } }
+@media(max-width:600px) {
+  .mobileCard { animation:mobileCard 15s ease-in-out infinite; }
+  .mobileStep { animation:step 15s infinite; }
+  .mobileStep1 { animation-name:stepTwo; }.mobileStep2 { animation-name:stepThree; }
+  .mobileStep>svg:nth-of-type(2) { color:#6fd8a8; }
+}
 /* The animation replaces the old comparison panel and its duplicate controls. */
 :global(section):has(.animation)>:not(:first-child):not(:has(.animation)) { display:none; }
 :global(section):has(.animation)>:first-child>p { display:none; }
@@ -64,4 +77,4 @@
 @keyframes tabTwo { 0%,32%,62.5%,100% { fill:transparent; stroke:#ffffff1a; } 34.5%,60% { fill:#e052e029; stroke:#e052e08c; } }
 @keyframes tabThree { 0%,61% { fill:transparent; stroke:#ffffff1a; } 63.5%,100% { fill:#e052e029; stroke:#e052e08c; } }
 @media(max-width:600px) { .stage { display:none; } .mobile { display:grid; gap:16px; padding:24px 18px; }.mobile>span { color:#e9a9ea; font-size:10px; letter-spacing:.12em; }.mobileCard { padding:20px; border:1px solid #e052e050; border-radius:18px; background:#2a2031; }.mobileCard>strong { display:block; margin:10px 0; }.mobileCard p { font-size:17px; margin-bottom:14px !important; }.mobileCard small { font-size:11px; color:#bca8c3; }.mobileStep { display:flex; align-items:center; gap:10px; font-size:12px; }.mobileStep>small { margin-left:auto; color:#e9a9ea; }.mobile svg { color:#e9a9ea; } }
-@media(prefers-reduced-motion:reduce) { .animation * { animation:none !important; }.fragment,.tangle,.burst,.traveler { display:none; }.card { transform:translateX(-235px) scale(.88); } }
+@media(prefers-reduced-motion:reduce) { .animation * { animation:none !important; }.fragment,.tangle,.burst,.traveler,.mobileFragments { display:none; }.card { transform:translateX(-235px) scale(.88); } }

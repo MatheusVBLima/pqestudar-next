@@ -6,6 +6,8 @@ export function useHeroScrollSnap() {
   const introRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Touch layouts have taller, stacked content; keep reading under user control.
+    if (window.matchMedia("(max-width: 760px)").matches) return;
     const intro = introRef.current;
     if (!intro) return;
     const sections = Array.from(intro.parentElement?.children ?? []).filter(

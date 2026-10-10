@@ -14,6 +14,8 @@ const steps = [
 ];
 
 export default function PreparationAnimation({ requestedBenefit }: { requestedBenefit?: { id: string; request: number } | null }) {
+  const experienceRef = useRef<HTMLDivElement>(null);
+  const [started, setStarted] = useState(false);
   const [showDemo, setShowDemo] = useState(true);
   const [showHandoff, setShowHandoff] = useState(false);
   const [replay, setReplay] = useState(0);
@@ -23,6 +25,16 @@ export default function PreparationAnimation({ requestedBenefit }: { requestedBe
   const checked = checks[benefit.id] ?? [];
   const complete = checked.length === benefit.steps.length;
   const progress = benefit.steps.length ? checked.length / benefit.steps.length : 0;
+
+  useEffect(() => {
+    const element = experienceRef.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setStarted(true); observer.disconnect(); }
+    }, { threshold: .2 });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!requestedBenefit || !MBO_BENEFITS.some((item) => item.id === requestedBenefit.id)) return;
@@ -36,10 +48,10 @@ export default function PreparationAnimation({ requestedBenefit }: { requestedBe
   }, []);
 
   useEffect(() => {
-    if (!showDemo) return;
+    if (!showDemo || !started) return;
     const timer = window.setTimeout(() => { setShowDemo(false); setShowHandoff(true); }, 9000);
     return () => window.clearTimeout(timer);
-  }, [showDemo, replay]);
+  }, [showDemo, replay, started]);
 
   useEffect(() => {
     if (!showHandoff) return;
@@ -54,9 +66,9 @@ export default function PreparationAnimation({ requestedBenefit }: { requestedBe
     });
   }
 
-  return <div className={styles.experience}>
+  return <div ref={experienceRef} className={styles.experience} data-started={started}>
     <div className={styles.toolbar}><span role="status">{showDemo ? "Veja como funciona" : showHandoff ? "" : "Agora é a sua vez"}</span><div><button type="button" onClick={() => { setShowHandoff(false); setReplay((current) => current + 1); setShowDemo(true); }}><Play size={15} aria-hidden="true"/>{showDemo ? "Reiniciar demonstração" : "Rever demonstração"}</button>{showDemo && <button type="button" onClick={() => { setShowDemo(false); setShowHandoff(true); }}>Usar checklist</button>}</div></div>
-    {showDemo ? <PreparationDemo key={replay}/> : showHandoff ? <div className={styles.handoff} role="status"><span>Sua vez</span><p>Escolha um benefício e prepare seu próximo passo.</p></div> : <div className={`${styles.demo} ${styles.live}`}>
+    {showDemo ? <PreparationDemo key={replay} active={started}/> : showHandoff ? <div className={styles.handoff} role="status"><span>Sua vez</span><p>Escolha um benefício e prepare seu próximo passo.</p></div> : <div className={`${styles.demo} ${styles.live}`}>
       <div className={styles.scene}>
         <div className={styles.progress}>
           <div className={styles.ring} role="progressbar" aria-label="Preparação pessoal" aria-valuemin={0} aria-valuemax={benefit.steps.length} aria-valuenow={checked.length}>
@@ -78,9 +90,10 @@ export default function PreparationAnimation({ requestedBenefit }: { requestedBe
   </div>;
 }
 
-function PreparationDemo() {
+function PreparationDemo({ active }: { active: boolean }) {
   const demoRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    if (!active) return;
     // Preserve the select and first-click timing (26% of the 13s source).
     // Compress only the remaining sequence so the demonstration ends at 9s.
     const openingMs = 3380;
@@ -91,7 +104,7 @@ function PreparationDemo() {
       });
     }, openingMs);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [active]);
   const drag = useHorizontalDrag();
   return <div ref={demoRef} className={styles.demo} {...drag} role="img" aria-label="Demonstração animada do checklist do ID Jovem: seleção do benefício, conferência de critérios, organização de documentos e consulta ao canal oficial. O progresso vai de zero a três. Preparação pessoal não confirma elegibilidade nem aprovação.">
     <div className={styles.scene} aria-hidden="true">

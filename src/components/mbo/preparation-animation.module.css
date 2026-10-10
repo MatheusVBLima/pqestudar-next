@@ -1,4 +1,5 @@
 .experience { width:100%; max-width:1100px; margin-inline:auto; grid-column:1/-1; }
+.experience[data-started="false"] .demo * { animation-play-state:paused; }
 .toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px; font-size:12px; color:#bca8c3; }
 .toolbar>div { display:flex; flex-wrap:wrap; gap:10px; }
 .toolbar button { display:inline-flex; align-items:center; gap:7px; padding:9px 12px; border:1px solid #e052e033; border-radius:10px; background:#e052e008; color:#efb3ed; font:inherit; }
@@ -48,6 +49,8 @@
 .disclaimer { display:block; max-width:310px; margin-top:26px; font-size:12px; line-height:1.5; text-align:center; color:#a99fb0; }
 .checklist { position:relative; border-left:1px solid #ffffff14; margin-block:30px; padding:0 30px; }
 .label { color:#a99fb0; font-size:14px; margin-bottom:12px; }
+.checklist button[role="combobox"] { background:#1d161f;color:#f6f0f8;border:1px solid #ffffff26;border-radius:12px;min-height:44px; }
+.liveRow input { color-scheme:dark; }
 .select { display:flex; align-items:center; gap:12px; height:54px; padding:0 18px; background:#1d161f; border:1px solid #ffffff1a; border-radius:14px; font-size:19px; animation:select var(--loop) infinite; }
 .select>svg { color:#e9a9ea; }.select>svg:last-child { margin-left:auto; color:#a99fb0; }
 .dropdown { position:absolute; top:91px; left:30px; right:30px; padding:8px; border:1px solid #ffffff20; border-radius:14px; background:#2b2330; box-shadow:0 20px 40px #0005; z-index:2; animation:dropdown var(--loop) infinite; }
@@ -90,4 +93,25 @@
 @keyframes spark { 0%,65% { opacity:0; transform:translateX(110px); } 67% { opacity:1; } 73%,100% { opacity:0; transform:translateX(180px); } }
 @keyframes cursor { 0% { opacity:0; left:88%; top:55%; } 3% { opacity:1; left:88%; top:55%; } 8%,10% { left:82%; top:15%; } 14%,16.5% { left:67%; top:25%; } 24.5%,26.5% { left:48%; top:32%; } 44.5%,46.5% { left:48%; top:49%; } 61.5%,63.5% { left:48%; top:67%; } 75%,78% { left:65%; top:86%; } 88%,100% { left:90%; top:93%; opacity:1; } }
 @media(max-width:760px) { .scene { grid-template-columns:1fr; }.progress { padding:24px 16px; }.ring { width:190px; height:190px; }.symbols { width:34px; height:34px; }.symbols svg { width:30px; height:30px; }.number b { font-size:64px; }.numbers { height:72px; }.status { font-size:21px; margin-top:16px; }.disclaimer { margin-top:12px; }.checklist { border-left:0; border-top:1px solid #ffffff14; margin:0; padding:24px 16px; }.row { gap:10px; min-height:86px; }.rowText { font-size:13px; }.rowIcon { width:32px; height:32px; }.dropdown { top:116px; left:16px; right:16px; }.cursor { display:none; }.spark { display:none; } }
+@media(max-width:760px) {
+  .scene { min-height:0; }
+  .toolbar { gap:8px;margin-bottom:16px; }
+  .toolbar button { min-height:40px;padding:8px 10px;font-size:11px; }
+  .progress { display:grid;grid-template-columns:112px minmax(0,1fr);gap:6px 18px;padding:16px 0 22px; }
+  .ring { width:112px;height:112px;grid-row:1/3; }
+  .liveStatus,.status { margin:0;text-align:left;font-size:18px;line-height:1.3;align-self:end; }
+  .status { height:46px; }
+  .disclaimer { margin:0;font-size:10px;text-align:left;align-self:start; }
+  .liveSymbol svg { width:25px;height:25px; }
+  .liveNumber b,.number b { font-size:38px; }
+  .liveNumber small,.number small { font-size:16px; }
+  .numbers { width:100px;height:43px; }
+  .symbols { width:26px;height:26px; }.symbols svg { width:22px;height:22px; }
+  .checklist { padding:20px 0 0; }
+  .rows { margin-top:12px; }
+  .liveRow,.row { min-height:72px;padding-block:12px;font-size:13px;gap:12px; }
+  .dropdown { top:86px;left:0;right:0; }
+  .link { font-size:13px;min-height:44px; }
+  .handoff { min-height:460px; }
+}
 @media(prefers-reduced-motion:reduce) { .demo * { animation:none !important; }.ticket,.number0,.number1,.number2,.statusZero,.statusPending,.dropdown,.cursor,.burst,.spark { display:none; }.fill { stroke-dashoffset:0; stroke:var(--mint); }.box { background:var(--mint); border-color:var(--mint); color:#102b1b; }.box svg { stroke-dashoffset:0; }.rowText { color:#a8e6c8; } }

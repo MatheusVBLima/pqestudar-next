@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { Ticket, CalendarDays, FileText, MapPin, Clock, Percent, ClipboardCheck, Folder, ShieldCheck, Check, ArrowUpRight } from "lucide-react";
 import { useHorizontalDrag } from "./useHorizontalDrag";
 import styles from "./difference-animation.module.css";
@@ -20,6 +20,13 @@ const steps = [
 export default function DifferenceAnimation() {
   const rootRef = useRef<HTMLDivElement>(null);
   const drag = useHorizontalDrag();
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const observer = new IntersectionObserver(([entry]) => { root.dataset.running = String(entry.isIntersecting); }, { threshold: .15 });
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, []);
   function replayAct(index: number) {
     rootRef.current?.getAnimations({ subtree: true }).forEach((animation) => {
       animation.currentTime = [0, 4800, 9150][index] ?? 0;
@@ -48,6 +55,6 @@ export default function DifferenceAnimation() {
         {["Informação solta", "Informação organizada", "Orientação para agir"].map((label, i) => <foreignObject key={label} x={76 + i * 274} y="442" width="260" height="48" className={`${styles.tab} ${styles[`tab${i}`]}`}><button type="button" className={styles.actButton} onClick={() => replayAct(i)} aria-label={`Rever etapa ${i + 1}: ${label}`}><span>0{i + 1}</span>{label}</button></foreignObject>)}
       </g>
     </svg>
-    <div className={styles.mobile} aria-hidden="true"><span>DA DESCOBERTA À AÇÃO</span><div className={styles.mobileCard}><Ticket size={26}/><strong>ID Jovem</strong><p>Cultura e viagens, com um caminho mais claro.</p><small>15–29 anos · CadÚnico · Renda familiar</small></div>{steps.map(({label, Icon}, i) => <div className={styles.mobileStep} key={label}><Icon size={22}/><span>{label}</span><Check size={17}/><small>0{i + 1}</small></div>)}</div>
+    <div className={styles.mobile}><span>DA DESCOBERTA À AÇÃO</span><div className={styles.mobileFragments} aria-hidden="true">{[Ticket, CalendarDays, FileText, MapPin, Clock, Percent].map((Icon, index) => <span key={index}><Icon size={28}/></span>)}</div><div className={styles.mobileCard}><Ticket size={26}/><strong>ID Jovem</strong><p>Cultura e viagens, com um caminho mais claro.</p><small>15–29 anos · CadÚnico · Renda familiar</small></div>{steps.map(({label, Icon}, i) => <div className={`${styles.mobileStep} ${styles[`mobileStep${i}`]}`} key={label}><Icon size={22}/><span>{label}</span><Check size={17}/><small>0{i + 1}</small></div>)}<div className={styles.mobileControls}>{["Informação solta", "Organizada", "Como agir"].map((label,i)=><button key={label} type="button" onClick={()=>replayAct(i)} aria-label={`Rever etapa ${i+1}: ${label}`}>{label}</button>)}</div></div>
   </div>;
 }

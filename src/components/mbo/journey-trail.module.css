@@ -19,3 +19,9 @@
 @media(max-width:1300px) { .checkpoint { width:28px; height:32px; } .checkpoint span { width:20px; height:20px; font-size:8px; } }
 @media(max-width:760px) { .checkpoint { width:18px; height:32px; } .checkpoint span { width:9px; height:9px; font-size:0; } .path,.completed { stroke-width:1; stroke-dasharray:1 7; } .checkpoint[data-state="current"] span { box-shadow:0 0 0 3px #ee65ea18; } }
 @media(prefers-reduced-motion:reduce) { .completed,.checkpoint span { transition:none; } .flow { animation:none; display:none; } }
+@media(max-width:760px) {
+ .checkpoint span { width:6px;height:6px;border-width:.75px; }
+ .checkpoint[data-state="current"] span { background:#38203c;box-shadow:0 0 0 2px #ee65ea0d; }
+ .path,.completed { stroke-width:.65; }
+ .flow { stroke-width:1;stroke-dasharray:3 97;filter:drop-shadow(0 0 2px #ee65ea66); }
+}

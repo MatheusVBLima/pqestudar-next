@@ -1,12 +1,10 @@
 ﻿"use client";
-import { useHorizontalDrag } from "./useHorizontalDrag";
 import Image from "next/image";
 import { Check, ArrowUpRight, Ticket } from "lucide-react";
 import { brazilOutline } from "./brazil-outline";
 import styles from "./hero-journey.module.css";
 export default function HeroJourney() {
- const drag = useHorizontalDrag();
- return <div className={styles.journey} {...drag} style={{ touchAction: "pan-y", userSelect: "none", cursor: "grab" }} onDragStart={(event) => event.preventDefault()} role="group" aria-label="Descubra o ID Jovem e prepare seu próximo passo. Arraste para rever a animação.">
+ return <div className={styles.journey} style={{ touchAction: "pan-y" }} onDragStart={(event) => event.preventDefault()} role="group" aria-label="Descubra o ID Jovem e prepare seu próximo passo.">
  <div className={styles.art} aria-hidden="true">
  <svg className={styles.map} viewBox="0 0 440 390"><path d={brazilOutline}/><circle cx="328" cy="88" r="6"/><circle cx="230" cy="205" r="4"/><circle cx="272" cy="276" r="5"/><circle cx="160" cy="123" r="4"/></svg>
  <div className={styles.beacon}/>

@@ -28,7 +28,9 @@ export default function JourneyTrail() {
         const marker = heading?.previousElementSibling;
         const anchor = marker instanceof HTMLElement ? marker.getBoundingClientRect() : heading?.getBoundingClientRect() ?? box;
         // Stay in the empty margin, never over the section's content.
-        const x = Math.max(9, Math.min(64, (box.left - base.left) / 2));
+        const x = window.matchMedia("(max-width: 760px)").matches
+          ? Math.max(16.5, (anchor.left - base.left) / 2 + 2.5)
+          : Math.max(9, Math.min(64, (box.left - base.left) / 2));
         return { x, y: anchor.top - base.top + anchor.height / 2 };
       });
       setPoints((previous) => previous.length === nextPoints.length && previous.every((point, i) => Math.abs(point.x - nextPoints[i].x) < .5 && Math.abs(point.y - nextPoints[i].y) < .5) ? previous : nextPoints);

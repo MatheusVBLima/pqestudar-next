@@ -25,7 +25,22 @@
 @keyframes float { 0%,100% { transform:translateY(0) rotate(-5deg); } 50% { transform:translateY(-9px) rotate(-3deg); } }
 @keyframes tick { 0%,18% { color:transparent; background:transparent; } 30%,90% { color:#ee91eb; background:#ee65ea20; } 100% { color:transparent; } }
 @media(max-width:1000px) { .photo { height:155px; } .art { height:470px; } .checklist { padding:15px; width:65%; } }
-@media(max-width:760px) { .art { height:470px; } .benefit { width:62%; left:4%; } .checklist { top:62%; right:2%; width:65%; } .photo { height:160px; } .mapLabel { font-size:7px; } }
+@media(max-width:760px) {
+ .journey { max-width:380px; }
+ .art { height:clamp(225px,32svh,290px); }
+ .benefit { width:62%; left:4%; top:4%; }
+ .photo { height:92px; }
+ .photo>span { font-size:9px; left:10px; bottom:10px; }
+ .benefitTitle { padding:12px; }
+ .benefitTitle strong { font-size:21px; }
+ .benefitTitle small { font-size:7px; }
+ .checklist { top:51%; right:1%; width:65%; padding:12px; }
+ .checklist>strong { font-size:11px; margin-bottom:8px; }
+ .row { font-size:9px; gap:7px; margin-top:7px; }
+ .tick { width:17px; height:17px; }
+ .mapLabel { display:none; }
+ .footer { justify-content:center; padding:12px 0 0; font-size:10px; }
+}
 .art { animation:sceneReveal 10s linear infinite; }
 .map path { stroke-dasharray:2400; animation:mapDraw 10s ease-out infinite; }
 .map circle { transform-box:fill-box; transform-origin:center; animation:pointReveal 10s ease-out infinite; }
@@ -60,15 +75,18 @@
 .art,.map path,.map circle,.benefit,.checklist,.tick,.tick svg,
 .stepDiscover,.stepUnderstand,.stepPrepare { animation-duration:14s; }
 .beacon { animation-duration:14s,2.2s; }
-@keyframes sceneReveal { 0%,100% { opacity:0; } 2.14%,94.29% { opacity:1; } }
+@keyframes sceneReveal { 0% { opacity:0; } 2.14%,100% { opacity:1; } }
 @keyframes mapDraw { 0% { stroke-dashoffset:2400; fill-opacity:0; } 12.86%,100% { stroke-dashoffset:0; fill-opacity:1; } }
 @keyframes pointReveal { 0%,7.14% { opacity:0; scale:0; } 12.86%,100% { opacity:1; scale:1; } }
 @keyframes cardReveal { 0%,20.71% { opacity:0; transform:translateY(40px) rotate(-9deg) scale(.9); } 29.29%,100% { opacity:1; transform:translateY(0) rotate(-3.5deg) scale(1); } }
 @keyframes checklistReveal { 0%,40% { opacity:0; transform:translate(30px,35px) rotate(8deg) scale(.92); } 47.14%,100% { opacity:1; transform:translate(0,0) rotate(3deg) scale(1); } }
 @keyframes checkReveal { 0%,47.86% { color:transparent; background:transparent; transform:scale(1); } 50% { transform:scale(1.15); } 52.86%,100% { color:#ee91eb; background:#ee65ea30; transform:scale(1); } }
 @keyframes checkDraw { 0%,48.57% { stroke-dashoffset:26; } 52.86%,100% { stroke-dashoffset:0; } }
-@keyframes discoverLabel { 0%,2.14%,100% { color:#ffffff38; } 10%,94.29% { color:#f4eef6; } }
-@keyframes understandLabel { 0%,20.71%,100% { color:#ffffff38; } 29.29%,94.29% { color:#f4eef6; } }
-@keyframes prepareLabel { 0%,40%,100% { color:#ffffff38; } 47.14%,94.29% { color:#f4eef6; } }
+@keyframes discoverLabel { 0%,2.14% { color:#ffffff38; } 10%,100% { color:#f4eef6; } }
+@keyframes understandLabel { 0%,20.71% { color:#ffffff38; } 29.29%,100% { color:#f4eef6; } }
+@keyframes prepareLabel { 0%,40% { color:#ffffff38; } 47.14%,100% { color:#f4eef6; } }
 @media(prefers-reduced-motion:reduce) { .steps>span { color:#f4eef6; } }
 @media(prefers-reduced-motion:reduce) { .journey * { animation:none !important; } .footer button { display:none; } }
+
+/* Play once and keep the completed illustration until the page reloads. */
+.journey * { animation-iteration-count:1 !important; animation-fill-mode:forwards !important; }

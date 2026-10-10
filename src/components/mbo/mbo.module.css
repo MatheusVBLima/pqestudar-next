@@ -159,6 +159,13 @@
   border-bottom:1px solid var(--line);
   background:#141216f5;
 }
+@media(max-width:360px) {
+  .page .nav { padding-inline:16px;gap:8px; }
+  .page .brand { font-size:15px;gap:4px; }
+  .page .brand svg { width:44px; }
+  .page .navCta { font-size:10px;padding:9px;gap:4px;white-space:nowrap; }
+  .page .hero h1 { font-size:27px; }
+}
 .brand {
   display:flex;
   align-items:center;
@@ -207,10 +214,24 @@
   padding:80px 0;
   scroll-margin-top:30px;
 }
+@media(max-width:760px) {
+  .page>main>section.section { min-height:0;height:auto;padding:36px var(--mobile-gutter);justify-content:flex-start; }
+  .page>main>.section[id="descobrir"] { min-height:0; }
+  .page>main>.intro { min-height:0; }
+  .page .sectionHeading { margin-bottom:24px; }
+}
 .intro {
   min-height:calc(100svh - var(--nav-height));
   display:grid;
   grid-template-rows:1fr auto;
+}
+@media(max-width:760px) {
+  .page>main>.intro { min-height:calc(100svh - var(--nav-height)); }
+  .intro .hero>div:first-child { order:2; }
+  .intro .hero>div:last-child { order:1; }
+  .heroExtra,.navCtaLong { display:none; }
+  .intro .hero .primary { width:100%; }
+  .intro .heroNote { justify-content:center;margin-top:10px; }
 }
 .hero {
   width:100%;
@@ -307,6 +328,10 @@
 .page .hero .primary {
   background:#e54be0;
   color:#fff;
+  margin-top:12px;
+  min-height:56px;
+  font-size:15px;
+  font-weight:800;
 }
 .page .hero .primary:hover { background:#f07aee; }
 .page .hero .primary::after { content:none; animation:none; }
@@ -1060,6 +1085,7 @@
 @media(max-width:760px) {
   .page {
     --nav-height:68px;
+    --mobile-gutter:clamp(28px,7.5vw,48px);
   }
   .nav {
     padding:0 20px;
@@ -1076,28 +1102,35 @@
     padding:9px 12px;
   }
   .section {
-    padding:48px 20px;
+    padding:48px var(--mobile-gutter);
     scroll-margin-top:15px;
   }
   .hero {
     grid-template-columns:1fr;
-    gap:30px;
-    padding-top:40px;
-    padding-bottom:30px;
+    grid-template-rows:auto auto;
+    align-content:center;
+    gap:16px;
+    min-height:0;
+    margin-inline:0;
+    width:100%;
+    padding:14px var(--mobile-gutter) 18px;
   }
   .hero h1 {
-    font-size:clamp(32px,8.5vw,48px);
-    margin:20px 0;
+    font-size:clamp(29px,8vw,42px);
+    margin:14px 0;
     line-height:1.12;
   }
   .hero p {
     font-size:14px;
     line-height:1.7;
-    margin-bottom:22px;
+    margin-bottom:20px;
     max-width:450px;
   }
   .eyebrow {
-    font-size:9px;
+    font-size:11px;
+    line-height:1.5;
+    letter-spacing:.1em;
+    font-weight:700;
   }
 
 

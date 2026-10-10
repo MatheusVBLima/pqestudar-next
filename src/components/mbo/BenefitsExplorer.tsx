@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties as ReactCSSProperties } from "react";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight, Bus, GraduationCap, MapPin, Pill, ShieldCheck, Sparkles, Ticket } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Bus, ChevronDown, GraduationCap, MapPin, Pill, ShieldCheck, Sparkles, Ticket } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MBO_BENEFITS, type MboBenefit } from "@/lib/mbo-preview";
 import { brazilOutline } from "./brazil-outline";
@@ -31,6 +31,7 @@ const project = (lon: number, lat: number) => ({ x: (lon + 74) * 9.66 + 7, y: (5
 
 export default function BenefitsExplorer({ onOpen }: { onOpen: (benefit: MboBenefit) => void }) {
   const [uf, setUf] = useState("BR");
+  const [locationOpen, setLocationOpen] = useState(false);
   const [category, setCategory] = useState("Todos");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [size, setSize] = useState({ width: 400, height: 410 });
@@ -67,11 +68,30 @@ export default function BenefitsExplorer({ onOpen }: { onOpen: (benefit: MboBene
     const list = listRef.current;
     const row = benefitId ? rows.current.get(benefitId) : null;
     if (!list || !row) return;
+    if (window.matchMedia("(max-width: 760px)").matches) {
+      list.scrollTo({ left: list.scrollLeft + row.getBoundingClientRect().left - list.getBoundingClientRect().left - 14, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      return;
+    }
     const listBox = list.getBoundingClientRect();
     const rowBox = row.getBoundingClientRect();
     const delta = rowBox.top < listBox.top ? rowBox.top - listBox.top : rowBox.bottom > listBox.bottom ? rowBox.bottom - listBox.bottom : 0;
     if (delta) list.scrollBy({ top: delta, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   }
+
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || !window.matchMedia("(max-width: 760px)").matches) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const sync = () => {
+      const left = list.getBoundingClientRect().left + 14;
+      const nearest = [...rows.current.entries()].sort((a, b) => Math.abs(a[1].getBoundingClientRect().left - left) - Math.abs(b[1].getBoundingClientRect().left - left))[0];
+      if (nearest) setSelectedId(nearest[0]);
+    };
+    const onScroll = () => { clearTimeout(timer); timer = setTimeout(sync, 120); };
+    const frame = requestAnimationFrame(() => { list.scrollLeft = 0; sync(); });
+    list.addEventListener("scroll", onScroll, { passive: true });
+    return () => { clearTimeout(timer); cancelAnimationFrame(frame); list.removeEventListener("scroll", onScroll); };
+  }, [category]);
 
   const groups = new Map<string, { x: number; y: number; items: MboBenefit[] }>();
   visible.forEach((benefit) => {
@@ -96,8 +116,12 @@ export default function BenefitsExplorer({ onOpen }: { onOpen: (benefit: MboBene
 
   return <div className={styles.panel} aria-label="Explorar benefícios">
     <div className={styles.filters}>
+      <button type="button" className={styles.locationToggle} aria-expanded={locationOpen} aria-controls={`${id}-location`} onClick={() => setLocationOpen(!locationOpen)}><MapPin size={18} aria-hidden="true" /><span>{uf === "BR" ? "Todo o Brasil" : `${regions[uf].city}, ${uf}`}</span><ChevronDown size={16} aria-hidden="true" /></button>
+      <div id={`${id}-location`} className={styles.locationFields} data-open={locationOpen}>
       <div className={styles.field}><label htmlFor={`${id}-uf`}>Estado</label><Select value={uf} onValueChange={setUf}><SelectTrigger id={`${id}-uf`} className={styles.select}><SelectValue /></SelectTrigger><SelectContent>{Object.entries(regions).map(([value, region]) => <SelectItem key={value} value={value}>{region.name}</SelectItem>)}</SelectContent></Select></div>
       <div className={styles.field}><label htmlFor={`${id}-city`}>Cidade</label><Select value={regions[uf].city} disabled={uf === "BR"}><SelectTrigger id={`${id}-city`} className={styles.select}><SelectValue /></SelectTrigger><SelectContent><SelectItem value={regions[uf].city}>{regions[uf].city}</SelectItem></SelectContent></Select></div>
+      <button type="button" className={styles.locationDone} onClick={() => setLocationOpen(false)}>Concluir</button>
+      </div>
       <div className={styles.sample}><Sparkles size={24} aria-hidden="true" /><div>Uma amostra do MBO<small>4 exemplos para explorar</small></div></div>
       <div className={styles.chips} role="group" aria-label="Filtrar por interesse">{["Todos", ...Object.keys(categories)].map((item) => <button type="button" key={item} style={colorStyle(item)} aria-pressed={category === item} onClick={() => { setCategory(item); if (selected && item !== "Todos" && selected.category !== item) setSelectedId(null); }}>{item !== "Todos" && <i aria-hidden="true" />}{item}</button>)}</div>
     </div>
@@ -116,7 +140,7 @@ export default function BenefitsExplorer({ onOpen }: { onOpen: (benefit: MboBene
             {[...groups.values()].map((group) => <span key={`${group.x}-${group.y}`} className={styles.anchor} style={{ left: group.x / 400 * size.width, top: group.y / 410 * size.height }} />)}
             {pins.map((pin, index) => {
               const Icon = icons[pin.benefit.image as keyof typeof icons] ?? Ticket;
-              return <button type="button" key={pin.benefit.id} className={styles.pin} style={{ ...colorStyle(pin.benefit.category), left: pin.x, top: pin.y, animationDelay: `${index * .08}s` }} data-selected={selectedId === pin.benefit.id} data-dimmed={!!selected && selectedId !== pin.benefit.id} aria-pressed={selectedId === pin.benefit.id} aria-label={`${pin.benefit.title} — ver no mapa`} onClick={() => selectedId === pin.benefit.id ? onOpen(pin.benefit) : selectBenefit(pin.benefit.id)}><Icon size={19} aria-hidden="true" /></button>;
+              return <button type="button" key={pin.benefit.id} className={styles.pin} style={{ ...colorStyle(pin.benefit.category), left: pin.x, top: pin.y, animationDelay: `${index * .08}s` }} data-selected={selectedId === pin.benefit.id} data-dimmed={!!selected && selectedId !== pin.benefit.id} aria-pressed={selectedId === pin.benefit.id} aria-label={`${pin.benefit.title} — ver no mapa`} onClick={() => selectedId === pin.benefit.id && !window.matchMedia("(max-width: 760px)").matches ? onOpen(pin.benefit) : selectBenefit(pin.benefit.id)}><Icon size={19} aria-hidden="true" /></button>;
             })}
             {selected && activePin && <div ref={calloutRef} key={`${selected.id}-${uf}`} className={styles.callout} data-callout data-above={calloutAbove} style={{ ...colorStyle(selected.category), width: calloutWidth, left: calloutLeft, top: calloutTop, "--arrow-x": `${Math.max(18, Math.min((calloutAbove ? activePin.x : activePin.ax) - calloutLeft, calloutWidth - 18))}px` } as CSSProperties}>
               <div className={styles.kicker}>{selected.scope} · {selected.category}</div><h4>{selected.title}</h4><p>{tagline(selected)}</p><button type="button" onClick={() => onOpen(selected)}>Abrir benefício <ArrowRight size={16} aria-hidden="true" /></button>
@@ -132,7 +156,7 @@ export default function BenefitsExplorer({ onOpen }: { onOpen: (benefit: MboBene
             <span className={styles.thumb}><Image src={`/images/premium/${benefit.image}.webp`} alt="" fill sizes="70px" /></span>
             <span className={styles.rowCopy}><span className={styles.meta}>{benefit.scope} · {benefit.category}</span><strong>{benefit.title}</strong><span className={styles.description}>{benefit.summary}</span><span className={styles.tagline}>{tagline(benefit)}</span></span>
           </button>
-          <button type="button" className={styles.open} aria-label={`Abrir ${benefit.title}`} onClick={() => { selectBenefit(benefit.id); onOpen(benefit); }}><ArrowUpRight size={20} aria-hidden="true" /></button>
+          <button type="button" className={styles.open} aria-label={`Abrir ${benefit.title}`} onClick={() => { selectBenefit(benefit.id); onOpen(benefit); }}><span className={styles.openLabel}>Ver benefício</span><ArrowUpRight size={20} aria-hidden="true" /></button>
         </div>)}
       </div>
     </div>

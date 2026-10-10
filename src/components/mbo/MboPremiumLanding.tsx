@@ -38,13 +38,13 @@ export default function MboPremiumLanding() {
     onPointerDownCapture={(event) => { event.currentTarget.dataset.input = "pointer"; }}
     onKeyDownCapture={(event) => { event.currentTarget.dataset.input = "keyboard"; }}
   >
-    <header className={styles.nav}><a href="/" className={styles.brand} aria-label="PqEstudar e MBO, página inicial"><span>Pq</span>Estudar <i aria-hidden="true" /> <MboLogo compact /></a><a className={styles.navCta} href="#premium">Conhecer o Premium <ArrowUpRight size={16} /></a></header>
+    <header className={styles.nav}><a href="/" className={styles.brand} aria-label="PqEstudar e MBO, página inicial"><span>Pq</span>Estudar <i aria-hidden="true" /> <MboLogo compact /></a><a className={styles.navCta} href="#premium"><span className={styles.navCtaLong}>Conhecer o </span>Premium <ArrowUpRight size={16} /></a></header>
 
     <main style={{ position: "relative" }}>
       <JourneyTrail />
       <div className={styles.intro} ref={introRef}>
       <section className={`${styles.section} ${styles.hero}`}>
-        <div><span className={styles.eyebrow}><Compass size={15} /> MAPA DOS BENEFÍCIOS OCULTOS</span><h1>Uma oportunidade<br />pode estar mais perto<br /><em>do que você imagina.</em></h1><p>Descubra benefícios, entenda as regras e encontre seu próximo passo. Experimente uma parte do MBO, agora.</p><a className={styles.primary} href="#descobrir">Explorar benefícios <ArrowDown size={18} /></a><small className={styles.heroNote}><ShieldCheck size={15} /> Amostra gratuita. Sem cadastro.</small></div>
+        <div><span className={styles.eyebrow}><Compass size={15} /> MAPA DOS BENEFÍCIOS OCULTOS</span><h1>Uma oportunidade<br />pode estar mais perto<br /><em>do que você imagina.</em></h1><p>Descubra benefícios, entenda as regras e encontre seu próximo passo.<span className={styles.heroExtra}> Experimente uma parte do MBO, agora.</span></p><a className={styles.primary} href="#descobrir">Explorar benefícios <ArrowDown size={18} /></a><small className={styles.heroNote}><ShieldCheck size={15} /> Amostra gratuita. Sem cadastro.</small></div>
         <HeroJourney />
       </section>
 

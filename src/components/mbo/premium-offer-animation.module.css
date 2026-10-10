@@ -153,6 +153,10 @@
 @media(prefers-reduced-motion:reduce) {
   :global(div):has(>.intro)>:global([class*="offerCard"]) :global(button[class*="primary"])::before { animation:none;opacity:0; }
 }
+/* Mobile checkout must remain visible even while the decorative sequence runs. */
+@media(max-width:760px) {
+  :global(div):has(>.intro)>:global([class*="offerCard"]) :global(button[class*="primary"]) { animation:none!important;opacity:1!important;visibility:visible!important;transform:none!important; }
+}
 /* Share a shorter timeline so the tiles, price and real CTA stay synchronized. */
 .tile,
 :global(div):has(>.intro)>:global([class*="offerIntro"]),
