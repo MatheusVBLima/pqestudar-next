@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import ts from 'typescript';
+const require=createRequire(import.meta.url), cache=new Map();
+let user={id:'00000000-0000-4000-8000-000000000001'}, allowed=false, syncFails=false;
+const calls=[], syncs=[];
+const environment={env:{AFFILIATE_PIX_ENCRYPTION_KEY:'ab'.repeat(32)}};
+function load(path) {
+ if(cache.has(path))return cache.get(path);
+ const sandbox={exports:{},Request,Response,URL,Buffer,console,process:environment,require:name=>{
+  if(name==='server-only')return {};
+  if(name==='@/lib/supabase-server')return {createServerSupabaseClientWithAuth:async()=>({auth:{getUser:async()=>({data:{user},error:null})},rpc:async(name,args)=>{calls.push({name,args});return {data:name==='affiliate_is_admin'?allowed:name==='affiliate_wallet'?{available_cents:0}:{ok:true},error:null};}})};
+  if(name==='@/lib/supabase-admin')return {createSupabaseAdminClient:()=>({rpc:async(name,args)=>{calls.push({name,args});return {data:name==='affiliate_wallet_orders'?['ORDTEST1234567']:null,error:null};}})};
+  if(name==='@/lib/mercado-pago-fulfillment')return {syncMercadoPagoOrder:async id=>{syncs.push(id);if(syncFails)throw new Error('provider failed');}};
+  if(name.startsWith('@/'))return load('src/'+name.slice(2)+'.ts');
+  return require(name);
+ }};
+ vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,sandbox);
+ cache.set(path,sandbox.exports);return sandbox.exports;
+}
+const wallet=load('src/app/api/affiliates/wallet/route.ts'), finance=load('src/app/api/admin/affiliates/finance/route.ts'), pix=load('src/lib/affiliates/pix-server.ts'), amounts=load('src/lib/affiliates/wallet.ts');
+const post=(body,origin='https://example.test')=>new Request('https://example.test/api/affiliates/wallet',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)});
+const request={id:'00000000-0000-4000-8000-000000000002',amount:5000,pixType:'email',pix:'test@example.test'};
+assert.equal(amounts.parseWalletAmount('50,01'),5001);assert.equal(amounts.parseWalletAmount('0.29'),29);assert.equal(amounts.parseWalletAmount('1e3'),null);assert.equal(amounts.parseWalletAmount('1.999'),null);
+assert.equal(pix.validatePix('cpf','111.111.111-11'),null);assert.equal(pix.validatePix('cpf','529.982.247-25'),'52998224725');assert.equal(pix.validatePix('phone','+5585989613799'),'+5585989613799');
+const sealed=pix.encryptPix(request.pix,user.id);assert.equal(sealed.includes(request.pix),false);assert.equal(pix.decryptPix(sealed,user.id),request.pix);assert.throws(()=>pix.decryptPix(sealed,request.id));
+assert.equal((await wallet.POST(post(request,'https://evil.test'))).status,403);assert.equal(calls.length,0);
+user=null;assert.equal((await wallet.GET(new Request('https://example.test/api/affiliates/wallet'))).status,401);
+user={id:'00000000-0000-4000-8000-000000000001'};
+assert.equal((await wallet.POST(post({...request,amount:1.1}))).status,400);assert.equal((await wallet.POST(post({...request,profile_id:user.id}))).status,400);
+assert.equal((await wallet.POST(post(request))).status,200);assert.equal(calls.at(-1).args.p_cipher.includes(request.pix),false);assert.equal(pix.decryptPix(calls.at(-1).args.p_cipher,user.id),request.pix);
+environment.env.AFFILIATE_PIX_ENCRYPTION_KEY='';assert.equal((await wallet.POST(post(request))).status,503);environment.env.AFFILIATE_PIX_ENCRYPTION_KEY='ab'.repeat(32);
+let response=await wallet.GET(new Request('https://example.test/api/affiliates/wallet'));assert.equal(response.headers.get('cache-control'),'private, no-store');
+assert.equal((await finance.POST(post({action:'release',id:request.id}))).status,403);assert.equal(syncs.length,0);
+allowed=true;syncFails=true;assert.equal((await finance.POST(post({action:'release',id:request.id}))).status,503);assert.equal(calls.some(c=>c.name==='affiliate_release_commission'),false);
+syncFails=false;assert.equal((await finance.POST(post({action:'release',id:request.id}))).status,200);assert.equal(calls.at(-1).name,'affiliate_release_commission');
+const paid={action:'review',id:request.id,version:4,status:'paid',reason:'Checked transfer',reference:'PIX-123456',proofType:'application/pdf',verified:true};
+assert.equal((await finance.POST(post(paid))).status,400);assert.equal((await finance.POST(post({...paid,proof:Buffer.from('not a PDF').toString('base64')}))).status,400);
+assert.equal((await finance.POST(post({...paid,proof:Buffer.from('%PDF-1.7\n').toString('base64')}))).status,200);assert.equal(calls.at(-1).name,'affiliate_review_payout');assert.equal(calls.at(-1).args.p_proof,'\\x255044462d312e370a');
+console.log('Wallet API: auth, CSRF, strict input, cents parsing, encryption binding, key configuration, official sync failure and proof validation passed.');

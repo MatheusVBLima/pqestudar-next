@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Clock3, Loader2, Users } from 'lucide-react';
+import { CheckCircle2, Clock3, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { statusLabels, type AffiliateDashboard } from '@/lib/affiliates/types';
 import { ApprovedAffiliateDashboard } from './ApprovedAffiliateDashboard';
+import { AffiliateDashboardSkeleton } from './AffiliateDashboardSkeleton';
 import { partnersRequest } from '@/lib/affiliates/client';
 export default function AffiliateDashboardClient({ userId }: { userId: string }) {
   const queryKey = ['affiliate-membership', userId];
@@ -24,6 +25,7 @@ export default function AffiliateDashboardClient({ userId }: { userId: string })
   function submit(event: FormEvent) { event.preventDefault(); apply.mutate(); }
   const data = query.data;
   const profile = data?.profile;
+  if (query.isPending) return <AffiliateDashboardSkeleton />;
   if (data && profile?.status === 'approved' && !query.isError) return <ApprovedAffiliateDashboard key={userId} userId={userId} dashboard={data} />;
   return <main className="mx-auto w-full max-w-6xl px-6 py-10 sm:px-8 sm:py-14">
     <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -31,7 +33,6 @@ export default function AffiliateDashboardClient({ userId }: { userId: string })
         <h1 className="text-3xl font-bold tracking-tight">{profile?.status === 'approved' ? 'Meu painel de afiliado' : 'Programa de afiliados'}</h1></div>
       {profile && <Badge variant="secondary">{statusLabels[profile.status]}</Badge>}
     </header>
-    {query.isPending && <p role="status" className="flex items-center gap-2 py-12"><Loader2 className="h-5 w-5 animate-spin" /> Carregando seu cadastro…</p>}
     {query.isError && <Card><CardContent className="space-y-4 pt-6"><p role="alert">{query.error.message}</p><Button onClick={() => query.refetch()}>Tentar novamente</Button></CardContent></Card>}
     {data && !profile && <div className="grid gap-8 lg:grid-cols-2">
       <section className="space-y-6"><h2 className="text-2xl font-semibold">Compartilhe o MBO. Cresça com suas indicações.</h2>

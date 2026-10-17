@@ -1,0 +1,11 @@
+create role anon; create role authenticated; create role service_role bypassrls;
+ create schema auth; create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,created_at timestamptz default now());
+ grant all on auth.users to service_role;
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create function auth.jwt() returns jsonb language sql stable as $$select '{}'::jsonb$$;
+ create function public.is_admin() returns boolean language sql stable as $$select false$$;
+ create type public.app_role as enum('admin','developer','moderator','user');
+ create table public.test_roles(user_id uuid,role public.app_role);
+ create function public.has_role(_user_id uuid,_role public.app_role) returns boolean language sql stable security definer as $$select exists(select 1 from public.test_roles where user_id=_user_id and role=_role)$$;
+ grant usage on schema public,auth to anon,authenticated,service_role;
+ create table public.subscriptions(id uuid primary key default gen_random_uuid(),user_id uuid,status text,plan_type text,plan_tier text,starts_at timestamptz default now(),ends_at timestamptz,created_at timestamptz default now(),updated_at timestamptz default now());

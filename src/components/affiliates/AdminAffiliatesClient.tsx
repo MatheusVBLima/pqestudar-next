@@ -1,6 +1,7 @@
 'use client';
 
 import { AffiliateTrackingSettings } from './AffiliateTrackingSettings';
+import { AffiliateFinanceAdmin } from './AffiliateFinanceAdmin';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -30,6 +31,7 @@ export default function AdminAffiliatesClient({ userId }: { userId: string }) {
   return <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-8">
     <header><h1 className="text-2xl font-bold">Gestão de Afiliados</h1><p className="mt-2 text-sm text-muted-foreground">Solicitações e participação no MBO Partners.</p></header>
     <AffiliateTrackingSettings userId={userId} />
+    <AffiliateFinanceAdmin userId={userId} />
     <div className="flex flex-wrap items-center justify-between gap-4"><div className="space-y-2"><Label htmlFor="affiliate-filter">Situação do cadastro</Label><Select value={status} onValueChange={value => { setStatus(value); setPage(0); }}><SelectTrigger id="affiliate-filter" className="w-56"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Todos</SelectItem>{Object.entries(statusLabels).map(([value,label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div><Button variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}>Atualizar</Button></div>
     {query.isPending && <p role="status">Carregando solicitações…</p>}
     {query.isError && <p role="alert" className="text-destructive">{query.error.message}</p>}

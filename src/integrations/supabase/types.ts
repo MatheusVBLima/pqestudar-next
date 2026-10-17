@@ -4355,6 +4355,14 @@ export type Database = {
       }
     }
     Functions: {
+      affiliate_wallet: { Args: { p_page?: number }; Returns: Json }
+      affiliate_release_commission: { Args: { p_commission: string }; Returns: undefined }
+      affiliate_request_payout: { Args: { p_id: string; p_amount: number; p_cipher: string; p_mask: string }; Returns: Json }
+      affiliate_finance_admin: { Args: { p_page?: number }; Returns: Json }
+      affiliate_finance_settings: { Args: { p_minimum: number; p_days: number }; Returns: undefined }
+      affiliate_payout_detail: { Args: { p_id: string }; Returns: Json }
+      affiliate_payout_proof: { Args: { p_attempt: string }; Returns: { base64: string; type: string } }
+      affiliate_review_payout: { Args: { p_id: string; p_version: number; p_status: string; p_reason: string; p_reference?: string | null; p_proof?: string | null; p_type?: string | null }; Returns: undefined }
       affiliate_code_available: { Args: { p_code: string }; Returns: Json }
       affiliate_change_code: { Args: { p_code: string; p_version: number }; Returns: Json }
       affiliate_sales: { Args: { p_page?: number }; Returns: Json }

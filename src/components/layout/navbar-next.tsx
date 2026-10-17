@@ -2,6 +2,9 @@
 
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { partnersRequest } from "@/lib/affiliates/client";
+import type { AffiliateDashboard } from "@/lib/affiliates/types";
 import {
   BarChart3,
   BookOpen,
@@ -85,6 +88,18 @@ export function Navbar() {
   const router = useRouter();
   const pathname = usePathname() ?? "/";
   const { user, signOut, switchGoogleAccount, loading } = useAuth();
+  const affiliateMembership = useQuery({
+    queryKey: ['affiliate-membership', user?.id],
+    queryFn: () => partnersRequest<AffiliateDashboard>('/api/affiliates'),
+    enabled: !!user && !loading,
+    retry: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+  const showAffiliatePanel = !!user && !loading && !affiliateMembership.isError
+    && !affiliateMembership.isFetching
+    && affiliateMembership.data?.profile?.user_id === user.id
+    && affiliateMembership.data?.profile?.status === 'approved';
   const { isAdmin, isModerator, loading: rolesLoading, error: rolesError, refetch: retryRoles } = useUserRoles();
   const { isActive } = useSubscription();
   const { items: navItems, logos, loading: navLoading } = useNavConfig();
@@ -355,7 +370,7 @@ export function Navbar() {
                     Entrar
                   </Button>
                 ) : (
-                  <DropdownMenu modal={false}>
+                  <DropdownMenu modal={false} onOpenChange={open => { if (open && user && !loading) void affiliateMembership.refetch(); }}>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
@@ -412,9 +427,9 @@ export function Navbar() {
                           <BookOpen className="h-4 w-4 mr-2" />Painel do moderador
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem onClick={() => handleNavigation("/afiliados")} className="cursor-pointer">
+                      {showAffiliatePanel && <DropdownMenuItem onClick={() => handleNavigation("/afiliados")} className="cursor-pointer">
                         <Users className="h-4 w-4 mr-2" />Afiliados
-                      </DropdownMenuItem>
+                      </DropdownMenuItem>}
                       {showPremiumArea && (
                         <DropdownMenuItem
                           onMouseEnter={() => !isOnKitSubdomain && router.prefetch("/premium")}
@@ -456,6 +471,7 @@ export function Navbar() {
               open={mobileMenuOpen}
               onOpenChange={(open) => {
                 if (isDiscoveryMenuLocked && !open) return;
+                if (open && user && !loading) void affiliateMembership.refetch();
                 setMobileMenuOpen(open);
               }}
             >
@@ -576,9 +592,9 @@ export function Navbar() {
                             <BookOpen className="h-4 w-4 mr-2" />Painel do moderador
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => handleNavigation("/afiliados")} className="cursor-pointer">
+                        {showAffiliatePanel && <DropdownMenuItem onClick={() => handleNavigation("/afiliados")} className="cursor-pointer">
                         <Users className="h-4 w-4 mr-2" />Afiliados
-                      </DropdownMenuItem>
+                      </DropdownMenuItem>}
                       {showPremiumArea && (
                           <DropdownMenuItem
                             onMouseEnter={() => !isOnKitSubdomain && router.prefetch("/premium")}
