@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/footer-next";
 import { DiscoveryTour } from "@/components/onboarding/discovery-tour";
 
 function shouldShowFooter(pathname: string) {
+  if (pathname === "/afiliados" || pathname.startsWith("/afiliados/")) return false;
   if ((pathname === "/mbo-premium" || pathname.startsWith("/mbo-premium/"))) return false;
   if (pathname === "/pqestudar-premium") return false;
   if (pathname === "/carteirinha") return false;

@@ -1,0 +1,29 @@
+'use client';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { partnersRequest } from '@/lib/affiliates/client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { AffiliateLevel } from '@/lib/affiliates/types';
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+
+type Sales = { total:number; valid_sales:number; pending_sales:number; clicks:number; unreconciled_sales:number; commissions_cents:number;
+ performance?:{day:string;sales:number}[];
+ items: {id:string;status:string;rate_bps:number|null;net_cents:number|null;commission_cents:number|null;created_at:string}[] };
+const labels:Record<string,string> = {awaiting_payment:'Aguardando pagamento',pending_calculation:'Pendente de apuração',in_security:'Em segurança',canceled:'Cancelada'};
+const money=(cents:number|null)=>cents===null?'Em apuração':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(cents/100);
+export function AffiliateActivity({userId,mode,levels=[],levelId}:{userId:string;mode:'overview'|'sales'|'growth';levels?:AffiliateLevel[];levelId?:string}) {
+ const [page,setPage]=useState(0);
+ const query=useQuery({queryKey:['affiliate-sales',userId,page],queryFn:()=>partnersRequest<Sales>(`/api/affiliates/sales?page=${page}`),retry:false,staleTime:0,refetchOnWindowFocus:true});
+ const data=query.data;
+ if(query.isPending) return <p role="status" className="py-6">Carregando suas indicações…</p>;
+ if(query.isError) return <div className="space-y-3 py-6"><p role="alert">{query.error.message}</p><Button variant="outline" onClick={()=>query.refetch()}>Tentar novamente</Button></div>;
+ if(!data) return null;
+ if(mode==='growth') {
+  const current=levels.find(l=>l.id===levelId);
+  const next=levels.find(l=>l.minimum_sales>(current?.minimum_sales||0));
+  return <div className="my-4 space-y-3 rounded-xl border p-5"><p className="font-medium">{data.valid_sales} vendas válidas acumuladas</p>{next?<><label htmlFor="affiliate-progress" className="block text-sm text-muted-foreground">Faltam {Math.max(0,next.minimum_sales-data.valid_sales)} vendas para {next.name}.</label><progress id="affiliate-progress" className="h-2 w-full accent-primary" value={Math.min(data.valid_sales,next.minimum_sales)} max={next.minimum_sales} /></>:<p className="text-sm text-muted-foreground">Você conquistou o nível mais alto do programa.</p>}<p className="text-xs text-muted-foreground">O nível conquistado é preservado após reembolsos. O novo percentual vale para confirmações futuras.</p></div>;
+ }
+ if(mode==='overview') return <Card><CardHeader><CardTitle>Suas indicações</CardTitle></CardHeader><CardContent><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[['Vendas válidas',data.valid_sales],['Aguardando pagamento',data.pending_sales],['Comissões em segurança',money(data.commissions_cents)],['Cliques registrados',data.clicks]].map(([label,value])=><div key={label} className="rounded-xl border p-5"><p className="text-sm text-muted-foreground">{label}</p><p className="mt-3 text-2xl font-semibold">{value}</p></div>)}</div><p className="mt-4 text-sm text-muted-foreground">{data.unreconciled_sales} venda(s) com líquido em apuração. Esses valores ainda não integram as comissões calculadas. Saques não estão disponíveis.</p><p className="mt-2 text-xs text-muted-foreground">Cliques refletem indicações consentidas registradas, não visitantes únicos.</p><h3 className="mb-4 mt-8 font-semibold">Vendas válidas nos últimos 30 dias</h3>{data.performance?.length?<div className="h-56 w-full" role="img" aria-label={`${data.performance.reduce((sum,item)=>sum+item.sales,0)} vendas válidas nos últimos 30 dias`}><ResponsiveContainer width="100%" height="100%"><BarChart data={data.performance}><XAxis dataKey="day" tickFormatter={value=>String(value).slice(5).split('-').reverse().join('/')} /><YAxis allowDecimals={false} width={30} /><Tooltip labelFormatter={value=>String(value).split('-').reverse().join('/')} /><Bar dataKey="sales" name="Vendas válidas" fill="hsl(var(--primary))" radius={[4,4,0,0]} isAnimationActive={false} /></BarChart></ResponsiveContainer></div>:<p className="text-sm text-muted-foreground">Nenhuma venda válida neste período.</p>}</CardContent></Card>;
+ return <Card><CardHeader><CardTitle>Minhas vendas</CardTitle></CardHeader><CardContent>{!data.items.length?<p className="py-8 text-center text-muted-foreground">Nenhuma venda atribuída ao seu cadastro ainda.</p>:<div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b">{['Venda','Líquido elegível','Percentual','Comissão','Status'].map(title=><th className="whitespace-nowrap p-3 font-medium" key={title}>{title}</th>)}</tr></thead><tbody>{data.items.map(sale=><tr key={sale.id} className="border-b"><td className="p-3"><p>{new Date(sale.created_at).toLocaleDateString('pt-BR')}</p><code className="text-xs text-muted-foreground" title={sale.id}>{sale.id}</code></td><td className="whitespace-nowrap p-3">{money(sale.net_cents)}</td><td className="p-3">{sale.rate_bps===null?'A definir':`${sale.rate_bps/100}%`}</td><td className="whitespace-nowrap p-3">{money(sale.commission_cents)}</td><td className="whitespace-nowrap p-3">{labels[sale.status]||sale.status}</td></tr>)}</tbody></table></div>}<div className="mt-4 flex items-center justify-between gap-3"><Button variant="outline" disabled={page===0} onClick={()=>setPage(p=>p-1)}>Anterior</Button><span className="text-sm">Página {page+1}</span><Button variant="outline" disabled={(page+1)*20>=data.total} onClick={()=>setPage(p=>p+1)}>Próxima</Button></div><p className="mt-4 text-xs text-muted-foreground">Valores de vendas canceladas são históricos e não compõem comissões elegíveis.</p></CardContent></Card>;
+}

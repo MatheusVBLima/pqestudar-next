@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import { affiliatePaymentEvidence } from '@/lib/affiliates/payment-evidence';
 import { mercadoPagoConfig, mercadoPagoFetch, mercadoPagoOrderStatus, MP_ORDER_ID, MP_REFERENCE, validateMercadoPagoOrder } from "@/lib/mercado-pago";
 
 export async function syncMercadoPagoOrder(id: string) {
@@ -15,9 +16,11 @@ export async function syncMercadoPagoOrder(id: string) {
     || (intent.order_id && intent.order_id !== id)) throw new Error("mp_intent_mismatch");
   validateMercadoPagoOrder(order, intent.id, config.seller, config.live);
   if (!order.last_updated_date || !Number.isFinite(Date.parse(order.last_updated_date))) throw new Error("mp_missing_order_date");
-  const { error: saveError } = await admin.rpc("record_mercado_pago_order", {
+  const evidence = affiliatePaymentEvidence(order);
+  const { error: saveError } = await admin.rpc("record_affiliate_mercado_pago_order", {
     p_reference: intent.id, p_order_id: id, p_status: mercadoPagoOrderStatus(order),
     p_updated_at: order.last_updated_date,
+    p_event_key: evidence.key, p_details: evidence.details,
   });
   if (saveError) throw saveError;
 }

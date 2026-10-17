@@ -27,7 +27,7 @@ const admin = {
   rpc: async (name, args) => {
     rpcCalls.push({ name, args });
     if (failDb) return { error: { message: 'db failed' } };
-    if (name === 'prepare_mercado_pago_order') return { data: intent, error: null };
+    if (name === 'prepare_affiliate_mercado_pago_order') return { data: intent, error: null };
     intent.status = args.p_status;
     intent.last_synced_at = new Date().toISOString();
     return { error: null };
@@ -56,6 +56,7 @@ function load(path) {
       return { ok: true, json: async () => url.endsWith('/users/me') ? { id: '123', site_id: 'MLB', tags: ['test_user'] } : order };
     },
     require: name => {
+      if (name === 'server-only') return {};
       if (name === '@/lib/supabase-admin') return { createSupabaseAdminClient: () => admin };
       if (name === '@/lib/supabase-server') return { createServerSupabaseClientWithAuth: async () => ({ auth: { getUser: async () => ({ data: { user } }) } }) };
       if (name.startsWith('@/')) return load(`src/${name.slice(2)}.ts`);

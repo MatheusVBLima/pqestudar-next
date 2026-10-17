@@ -16,7 +16,7 @@ const ADMIN_CACHE = {
   staleTime: 10 * 60 * 1000,
   gcTime: 30 * 60 * 1000,
   refetchOnMount: true,
-  refetchOnWindowFocus: false as const,
+  refetchOnWindowFocus: true,
   refetchOnReconnect: true,
   retry: 2,
 };

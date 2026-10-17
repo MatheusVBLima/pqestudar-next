@@ -7,6 +7,7 @@ fs.mkdirSync('test-results/mercado-pago', { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   let mode = 'error', requests = [], state = 'pending';
+  await page.route('**/api/affiliates/referral', route => route.fulfill({json:{accepted:false,cleared:true}}));
   await page.route('**/api/mercado-pago/create-checkout', async route => {
     requests.push(route.request().postDataJSON());
     await route.fulfill(mode === 'error' ? { status: 503, json: { error: 'unavailable' } }
@@ -31,6 +32,7 @@ try {
   mode = 'ok'; await cta.click();
   await page.waitForURL('https://www.mercadopago.com.br/checkout/**');
   assert.equal(requests[0].requestId, requests[2].requestId, 'Same key for network retries');
+  assert.equal(requests[0].affiliateConsent,false,'No attribution without marketing consent');
   await page.goto(`${base}/mbo-premium`, { waitUntil: 'networkidle' });
   mode = 'login'; await cta.click();
   await page.waitForURL('**/login?from=**');
@@ -58,8 +60,12 @@ try {
   await page.goto(`${base}/mbo-premium/sucesso?session_id=cs_test_legacy`, { waitUntil: 'networkidle' });
   await page.getByRole('link', { name: 'Entrar no Premium' }).waitFor();
   await page.setViewportSize({ width: 1440, height: 1000 });
+  // Payment regression in the supported reduced-motion mode. Normal desktop
+  // offer animation timing is a separate landing-page test.
+  await page.emulateMedia({reducedMotion:'reduce'});
   await page.goto(`${base}/mbo-premium`, { waitUntil: 'networkidle' });
+  await page.locator('#premium').scrollIntoViewIfNeeded();
   await cta.scrollIntoViewIfNeeded();
   await page.screenshot({ path: 'test-results/mercado-pago/offer-desktop.png' });
-  console.log('PASS: mobile/desktop offer, error/retry, unsafe redirect blocked, login return, stable retry key, pending/test/refund/active views, legacy Stripe return and mobile overflow. Provider mocked.');
+  console.log('PASS: mobile offer, reduced-motion desktop offer, error/retry, unsafe redirect blocked, login return, stable retry key, pending/test/refund/active views, legacy Stripe return and mobile overflow. Provider mocked; normal desktop animation not verified.');
 } finally { await browser.close(); }

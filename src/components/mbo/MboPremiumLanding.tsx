@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { ThemeSelector } from "@/components/layout/theme-selector";
+import "./mbo-theme.css";
 import BenefitsExplorer from "./BenefitsExplorer";
 import PremiumCheckoutButton from "./PremiumCheckoutButton";
 import PaymentMethods from "./PaymentMethods";
@@ -38,7 +40,7 @@ export default function MboPremiumLanding() {
     onPointerDownCapture={(event) => { event.currentTarget.dataset.input = "pointer"; }}
     onKeyDownCapture={(event) => { event.currentTarget.dataset.input = "keyboard"; }}
   >
-    <header className={styles.nav}><a href="/" className={styles.brand} aria-label="PqEstudar e MBO, página inicial"><span>Pq</span>Estudar <i aria-hidden="true" /> <MboLogo compact /></a><a className={styles.navCta} href="#premium"><span className={styles.navCtaLong}>Conhecer o </span>Premium <ArrowUpRight size={16} /></a></header>
+    <header className={styles.nav}><a href="/" className={styles.brand} aria-label="PqEstudar e MBO, página inicial"><span>Pq</span>Estudar <i aria-hidden="true" /> <MboLogo compact /></a><div className={styles.navActions}><ThemeSelector className={styles.themeToggle} /><a className={styles.navCta} href="#premium"><span className={styles.navCtaLong}>Conhecer o </span>Premium <ArrowUpRight size={16} /></a></div></header>
 
     <main style={{ position: "relative" }}>
       <JourneyTrail />

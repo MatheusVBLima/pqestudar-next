@@ -216,6 +216,12 @@
     "dynamic": false
   },
   {
+    "path": "/admin/mbo-partners",
+    "name": "Mbo partners",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
     "path": "/admin/menu",
     "name": "Menu",
     "area": "Admin",
@@ -285,6 +291,12 @@
     "path": "/admin/suporte",
     "name": "Suporte",
     "area": "Admin",
+    "dynamic": false
+  },
+  {
+    "path": "/afiliados",
+    "name": "Afiliados",
+    "area": "Site",
     "dynamic": false
   },
   {

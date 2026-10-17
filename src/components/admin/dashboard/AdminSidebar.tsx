@@ -571,6 +571,11 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isActive('/admin/mbo-partners')} data-hover-label="Gestão de Afiliados" className={itemClass(isActive('/admin/mbo-partners'))}>
+                  <Link href="/admin/mbo-partners"><Users className="h-4 w-4" /><span>Gestão de Afiliados</span></Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isActive('/admin/influenciadores')} data-hover-label="Influenciadores" className={itemClass(isActive('/admin/influenciadores'))}>
                   <Link href="/admin/influenciadores">
                     <Users className="h-4 w-4" />

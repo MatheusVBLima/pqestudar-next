@@ -1,0 +1,82 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import ts from 'typescript';
+const require = createRequire(import.meta.url);
+let user = { id: '00000000-0000-4000-8000-000000000001' };
+let authError = null;
+let rpcError = null;
+let adminAllowed = false;
+const calls = [];
+const cache = new Map();
+function load(path) {
+  if (cache.has(path)) return cache.get(path);
+  const sandbox = { exports: {}, Request, Response, URL, console, require: name => {
+    if (name === 'server-only') return {};
+    if (name === '@/lib/supabase-server') return { createServerSupabaseClientWithAuth: async () => ({
+      auth: { getUser: async () => ({ data: { user }, error: authError }) },
+      rpc: async (name,args) => { calls.push({ name,args }); return { data: name==='has_role'?adminAllowed:{ profile: null }, error: rpcError }; },
+    }) };
+    if (name.startsWith('@/')) return load(`src/${name.slice(2)}.ts`);
+    return require(name);
+  } };
+  const code = ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+  vm.runInNewContext(code,sandbox); cache.set(path,sandbox.exports); return sandbox.exports;
+}
+const member = load('src/app/api/affiliates/route.ts');
+const codeRoute = load('src/app/api/affiliates/code/route.ts');
+const admin = load('src/app/api/admin/affiliates/route.ts');
+function post(body, origin = 'https://example.test') { return new Request('https://example.test/api/affiliates',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)}); }
+const input = { name:'Alice',channel:'Educational videos' };
+assert.equal((await member.POST(post(input,'https://attacker.test'))).status,403);
+assert.equal(calls.length,0);
+user = null;
+assert.equal((await member.GET()).status,401);
+assert.equal((await admin.GET(new Request('https://example.test/api/admin/affiliates'))).status,401);
+assert.equal((await member.POST(post(input))).status,401);
+authError = {status:503};
+assert.equal((await member.GET()).status,503);
+user = {id:'00000000-0000-4000-8000-000000000001'}; authError = null;
+assert.equal((await member.POST(post({...input,status:'approved'}))).status,400);
+assert.equal((await member.POST(post({...input,user_id:'someone-else'}))).status,400);
+assert.equal((await member.POST(new Request('https://example.test/api/affiliates',{method:'POST',headers:{origin:'https://example.test'},body:'{'}))).status,400);
+assert.equal((await member.POST(post(input))).status,200);
+assert.equal(calls.at(-1).args.p_name,'Alice');
+assert.equal(Object.hasOwn(calls.at(-1).args,'user_id'),false);
+let response = await member.GET();
+assert.equal(response.headers.get('cache-control'),'private, no-store');
+rpcError = {message:'admin_required'};
+assert.equal((await admin.GET(new Request('https://example.test/api/admin/affiliates'))).status,403);
+const decision = {profile:user.id,action:'approve',reason:'Reviewed channel',version:1};
+assert.equal((await admin.POST(post(decision))).status,403);
+rpcError = {message:'stale_version'};
+assert.equal((await admin.POST(post(decision))).status,409);
+rpcError = {message:'rate_limited'};
+assert.equal((await admin.POST(post(decision))).status,429);
+rpcError = {message:'private database details'};
+response = await member.GET();
+assert.equal(response.status,503);
+assert.equal((await response.text()).includes('private database details'),false);
+rpcError = null;
+assert.equal((await admin.POST(post({...decision,version:0}))).status,400);
+assert.equal((await admin.GET(new Request('https://example.test/api/admin/affiliates?page=-1'))).status,400);
+assert.equal((await admin.GET(new Request('https://example.test/api/admin/affiliates?status=approved&page=2'))).status,200);
+assert.equal(calls.at(-1).args.p_page,2);
+assert.equal((await admin.POST(post(decision))).status,200);
+console.log('PASS: API authentication, fail-closed auth, origin, validation, ownership derived from session, private responses, pagination, conflict/rate-limit handling and sanitized errors. Authorization itself covered by SQL tests.');
+assert.equal((await (await member.GET()).json()).can_demo,false);
+adminAllowed=true;
+assert.equal((await (await member.GET()).json()).can_demo,true);
+assert.equal(calls.at(-1).args._role,'admin');
+assert.equal((await codeRoute.POST(post({code:'meu-canal',version:2},'https://attacker.test'))).status,403);
+assert.equal((await codeRoute.POST(post({code:'meu-canal',version:2,user_id:'other'}))).status,400);
+assert.equal((await codeRoute.POST(post({code:'-bad',version:2}))).status,400);
+assert.equal((await codeRoute.POST(post({code:' Meu-Canal ',version:2}))).status,200);
+assert.equal(calls.at(-1).args.p_code,'meu-canal');
+assert.equal(Object.hasOwn(calls.at(-1).args,'user_id'),false);
+rpcError={message:'affiliate_code_taken'};
+assert.equal((await codeRoute.POST(post({code:'meu-canal',version:2}))).status,409);
+rpcError=null; user=null;
+assert.equal((await codeRoute.GET(new Request('https://example.test/api/affiliates/code?code=meu-canal'))).status,401);
+console.log('PASS: admin-only demo capability and custom-code validation, origin, ownership and conflicts.');

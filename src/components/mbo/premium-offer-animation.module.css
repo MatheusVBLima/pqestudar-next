@@ -1,8 +1,8 @@
 /* Existing offer markup remains the source of truth for prices and checkout. */
 :global(div):has(>.intro) { position:relative; display:grid; grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); gap:32px 48px; align-items:center; }
 .intro { grid-column:1/-1; grid-row:2; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; align-self:center; pointer-events:none; z-index:1; }
-.tile { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; min-height:240px; padding:28px 18px; text-align:center; border:1px solid #ffffff20; border-radius:28px; background:linear-gradient(165deg,#2b1f33,#1f1725); box-shadow:0 30px 60px -30px #0009; animation:tileOne 18s cubic-bezier(.2,.9,.3,1) both; animation-play-state:paused; }
-.tile svg { color:#f0a8f0; }
+.tile { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; min-height:240px; padding:28px 18px; text-align:center; border:1px solid var(--mbo-ffffff20, #ffffff20); border-radius:28px; background:linear-gradient(165deg,var(--mbo-2b1f33, #2b1f33),var(--mbo-1f1725, #1f1725)); box-shadow:0 30px 60px -30px var(--mbo-shadow-0009, #0009); animation:tileOne 18s cubic-bezier(.2,.9,.3,1) both; animation-play-state:paused; }
+.tile svg { color:var(--mbo-f0a8f0, #f0a8f0); }
 .tile strong { font-size:20px; line-height:1.25; font-weight:600; }
 .tile1 { animation-name:tileTwo; }.tile2 { animation-name:tileThree; }
 :global(div):has(>.intro)>:global([class*="offerIntro"]) { grid-column:1/-1; grid-row:1; max-width:none; }
@@ -11,7 +11,7 @@
 :global(div):has(>.intro)>:global([class*="offerFeatures"]) { grid-column:1; grid-row:2; margin:0; animation:featuresIn 18s ease both; animation-play-state:paused; }
 :global(div):has(>.intro)>:global([class*="offerFeatures"])>div { display:grid; grid-template-columns:42px 1fr; gap:8px 14px; align-items:center; }
 :global(div):has(>.intro)>:global([class*="offerFeatures"])>div>p { grid-column:2; font-size:12px; }
-:global(div):has(>.intro)>:global([class*="offerFeatures"])>div>svg { color:#f0a8f0; }
+:global(div):has(>.intro)>:global([class*="offerFeatures"])>div>svg { color:var(--mbo-f0a8f0, #f0a8f0); }
 :global(div):has(>.intro)>:global([class*="offerCard"]) { grid-column:2; grid-row:2; width:100%; max-width:460px; justify-self:center; animation:cardIn 18s cubic-bezier(.2,.9,.3,1) both; animation-play-state:paused; }
 :global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="checkoutPrice"]) { animation:priceIn 18s cubic-bezier(.3,1.3,.5,1) both; animation-play-state:paused; }
 :global(div):has(>.intro)>:global([class*="offerCard"]) :global([class*="primary"]) { animation:purchaseIn 18s ease both !important; animation-play-state:paused !important; }
@@ -76,7 +76,7 @@
     align-items:start;
     gap:8px 16px;
     padding:16px 0;
-    border-bottom:1px solid #ffffff0d;
+    border-bottom:1px solid var(--mbo-ffffff0d, #ffffff0d);
   }
   :global(div):has(>.intro)>:global([class*="offerFeatures"])>div:last-child { border-bottom:0; }
   :global(div):has(>.intro)>:global([class*="offerFeatures"])>div>svg {

@@ -1,5 +1,6 @@
 import { createServerSupabaseClientWithAuth } from "@/lib/supabase-server";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import { referralHashFromRequest } from '@/lib/affiliates/referral-server';
 import { buildMercadoPagoOrder, isMercadoPagoCheckoutUrl, mercadoPagoConfig, mercadoPagoFetch, MP_REFERENCE, validateMercadoPagoOrder } from "@/lib/mercado-pago";
 
 export const runtime = "nodejs";
@@ -25,9 +26,10 @@ export async function POST(request: Request) {
     if (String(seller.id) !== config.seller || seller.site_id !== "MLB"
       || (seller.tags || []).includes("test_user") === config.live) throw new Error("mp_seller_mismatch");
     stage = "prepare_order";
-    const { data: intent, error, status } = await admin.rpc("prepare_mercado_pago_order", {
+    const { data: intent, error, status } = await admin.rpc("prepare_affiliate_mercado_pago_order", {
       p_reference: body.requestId, p_user: user.id, p_email: user.email,
       p_live: config.live, p_seller: config.seller, p_site: config.site,
+      p_referral_hash: body.affiliateConsent === true ? referralHashFromRequest(request) : null,
     });
     databaseStatus = status;
     if (error) throw error;

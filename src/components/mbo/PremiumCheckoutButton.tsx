@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { ArrowRight, LoaderCircle } from "lucide-react";
 import styles from "./mbo.module.css";
+import { hasAffiliateConsent, syncAffiliateReferral } from '@/lib/affiliates/referral-client';
 
 export default function PremiumCheckoutButton() {
   const busy = useRef(false);
@@ -16,9 +17,12 @@ export default function PremiumCheckoutButton() {
     setError("");
     try {
       requestId.current ||= crypto.randomUUID();
+      // Complete an in-flight capture before the server freezes this order's attribution.
+      // Tracking unavailability must not prevent a regular Premium purchase.
+      await syncAffiliateReferral().catch(() => {});
       const response = await fetch("/api/mercado-pago/create-checkout", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId: requestId.current }), signal: AbortSignal.timeout(45000),
+        body: JSON.stringify({ requestId: requestId.current, affiliateConsent: hasAffiliateConsent() }), signal: AbortSignal.timeout(45000),
       });
       const data = await response.json();
       if (response.status === 401) {

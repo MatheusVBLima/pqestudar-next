@@ -5,7 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from "@/lib/runtime-env";
 import { resolvePremiumItemSlugWithClient } from "@/lib/premium-item-slug-client";
 
-const PROTECTED_PREFIXES = ["/meu-perfil", "/meus-materiais", "/salvos", "/ferramentas/salvos", "/premium", "/admin", "/moderador"];
+const PROTECTED_PREFIXES = ["/afiliados", "/meu-perfil", "/meus-materiais", "/salvos", "/ferramentas/salvos", "/premium", "/admin", "/moderador"];
 
 function hasSupabaseAuthCookie(request: NextRequest): boolean {
   return request.cookies.getAll().some((c) => {

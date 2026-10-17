@@ -6,6 +6,7 @@ import {
   BarChart3,
   BookOpen,
   Crown,
+  Users,
   ExternalLink,
   Home,
   Info,
@@ -84,7 +85,7 @@ export function Navbar() {
   const router = useRouter();
   const pathname = usePathname() ?? "/";
   const { user, signOut, switchGoogleAccount, loading } = useAuth();
-  const { isAdmin, isModerator } = useUserRoles();
+  const { isAdmin, isModerator, loading: rolesLoading, error: rolesError, refetch: retryRoles } = useUserRoles();
   const { isActive } = useSubscription();
   const { items: navItems, logos, loading: navLoading } = useNavConfig();
   const { enabled: publicCoursesEnabled, loading: publicCoursesLoading } = useSiteFeatureFlag(PREMIUM_COURSES_PUBLIC_FLAG);
@@ -387,6 +388,12 @@ export function Navbar() {
                       >
                         <Bookmark className="h-4 w-4 mr-2" />Salvos
                       </DropdownMenuItem>
+                      {(rolesLoading || rolesError) && (
+                        <DropdownMenuItem disabled={rolesLoading} onSelect={(event) => { event.preventDefault(); void retryRoles(); }} className="cursor-pointer">
+                          <RotateCcw className="h-4 w-4 mr-2" />
+                          {rolesLoading ? "Verificando permissões…" : "Tentar verificar permissões"}
+                        </DropdownMenuItem>
+                      )}
                       {isAdmin && (
                         <DropdownMenuItem
                           onMouseEnter={() => !isOnKitSubdomain && router.prefetch("/admin")}
@@ -405,6 +412,9 @@ export function Navbar() {
                           <BookOpen className="h-4 w-4 mr-2" />Painel do moderador
                         </DropdownMenuItem>
                       )}
+                      <DropdownMenuItem onClick={() => handleNavigation("/afiliados")} className="cursor-pointer">
+                        <Users className="h-4 w-4 mr-2" />Afiliados
+                      </DropdownMenuItem>
                       {showPremiumArea && (
                         <DropdownMenuItem
                           onMouseEnter={() => !isOnKitSubdomain && router.prefetch("/premium")}
@@ -542,6 +552,12 @@ export function Navbar() {
                         >
                           <Bookmark className="h-4 w-4 mr-2" />Salvos
                         </DropdownMenuItem>
+                        {(rolesLoading || rolesError) && (
+                          <DropdownMenuItem disabled={rolesLoading} onSelect={(event) => { event.preventDefault(); void retryRoles(); }} className="cursor-pointer">
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                            {rolesLoading ? "Verificando permissões…" : "Tentar verificar permissões"}
+                          </DropdownMenuItem>
+                        )}
                         {isAdmin && (
                           <DropdownMenuItem
                             onMouseEnter={() => !isOnKitSubdomain && router.prefetch("/admin")}
@@ -560,7 +576,10 @@ export function Navbar() {
                             <BookOpen className="h-4 w-4 mr-2" />Painel do moderador
                           </DropdownMenuItem>
                         )}
-                        {showPremiumArea && (
+                        <DropdownMenuItem onClick={() => handleNavigation("/afiliados")} className="cursor-pointer">
+                        <Users className="h-4 w-4 mr-2" />Afiliados
+                      </DropdownMenuItem>
+                      {showPremiumArea && (
                           <DropdownMenuItem
                             onMouseEnter={() => !isOnKitSubdomain && router.prefetch("/premium")}
                             onFocus={() => !isOnKitSubdomain && router.prefetch("/premium")}

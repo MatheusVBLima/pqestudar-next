@@ -4355,6 +4355,15 @@ export type Database = {
       }
     }
     Functions: {
+      affiliate_code_available: { Args: { p_code: string }; Returns: Json }
+      affiliate_change_code: { Args: { p_code: string; p_version: number }; Returns: Json }
+      affiliate_sales: { Args: { p_page?: number }; Returns: Json }
+      affiliate_tracking_settings: { Args: { p_enabled?: boolean; p_days?: number }; Returns: Json }
+      affiliate_dashboard: { Args: Record<PropertyKey, never>; Returns: Json }
+      affiliate_apply: { Args: { p_name: string; p_channel: string }; Returns: Json }
+      affiliate_review: { Args: { p_profile: string; p_action: string; p_reason: string; p_version: number }; Returns: Json }
+      affiliate_admin_list: { Args: { p_status?: string; p_page?: number }; Returns: Json }
+      affiliate_is_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       get_effective_subscription: { Args: Record<PropertyKey, never>; Returns: Json }
       record_page_heatmap: { Args: { p_visit: string; p_path: string; p_device: string; p_clicks: Json }; Returns: undefined }
       admin_page_heatmap: { Args: { p_path?: string; p_device?: string; p_days?: number }; Returns: Json }
