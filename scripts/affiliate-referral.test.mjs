@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import ts from 'typescript';
 const require=createRequire(import.meta.url);
-const cache=new Map(), calls=[];
+const cache=new Map(), calls=[], diagnostics=[];
 const env={AFFILIATE_REFERRAL_SECRET:'test-secret-not-real-12345678901234567890'};
 let result={accepted:true,max_age:2592000},dbError=null;
 let stored=null;
@@ -12,7 +12,7 @@ const location={href:'https://example.test/mbo-premium?ref='+ 'a'.repeat(32)};
 const fetches=[];
 function load(path) {
  if(cache.has(path)) return cache.get(path);
- const sandbox={exports:{},Request,Response,URL,AbortSignal,Date,console,process:{env},
+ const sandbox={exports:{},Request,Response,URL,AbortSignal,Date,console:{...console,error:(...args)=>diagnostics.push(args)},process:{env},
   localStorage:{getItem:()=>stored},window:{location},
   fetch:async(url,options)=>{fetches.push({url,...options});return {ok:true};},
   require:name=>{
@@ -42,6 +42,15 @@ assert.equal(server.referralSubject(request(valid,{'x-forwarded-for':'1.1.1.1'})
 result={accepted:false};response=await route.POST(request(valid));assert.equal(response.headers.get('set-cookie'),null);
 result={limited:true};assert.equal((await route.POST(request(valid))).status,429);
 dbError={message:'private provider failure'};response=await route.POST(request(valid));assert.equal(response.status,503);assert.equal((await response.text()).includes('private'),false);
+assert.equal(diagnostics.at(-1)[1].stage,'database');
+assert.equal(JSON.stringify(diagnostics).includes('private provider failure'),false);
+assert.equal(JSON.stringify(diagnostics).includes(env.AFFILIATE_REFERRAL_SECRET),false);
+const savedSecret=env.AFFILIATE_REFERRAL_SECRET;
+env.AFFILIATE_REFERRAL_SECRET='short';
+assert.equal((await route.POST(request(valid))).status,503);
+assert.equal(diagnostics.at(-1)[1].stage,'configuration');
+assert.equal(diagnostics.at(-1)[1].referralSecretValid,false);
+env.AFFILIATE_REFERRAL_SECRET=savedSecret;
 response=await route.DELETE(new Request('https://example.test/api/affiliates/referral',{method:'DELETE',headers:{origin:'https://example.test',cookie}}));
 assert.match(response.headers.get('set-cookie'),/Max-Age=0/);assert.equal(calls.at(-1).name,'affiliate_revoke');
 dbError=null;
