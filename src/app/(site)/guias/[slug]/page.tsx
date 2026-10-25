@@ -12,6 +12,8 @@ import {
 } from "@/lib/data/guides";
 import { JsonLd, absoluteUrl, buildBreadcrumbList } from "@/lib/seo/jsonld";
 import { DEFAULT_SOCIAL_IMAGE_ALT, DEFAULT_SOCIAL_IMAGE_URL } from "@/lib/site";
+import { getGuideAuthors } from "@/lib/data/authors";
+import type { AuthorProfile } from "@/lib/authors";
 
 interface GuiaDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -66,7 +68,7 @@ function buildArticleJsonLd(guide: {
   cover_image_url?: string | null;
   updated_at: string;
   created_at: string;
-}) {
+}, author?: AuthorProfile) {
   const displayCategory = guide.public_category || guide.category;
   const url = absoluteUrl(`/guias/${guide.slug}`);
   return {
@@ -78,7 +80,7 @@ function buildArticleJsonLd(guide: {
     url,
     mainEntityOfPage: url,
     image: guide.cover_image_url || undefined,
-    author: { "@type": "Person", name: guide.author_name || "Equipe PqEstudar" },
+    author: { "@type": "Person", name: author?.display_name || guide.author_name || "Equipe PqEstudar", url: author ? absoluteUrl(`/autores/${author.slug}`) : undefined },
     dateModified: guide.updated_at,
     datePublished: guide.created_at,
     publisher: {
@@ -93,6 +95,8 @@ export default async function GuiaDetalhePage({ params, searchParams }: GuiaDeta
   const { slug } = await params;
   const preview = (await searchParams)?.preview === "1";
   const queryClient = createQueryClient();
+  const authors = await getGuideAuthors();
+  queryClient.setQueryData(["public-authors"], authors);
 
   const guide = await getGuideBySlug(slug);
 
@@ -126,7 +130,7 @@ export default async function GuiaDetalhePage({ params, searchParams }: GuiaDeta
 
   return (
     <>
-      {guide && <JsonLd data={buildArticleJsonLd(guide)} />}
+      {guide && <JsonLd data={buildArticleJsonLd(guide, authors.find(a => a.id === guide.author_id))} />}
       {breadcrumbLd && <JsonLd data={breadcrumbLd} />}
       <QueryHydration state={dehydrate(queryClient)}>
         <GuiaDetalheNext />

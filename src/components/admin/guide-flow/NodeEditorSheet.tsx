@@ -1,3 +1,4 @@
+import { AuthorProfileSelect } from "@/components/authors/AuthorProfileSelect";
 import { parseGuideSections, replaceGuideSection } from '@/lib/guide-sections';
 import { useState, useEffect, useRef } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -288,14 +289,15 @@ function MetaEditor({ local, update, slugStatus, internalCode }: {
             {customAuthor ? 'Escolher da lista' : 'Digitar manualmente'}
           </Button>
         </div>
+        <AuthorProfileSelect value={local.author_id} onChange={(id, name) => { update('author_id', id); if (name) update('author_name', name); }} />
         {customAuthor ? (
           <Input
-            value={local.author_name}
+            disabled={!!local.author_id} value={local.author_name}
             onChange={(e) => update('author_name', e.target.value)}
             placeholder="Nome do autor"
           />
         ) : (
-          <Select value={local.author_name} onValueChange={(v) => update('author_name', v)}>
+          <Select disabled={!!local.author_id} value={local.author_name} onValueChange={(v) => update('author_name', v)}>
             <SelectTrigger className="h-9 focus:ring-0 focus:ring-offset-0">
               <SelectValue />
             </SelectTrigger>

@@ -1,3 +1,4 @@
+import { AuthorProfileSelect } from "@/components/authors/AuthorProfileSelect";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,6 +31,7 @@ export interface GeneratedGuideData {
   category: string;          // Categoria Interna (editorial/IA)
   public_category: string;   // Categoria Pública (badge visual)
   author_name: string;
+  author_id?: string | null;
   content_markdown: string;
   cta_top: { label: string; url: string; text: string } | null;
   cta_middle: { label: string; url: string; text: string } | null;
@@ -161,7 +163,8 @@ export function GuideFlowPreview({ data, onChange }: Props) {
           </div>
           <div className="space-y-1.5">
             <Label>Autor</Label>
-            <Input value={data.author_name} onChange={(e) => update('author_name', e.target.value)} className="rounded-[var(--admin-radius)]" />
+            <AuthorProfileSelect value={data.author_id} onChange={(id, name) => onChange({ ...data, author_id: id, author_name: name || data.author_name })} />
+            <Input disabled={!!data.author_id} value={data.author_name} onChange={(e) => update('author_name', e.target.value)} className="rounded-[var(--admin-radius)]" />
           </div>
         </div>
         <div className="space-y-1.5 rounded-[var(--admin-radius)] border border-emerald-500/20 bg-emerald-500/5 p-3">

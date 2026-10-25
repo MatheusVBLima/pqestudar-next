@@ -5,6 +5,7 @@ import { QueryHydration } from "@/components/providers/query-hydration";
 import { createQueryClient } from "@/lib/query-client";
 import { getPageSettings } from "@/lib/data/page-settings";
 import { getPublishedGuides } from "@/lib/data/guides";
+import { getGuideAuthors } from "@/lib/data/authors";
 import { JsonLd, absoluteUrl } from "@/lib/seo/jsonld";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,13 +23,15 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function GuiasPage() {
   const queryClient = createQueryClient();
 
-  const [pageSettings, guides] = await Promise.all([
+  const [pageSettings, guides, authors] = await Promise.all([
     getPageSettings("/guias"),
     getPublishedGuides(),
+    getGuideAuthors(),
   ]);
 
   queryClient.setQueryData(["page_settings", "/guias"], pageSettings ?? null);
   queryClient.setQueryData(["guides", "published"], guides ?? []);
+  queryClient.setQueryData(["public-authors"], authors);
 
   const guideList = (guides ?? []) as Array<{ slug: string; title: string }>;
   const collectionLd = {

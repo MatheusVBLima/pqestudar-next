@@ -32,6 +32,7 @@ import { ThemeSelector } from "@/components/layout/theme-selector";
 import { cn } from "@/lib/utils";
 
 const items = [
+  { title: "Meu perfil de autor", href: "/autores/meu-perfil", icon: FilePenLine },
   { title: "Planejamento editorial", href: "/moderador/guias", icon: BookOpen, exact: true },
   { title: "Gerenciar guias", href: "/moderador/gerenciar-guias", icon: FilePenLine },
   { title: "Fluxos", href: "/moderador/fluxos", icon: Sparkles },

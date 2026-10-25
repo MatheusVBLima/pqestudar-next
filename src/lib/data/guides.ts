@@ -1,10 +1,11 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { isMissingGuideAuthorColumn } from "@/lib/author-schema";
 
 export const GUIDES_TAG = "guides";
 const GUIDE_LIST_SELECT =
-  "id,internal_code,title,slug,category,public_category,short_description,is_published,is_featured,sort_order,author_name,cover_image_url,created_at,updated_at";
+  "id,internal_code,title,slug,category,public_category,short_description,is_published,is_featured,sort_order,author_name,author_id,cover_image_url,created_at,updated_at";
 
 export function guideSlugTag(slug: string): string {
   return `guide:${slug}`;
@@ -12,18 +13,26 @@ export function guideSlugTag(slug: string): string {
 
 async function fetchPublishedGuides() {
   const supabase = createServerSupabaseClient();
-  const { data } = await supabase
+  let { data, error } = await supabase
     .from("guides")
     .select(GUIDE_LIST_SELECT)
     .eq("is_published", true)
     .order("sort_order", { ascending: true });
+  if (isMissingGuideAuthorColumn(error)) {
+    const legacy = await supabase.from("guides")
+      .select("id,internal_code,title,slug,category,public_category,short_description,is_published,is_featured,sort_order,author_name,cover_image_url,created_at,updated_at")
+      .eq("is_published", true).order("sort_order", { ascending: true });
+    error = legacy.error;
+    data = legacy.data?.map(guide => ({ ...guide, author_id: null })) ?? null;
+  }
+  if (error) throw error;
   return data ?? [];
 }
 
 export function getPublishedGuides() {
   return unstable_cache(
     () => fetchPublishedGuides(),
-    ["guides-published"],
+    ["guides-published-author-compatible"],
     { tags: [GUIDES_TAG], revalidate: 1800 },
   )();
 }

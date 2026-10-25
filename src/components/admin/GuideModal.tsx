@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/error-message";
 import { useGuideAuthors } from "@/hooks/useGuideAuthors";
+import { AuthorProfileSelect } from "@/components/authors/AuthorProfileSelect";
 import { useAuth } from "@/hooks/useAuth";
 import { createGuideInternalCode, uploadGuideImage } from "@/lib/guide-assets";
 
@@ -271,6 +272,7 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
   const [sortOrder, setSortOrder] = useState(0);
   const [internalLinks, setInternalLinks] = useState<InternalLink[]>([]);
   const [authorName, setAuthorName] = useState("");
+  const [authorId, setAuthorId] = useState<string | null>(null);
   const [customAuthor, setCustomAuthor] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [coverMode, setCoverMode] = useState<'upload' | 'url'>('upload');
@@ -308,6 +310,7 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
       setIsFeatured(guide.is_featured);
       setSortOrder(guide.sort_order);
       setAuthorName(guide.author_name || "");
+      setAuthorId(guide.author_id || null);
       setCustomAuthor(!!guide.author_name && !authors.some((author) => author.name === guide.author_name));
       setCoverImageUrl(guide.cover_image_url || null);
       setCoverUrlInput(guide.cover_image_url || "");
@@ -332,6 +335,7 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
       setIsPublished(false); setIsFeatured(false); setSortOrder(0);
       const currentAuthor = authors.find((author) => author.userId === user?.id);
       setAuthorName(currentAuthor?.name || "Equipe PqEstudar");
+      setAuthorId(null);
       setCustomAuthor(false);
       setCoverImageUrl(null); setCoverUrlInput(""); setCoverMode('upload');
       setInternalLinks([]);
@@ -406,6 +410,7 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
       payload.cta_final_text = ctaFinalText.trim() || null;
       payload.internal_links = validLinks;
       payload.author_name = authorName.trim() || "Equipe PqEstudar";
+      if (authorId || guide?.author_id !== undefined) payload.author_id = authorId;
       payload.cover_image_url = coverImageUrl || null;
       payload.internal_code = internalCode;
       if (guide) payload.id = guide.id;
@@ -624,10 +629,11 @@ export function GuideModal({ open, onClose, onSave, guide }: GuideModalProps) {
                   {customAuthor ? 'Escolher da lista' : 'Digitar manualmente'}
                 </Button>
               </div>
+              <AuthorProfileSelect value={authorId} onChange={(id, name) => { setAuthorId(id); if (name) setAuthorName(name); }} />
               {customAuthor ? (
-                <Input value={authorName} onChange={e => setAuthorName(e.target.value)} placeholder="Nome do autor" />
+                <Input value={authorName} disabled={!!authorId} onChange={e => setAuthorName(e.target.value)} placeholder="Nome do autor" />
               ) : (
-                <Select value={authorName} onValueChange={setAuthorName} disabled={authorsLoading}>
+                <Select value={authorName} onValueChange={setAuthorName} disabled={authorsLoading || !!authorId}>
                   <SelectTrigger>
                     <SelectValue placeholder={authorsLoading ? 'Carregando autores...' : 'Selecione o autor'} />
                   </SelectTrigger>

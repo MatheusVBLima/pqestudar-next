@@ -583,6 +583,7 @@ export function AdminSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem><SidebarMenuButton asChild isActive={isActive('/admin/autores')} className={itemClass(isActive('/admin/autores'))}><Link href="/admin/autores"><Users className="h-4 w-4" /><span>Autores dos guias</span></Link></SidebarMenuButton></SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

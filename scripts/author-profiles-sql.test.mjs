@@ -1,0 +1,87 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { PGlite } from '../test-results/mercado-pago-sql/node_modules/@electric-sql/pglite/dist/index.js';
+
+const db = new PGlite();
+const owner = randomUUID(), other = randomUUID(), admin = randomUUID(), ordinary = randomUUID();
+async function as(id, role = 'authenticated') {
+  await db.exec(`reset role; set role ${role}`);
+  await db.query("select set_config('request.jwt.claim.sub', $1, false)", [id || '']);
+}
+async function root() { await db.exec('reset role'); await db.exec("select set_config('request.jwt.claim.sub', '', false)"); }
+async function codes(id) { return (await db.query('select code from public.author_badges where author_id=$1', [id])).rows.map(r => r.code); }
+try {
+  await db.exec(fs.readFileSync('supabase/tests/affiliate-fixture.sql', 'utf8'));
+  await db.exec(`
+    alter table auth.users add column raw_user_meta_data jsonb default '{}';
+    create view public.user_roles as select * from public.test_roles;
+    create table public.guides(id uuid primary key default gen_random_uuid(), author_name text default '', category text default 'Educação', public_category text default 'Educação', is_published boolean default false, created_at timestamptz default now());
+    grant select on public.guides to anon;
+    grant select, insert, update, delete on public.guides to authenticated;
+    create table public.notifications(id uuid primary key default gen_random_uuid(),title text,body text);
+    create table public.user_notifications(id uuid primary key default gen_random_uuid(),user_id uuid,notification_id uuid references public.notifications);
+  `);
+  for (const id of [owner, other, admin, ordinary]) await db.query('insert into auth.users(id,email) values($1,$2)', [id, `${id}@example.invalid`]);
+  await db.query("insert into public.test_roles values($1,'moderator'),($2,'moderator'),($3,'admin')", [owner, other, admin]);
+  await db.exec(fs.readFileSync('supabase/migrations/20260822000100_moderator_panel_permissions.sql', 'utf8'));
+  await db.exec("insert into public.guides(author_name,is_published,created_at) values ('Autor legado',true,'2020-01-01'),('Autor legado',true,'2020-02-01'),('Autor legado',true,'2020-03-01')");
+  await db.exec("insert into public.guides(author_name,is_published) values ('Nome somente em rascunho',false)");
+  await db.exec(fs.readFileSync('supabase/migrations/20261024000100_author_profiles.sql', 'utf8'));
+  const legacy = (await db.query("select * from public.author_profiles where display_name='Autor legado'")).rows[0];
+  assert.equal(legacy.user_id, null, 'Legacy names must not claim auth identities');
+  assert.equal((await db.query('select count(*)::int as n from public.author_profiles')).rows[0].n, 1, 'Draft-only bylines remain private');
+  assert.deepEqual(await codes(legacy.id), ['published-1'], 'Draft creation dates must not award a historical streak');
+  await as(owner);
+  const author = (await db.query("insert into public.author_profiles(user_id,slug,display_name) values($1,'autor-teste','Autor Teste') returning id", [owner])).rows[0].id;
+  await as(other);
+  const authorOther = (await db.query("insert into public.author_profiles(user_id,slug,display_name) values($1,'outro-autor','Outro Autor') returning id", [other])).rows[0].id;
+  assert.equal((await db.query("update public.author_profiles set bio='invasão' where id=$1 returning id", [author])).rows.length, 0);
+  await assert.rejects(() => db.query('update public.author_profiles set user_id=$1 where id=$2', [ordinary, authorOther]), /Only administrators/);
+  await as(ordinary);
+  await assert.rejects(() => db.query("insert into public.author_profiles(user_id,slug,display_name) values($1,'sem-acesso','Sem acesso')", [ordinary]), /row-level security/);
+  await assert.rejects(() => db.query("insert into public.author_badges(author_id,code,title,description) values($1,'fake','Fake','Fake')", [author]), /permission denied/);
+  await assert.rejects(() => db.query('select public.award_author_badges($1)', [author]), /permission denied/);
+  await as(owner);
+  const drafts = [];
+  for (let i = 0; i < 10; i++) drafts.push((await db.query('insert into public.guides(author_id) values($1) returning id', [authorOther])).rows[0].id);
+  assert.deepEqual(await codes(author), []);
+  assert.equal((await db.query('select author_id from public.guides where id=$1', [drafts[0]])).rows[0].author_id, author, 'Moderator cannot spoof attribution');
+  await db.query('update public.guides set is_published=true where id=$1', [drafts[0]]);
+  assert.deepEqual(await codes(author), ['published-1']);
+  const firstDate = (await db.query('select first_published_at from public.guides where id=$1', [drafts[0]])).rows[0].first_published_at;
+  await db.query('update public.guides set is_published=false where id=$1', [drafts[0]]);
+  assert.deepEqual(await codes(author), ['published-1'], 'Earned badges survive unpublishing');
+  await db.query("update public.guides set is_published=true, first_published_at='2000-01-01' where id=$1", [drafts[0]]);
+  assert.equal(String((await db.query('select first_published_at from public.guides where id=$1', [drafts[0]])).rows[0].first_published_at), String(firstDate));
+  await assert.rejects(() => db.query('update public.guides set author_id=$1 where id=$2', [authorOther, drafts[0]]), /Cannot attribute/);
+  await db.query('update public.guides set is_published=true where created_by=$1', [owner]);
+  assert.equal((await codes(author)).length, 3, 'First, ten, and category badges');
+  await db.query('update public.guides set is_published=true where created_by=$1', [owner]);
+  await root();
+  assert.equal((await db.query('select count(*)::int as n from public.user_notifications where user_id=$1', [owner])).rows[0].n, 3, 'Notifications are idempotent');
+  // Simulate genuinely recorded publication months; clients cannot set these.
+  await db.exec('alter table public.guides disable trigger prepare_guide_author');
+  for (let i = 0; i < 3; i++) await db.query('update public.guides set first_published_at=$1 where id=$2', [`2026-0${[1, 2, 4][i]}-15T12:00:00Z`, drafts[i]]);
+  await db.exec('alter table public.guides enable trigger prepare_guide_author');
+  await as(owner);
+  await db.query('update public.guides set is_published=true where id=$1', [drafts[0]]);
+  assert.equal((await codes(author)).includes('consistent-3'), false, 'A missing month breaks the streak');
+  await root();
+  await db.exec('alter table public.guides disable trigger prepare_guide_author');
+  await db.query("update public.guides set first_published_at='2026-03-15T12:00:00Z' where id=$1", [drafts[2]]);
+  await db.exec('alter table public.guides enable trigger prepare_guide_author');
+  await as(owner);
+  await db.query('update public.guides set is_published=true where id=$1', [drafts[0]]);
+  assert.ok((await codes(author)).includes('consistent-3'));
+  for (let i = 0; i < 40; i++) await db.exec('insert into public.guides(is_published) values(true)');
+  assert.ok((await codes(author)).includes('published-50'));
+  await as(null, 'anon');
+  assert.equal((await db.query('select display_name from public.author_profiles')).rows.length, 3);
+  await assert.rejects(() => db.query('select user_id from public.author_profiles'), /permission denied/);
+  await assert.rejects(() => db.query("update public.author_profiles set bio='invasão'"), /permission denied/);
+  await as(admin);
+  await db.query('update public.author_profiles set user_id=$1,bio=$2 where id=$3', [admin, 'Apresentação editorial', legacy.id]);
+  assert.equal((await db.query('select bio from public.author_profiles where id=$1', [legacy.id])).rows[0].bio, 'Apresentação editorial');
+  console.log('PASS: legacy attribution, publication thresholds, categories, streak, immutable dates, idempotency, notifications, profile and guide RLS.');
+} finally { await db.close(); }

@@ -1428,8 +1428,85 @@ export type Database = {
         }
         Relationships: []
       }
+      author_profiles: {
+        Row: {
+          id: string
+          user_id: string | null
+          slug: string
+          display_name: string
+          headline: string
+          bio: string
+          education: string
+          photo_url: string
+          website_url: string
+          website_label: string
+          instagram_url: string
+          youtube_url: string
+          featured_badges: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          slug: string
+          display_name: string
+          headline?: string
+          bio?: string
+          education?: string
+          photo_url?: string
+          website_url?: string
+          website_label?: string
+          instagram_url?: string
+          youtube_url?: string
+          featured_badges?: string[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          slug?: string
+          display_name?: string
+          headline?: string
+          bio?: string
+          education?: string
+          photo_url?: string
+          website_url?: string
+          website_label?: string
+          instagram_url?: string
+          youtube_url?: string
+          featured_badges?: string[]
+          created_at?: string
+        }
+        Relationships: []
+      }
+      author_badges: {
+        Row: {
+          author_id: string
+          code: string
+          title: string
+          description: string
+          earned_at: string
+        }
+        Insert: {
+          author_id: string
+          code: string
+          title: string
+          description: string
+          earned_at?: string
+        }
+        Update: {
+          author_id?: string
+          code?: string
+          title?: string
+          description?: string
+          earned_at?: string
+        }
+        Relationships: []
+      }
       guides: {
         Row: {
+          author_id: string | null
+          first_published_at: string | null
           author_name: string
           category: string
           content_markdown: string
@@ -1462,6 +1539,8 @@ export type Database = {
           views_count: number
         }
         Insert: {
+          author_id?: string | null
+          first_published_at?: string | null
           author_name?: string
           category: string
           content_markdown?: string
@@ -1494,6 +1573,8 @@ export type Database = {
           views_count?: number
         }
         Update: {
+          author_id?: string | null
+          first_published_at?: string | null
           author_name?: string
           category?: string
           content_markdown?: string

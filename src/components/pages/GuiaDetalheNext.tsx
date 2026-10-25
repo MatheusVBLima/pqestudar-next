@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { AuthorIdentity } from "@/components/authors/AuthorIdentity";
 import { motion } from "framer-motion";
 import { PageHero } from "@/components/layout/PageHero";
 import { renderHighlightedTitle } from "@/lib/highlight-title";
@@ -276,10 +277,10 @@ export default function GuiaDetalheNext() {
               )}
               {updatedDate ? (
                 <span className="text-xs text-white/70">
-                  Por {authorName} · Atualizado em {updatedDate}
+                  Por <AuthorIdentity authorId={guide.author_id} name={authorName} /> · Atualizado em {updatedDate}
                 </span>
               ) : (
-                <span className="text-xs text-white/70">Por {authorName}</span>
+                <span className="text-xs text-white/70">Por <AuthorIdentity authorId={guide.author_id} name={authorName} /></span>
               )}
             </div>
             <h1 className="max-w-full md:max-w-4xl lg:max-w-[1100px] text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 text-white drop-shadow-lg">
@@ -306,10 +307,10 @@ export default function GuiaDetalheNext() {
               )}
               {updatedDate ? (
                 <span className="text-xs text-muted-foreground">
-                  Por {authorName} · Atualizado em {updatedDate}
+                  Por <AuthorIdentity authorId={guide.author_id} name={authorName} /> · Atualizado em {updatedDate}
                 </span>
               ) : (
-                <span className="text-xs text-muted-foreground">Por {authorName}</span>
+                <span className="text-xs text-muted-foreground">Por <AuthorIdentity authorId={guide.author_id} name={authorName} /></span>
               )}
             </div>
           }
@@ -359,6 +360,7 @@ export default function GuiaDetalheNext() {
             />
 
             <GuideEngagementFooter guideId={guide.id} guideTitle={guide.title} />
+            <AuthorIdentity authorId={guide.author_id} name={authorName} expanded />
 
             {hasRelated && (
               <div className="mt-16 space-y-10">

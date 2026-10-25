@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json, Tables } from '@/integrations/supabase/types';
+import { isMissingGuideAuthorColumn } from '@/lib/author-schema';
 
 export interface Guide {
   id: string;
@@ -35,6 +36,7 @@ export interface Guide {
   views_count?: number | null;
   sort_order: number;
   author_name: string;
+  author_id?: string | null;
   created_by: string | null;
   cover_image_url: string | null;
   flow_data: Json | null;
@@ -53,7 +55,7 @@ type GuidePreview = Pick<Tables<'guides'>, 'slug' | 'cover_image_url' | 'categor
 
 const GUIDES_KEY = ['guides'];
 const GUIDE_LIST_SELECT =
-  'id,internal_code,title,slug,category,public_category,short_description,is_published,is_featured,sort_order,author_name,cover_image_url,created_at,updated_at';
+  'id,internal_code,title,slug,category,public_category,short_description,is_published,is_featured,sort_order,author_name,author_id,cover_image_url,created_at,updated_at';
 
 export function useGuides(includeUnpublished = false) {
   return useQuery({
@@ -70,6 +72,13 @@ export function useGuides(includeUnpublished = false) {
       }
 
       const { data, error } = await query;
+      if (!includeUnpublished && isMissingGuideAuthorColumn(error)) {
+        const legacy = await supabase.from('guides')
+          .select('id,internal_code,title,slug,category,public_category,short_description,is_published,is_featured,sort_order,author_name,cover_image_url,created_at,updated_at')
+          .eq('is_published', true).order('sort_order', { ascending: true });
+        if (legacy.error) throw legacy.error;
+        return (legacy.data ?? []).map(guide => ({ ...guide, author_id: null })) as unknown as Guide[];
+      }
       if (error) throw error;
       return (data ?? []) as unknown as Guide[];
     },

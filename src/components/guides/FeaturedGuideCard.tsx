@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AuthorIdentity } from "@/components/authors/AuthorIdentity";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -109,7 +110,7 @@ export function FeaturedGuideCard({
                 <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{guide.internal_code}</span>
               )}
               {guide.author_name && (
-                <span className="font-medium">{guide.author_name}</span>
+                <AuthorIdentity authorId={guide.author_id} name={guide.author_name} />
               )}
               {updatedDate && (
                 <>

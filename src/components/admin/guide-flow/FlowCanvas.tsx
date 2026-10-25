@@ -141,7 +141,7 @@ export function buildGeneratedLayout(data: GeneratedGuideData, structureNames: s
   // Column 0: Meta + SEO
   addNode('meta', 'metaNode', {
     title: data.title, slug: data.slug, category: data.category,
-    public_category: data.public_category, author_name: data.author_name,
+    public_category: data.public_category, author_name: data.author_name, author_id: data.author_id,
     short_description: data.short_description, internal_code: internalCode ?? data.internal_code,
   }, 0, 0);
 

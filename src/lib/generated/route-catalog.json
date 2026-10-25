@@ -18,6 +18,12 @@
     "dynamic": false
   },
   {
+    "path": "/admin/autores",
+    "name": "Autores",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
     "path": "/admin/bonus",
     "name": "Bonus",
     "area": "Admin",
@@ -296,6 +302,24 @@
   {
     "path": "/afiliados",
     "name": "Afiliados",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/autores",
+    "name": "Autores",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/autores/[slug]",
+    "name": "Autores · [slug]",
+    "area": "Site",
+    "dynamic": true
+  },
+  {
+    "path": "/autores/meu-perfil",
+    "name": "Meu perfil",
     "area": "Site",
     "dynamic": false
   },

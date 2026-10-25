@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AuthorIdentity } from "@/components/authors/AuthorIdentity";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Star, Eye, EyeOff, StarOff, Edit, Trash2, ExternalLink } from "lucide-react";
@@ -107,7 +108,7 @@ export function GuideListItem({
           {showAdmin && guide.internal_code && (
             <span className="font-mono text-[11px] bg-muted px-1.5 py-0.5 rounded">{guide.internal_code}</span>
           )}
-          {guide.author_name && <span>{guide.author_name}</span>}
+          {guide.author_name && <AuthorIdentity authorId={guide.author_id} name={guide.author_name} />}
           {updatedDate && (
             <>
               <span>·</span>
