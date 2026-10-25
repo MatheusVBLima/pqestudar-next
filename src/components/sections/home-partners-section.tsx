@@ -16,19 +16,19 @@ function safeUrl(value: string, image = false) {
   } catch { return false; }
 }
 
-function PartnerRow({ partners, reverse = false }: { partners: Partner[]; reverse?: boolean }) {
+function PartnerRow({ partners, reverse = false, loop = true }: { partners: Partner[]; reverse?: boolean; loop?: boolean }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!rowRef.current || !trackRef.current) return;
+    if (!loop || !rowRef.current || !trackRef.current) return;
     return attachDraggableLoop(rowRef.current, trackRef.current, reverse);
-  }, [partners.length, reverse]);
+  }, [partners.length, reverse, loop]);
   // Each identical half fills even wide screens, so the loop has no empty seam.
-  const copies = Math.max(1, Math.ceil(14 / partners.length));
+  const copies = loop ? Math.max(1, Math.ceil(14 / partners.length)) : 1;
   const repeated = Array.from({ length: copies }, () => partners).flat();
-  return <div className={styles.row} ref={rowRef}>
+  return <div className={`${styles.row} ${!loop ? styles.staticRow : ''}`} ref={rowRef}>
     <div className={styles.track} ref={trackRef}>
-      {[0, 1].map(half => <div className={styles.group} key={half} aria-hidden={half === 1 ? true : undefined}>
+      {(loop ? [0, 1] : [0]).map(half => <div className={styles.group} key={half} aria-hidden={half === 1 ? true : undefined}>
         {repeated.map((partner, index) => <a key={`${partner.id}-${index}`} href={partner.profile_url} target="_blank" rel="noopener noreferrer" className={styles.portrait}
           tabIndex={half === 1 || index >= partners.length ? -1 : undefined}
           aria-hidden={index >= partners.length ? true : undefined}
@@ -56,6 +56,7 @@ export function HomePartnersSection() {
     staleTime: 60_000,
   });
   if (!data?.length) return null;
+  const shouldLoop = data.length >= 8;
   const top = data.filter((_, index) => index % 2 === 0);
   const bottom = data.filter((_, index) => index % 2 === 1);
   return <section className={styles.section} aria-labelledby="home-partners-title">
@@ -63,9 +64,11 @@ export function HomePartnersSection() {
       <h2 id="home-partners-title">Quem apoia o <span className="text-primary">PqEstudar</span></h2>
       <p>Conheça os criadores que fazem parte dessa parceria e ajudam a levar oportunidades a mais pessoas.</p>
     </div>
-    <div className={styles.rows}>
+    <div className={shouldLoop ? styles.rows : undefined}>
+      {shouldLoop ? <>
       <PartnerRow partners={top} />
-      <PartnerRow partners={bottom.length ? bottom : top} reverse />
+      <PartnerRow partners={bottom} reverse />
+      </> : <PartnerRow key="static" partners={data} loop={false} />}
     </div>
   </section>;
 }

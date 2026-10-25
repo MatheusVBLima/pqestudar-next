@@ -7,6 +7,9 @@
 .row[data-dragging=true], .row[data-dragging=true] a { cursor: grabbing; }
 .track { display: flex; width: max-content; will-change: transform; }
 .group { display: flex; align-items: center; gap: 24px; padding: 36px 24px 0 0; }
+.staticRow { cursor: auto; user-select: auto; padding: 0 24px; }
+.staticRow .track { width: 100%; will-change: auto; }
+.staticRow .group { width: 100%; flex-wrap: wrap; justify-content: center; gap: 40px 24px; padding: 36px 0 0; }
 .portrait { display: block; flex: 0 0 auto; position: relative; width: 150px; height: 150px; border-radius: 50%; }
 .photo { display: block; position: relative; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: hsl(var(--muted)); border: 2px solid hsl(var(--border)); transition: border-color .2s; }
 .portrait:hover .photo, .portrait:focus-visible .photo { border-color: hsl(var(--primary)); }
