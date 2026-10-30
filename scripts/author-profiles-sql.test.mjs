@@ -28,6 +28,7 @@ try {
   await db.exec("insert into public.guides(author_name,is_published,created_at) values ('Autor legado',true,'2020-01-01'),('Autor legado',true,'2020-02-01'),('Autor legado',true,'2020-03-01')");
   await db.exec("insert into public.guides(author_name,is_published) values ('Nome somente em rascunho',false)");
   await db.exec(fs.readFileSync('supabase/migrations/20261024000100_author_profiles.sql', 'utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/20261030000100_author_badge_milestones.sql', 'utf8'));
   const legacy = (await db.query("select * from public.author_profiles where display_name='Autor legado'")).rows[0];
   assert.equal(legacy.user_id, null, 'Legacy names must not claim auth identities');
   assert.equal((await db.query('select count(*)::int as n from public.author_profiles')).rows[0].n, 1, 'Draft-only bylines remain private');
@@ -76,6 +77,21 @@ try {
   assert.ok((await codes(author)).includes('consistent-3'));
   for (let i = 0; i < 40; i++) await db.exec('insert into public.guides(is_published) values(true)');
   assert.ok((await codes(author)).includes('published-50'));
+  await root();
+  await db.exec('alter table public.guides disable trigger prepare_guide_author');
+  for (let i = 0; i < 6; i++) await db.query('update public.guides set first_published_at=$1 where id=$2', [`2025-${String(i + 7).padStart(2, '0')}-15T12:00:00Z`, drafts[i]]);
+  await db.exec('alter table public.guides enable trigger prepare_guide_author');
+  await db.query('select public.award_author_badges($1)', [author]);
+  assert.ok((await codes(author)).includes('consistent-6'), 'Six consecutive months award the milestone');
+  await db.query("update public.guides set public_category='Carreira' where id=any($1::uuid[])", [drafts.slice(0,2)]);
+  await db.query("update public.guides set public_category='Ferramentas' where id=$1", [drafts[2]]);
+  assert.ok(!(await codes(author)).includes('variety-3'), 'One guide in the third category is insufficient');
+  await db.query("update public.guides set public_category='Ferramentas' where id=$1", [drafts[3]]);
+  assert.ok((await codes(author)).includes('variety-3'), 'Two guides in three categories award variety');
+  const before = (await db.query('select count(*)::int as n from public.user_notifications')).rows[0].n;
+  await db.exec(fs.readFileSync('supabase/migrations/20261030000100_author_badge_milestones.sql', 'utf8'));
+  assert.equal((await db.query('select count(*)::int as n from public.user_notifications')).rows[0].n, before, 'Backfill does not duplicate notifications');
+  assert.equal((await db.query("select title from public.author_badges where author_id=$1 and code='published-50'", [author])).rows[0].title, 'Voz de referência');
   await as(null, 'anon');
   assert.equal((await db.query('select display_name from public.author_profiles')).rows.length, 3);
   await assert.rejects(() => db.query('select user_id from public.author_profiles'), /permission denied/);
@@ -83,5 +99,27 @@ try {
   await as(admin);
   await db.query('update public.author_profiles set user_id=$1,bio=$2 where id=$3', [admin, 'Apresentação editorial', legacy.id]);
   assert.equal((await db.query('select bio from public.author_profiles where id=$1', [legacy.id])).rows[0].bio, 'Apresentação editorial');
+  await root();
+  await db.exec(fs.readFileSync('supabase/migrations/20261030000200_author_pioneers.sql', 'utf8'));
+  assert.ok((await codes(author)).includes('pioneer-20'));
+  assert.ok((await codes(legacy.id)).includes('pioneer-20'));
+  assert.ok(!(await codes(authorOther)).includes('pioneer-20'), 'Profiles and drafts alone do not qualify');
+  const notificationsBefore = (await db.query('select count(*)::int as n from public.user_notifications')).rows[0].n;
+  await db.query('select public.award_author_pioneer($1)', [author]);
+  assert.equal((await db.query('select count(*)::int as n from public.user_notifications')).rows[0].n, notificationsBefore);
+  for (let i = 0; i < 25; i++) {
+    const newcomer = (await db.query('insert into public.author_profiles(slug,display_name) values($1,$2) returning id', [`pioneer-test-${i}`, `Pioneer ${i}`])).rows[0].id;
+    await db.query('insert into public.guides(author_id,is_published) values($1,true)', [newcomer]);
+    assert.equal((await codes(newcomer)).includes('pioneer-20'), i < 18, 'Only the remaining eighteen places can be awarded');
+  }
+  assert.equal((await db.query('select allocated from public.author_pioneer_capacity')).rows[0].allocated, 20);
+  await db.query('delete from public.guides where author_id=$1', [legacy.id]);
+  await db.query('delete from public.author_profiles where id=$1', [legacy.id]);
+  await db.query('insert into public.guides(author_id,is_published) values($1,true)', [authorOther]);
+  assert.ok(!(await codes(authorOther)).includes('pioneer-20'), 'Deleting an author never reopens a place');
+  assert.equal((await db.query('select count(*)::int as n from public.author_pioneer_claims')).rows[0].n, 20);
+  await as(ordinary);
+  await assert.rejects(() => db.query('select public.award_author_pioneer($1)', [authorOther]), /permission denied/);
+  await assert.rejects(() => db.exec('update public.author_pioneer_capacity set allocated=0'), /permission denied/);
   console.log('PASS: legacy attribution, publication thresholds, categories, streak, immutable dates, idempotency, notifications, profile and guide RLS.');
 } finally { await db.close(); }

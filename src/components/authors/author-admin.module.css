@@ -42,6 +42,21 @@
 .badge { width: 70px; display: flex; flex-direction: column; align-items: center; gap: 7px; }
 .medal { width: 38px; height: 44px; display: grid; place-items: center; color: hsl(var(--primary)); background: linear-gradient(150deg, hsl(var(--primary) / .16), hsl(var(--primary) / .04)); border: 1px solid hsl(var(--primary) / .18); border-radius: 12px 12px 17px 17px; box-shadow: inset 0 1px 0 hsl(var(--background) / .8); }
 .badge small { font-size: 10px; line-height: 1.3; color: hsl(var(--muted-foreground)); text-align: center; }
+.medal { position: relative; isolation: isolate; width: 44px; height: 50px; color: var(--badge-ink); border-color: var(--badge-edge); background: linear-gradient(145deg, var(--badge-wash), transparent); transition: filter .18s ease, box-shadow .18s ease; }
+.medal[data-level="first"] { --badge-ink: #64748b; --badge-edge: #94a3b880; --badge-wash: #94a3b82b; border-radius: 12px; }
+.medal[data-level="dedication"] { --badge-ink: #2563eb; --badge-edge: #3b82f6a0; --badge-wash: #3b82f633; border-width: 2px; }
+.medal[data-level="mastery"] { --badge-ink: #9333ea; --badge-edge: #a855f7a0; --badge-wash: #a855f733; border-width: 2px; border-radius: 16px 16px 10px 10px; }
+.medal[data-level="mastery"]::after { content: ''; position: absolute; bottom: 4px; width: 12px; height: 2px; border-radius: 2px; background: currentColor; opacity: .7; }
+.medal[data-level="excellence"] { --badge-ink: #047857; --badge-edge: #10b981aa; --badge-wash: #10b98133; border: 3px double var(--badge-edge); border-radius: 15px 15px 20px 20px; }
+.medal[data-level="historic"] { --badge-ink: #a66a08; --badge-edge: #d49a2eaa; --badge-wash: #edbe5645; border: 3px double var(--badge-edge); border-radius: 50% 50% 15px 15px; }
+.medal[data-level="historic"]::after { content: ''; position: absolute; top: 4px; width: 4px; height: 4px; background: currentColor; transform: rotate(45deg); }
+:global(.dark) .medal[data-level="first"] { --badge-ink: #cbd5e1; }
+:global(.dark) .medal[data-level="dedication"] { --badge-ink: #93c5fd; }
+:global(.dark) .medal[data-level="mastery"] { --badge-ink: #d8b4fe; }
+:global(.dark) .medal[data-level="excellence"] { --badge-ink: #6ee7b7; }
+:global(.dark) .medal[data-level="historic"] { --badge-ink: #fcd778; }
+.badge:hover .medal, button:focus-visible .medal { filter: brightness(1.12); box-shadow: inset 0 0 10px var(--badge-wash), 0 0 12px var(--badge-wash); }
+@media (prefers-reduced-motion: reduce) { .medal { transition: none; } }
 .tenure { display: flex; align-items: flex-start; gap: 9px; text-align: left; padding: 12px; background: hsl(var(--muted) / .45); border-radius: 10px; margin-top: 10px; }
 .tenure > svg { color: hsl(var(--primary)); margin-top: 2px; flex-shrink: 0; }
 .tenure strong { display: block; font-size: 11px; font-weight: 600; }

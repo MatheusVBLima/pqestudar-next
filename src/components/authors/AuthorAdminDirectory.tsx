@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import Link from 'next/link';
-import { Award, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Feather, Medal, Pencil, Plus, Search, ShieldCheck, Users, SlidersHorizontal, ListFilter } from 'lucide-react';
+import { Award, Flag, Compass, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Feather, Medal, Pencil, Plus, Search, ShieldCheck, Users, SlidersHorizontal, ListFilter } from 'lucide-react';
 import { differenceInCalendarDays, differenceInMonths, differenceInYears } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { safeAuthorUrl, type AuthorBadge, type AuthorProfile } from '@/lib/authors';
 import styles from './author-admin.module.css';
+import { authorBadgeLevel } from '@/lib/author-badge-levels';
 
 const selectTriggerClass = 'h-10 w-auto max-w-full gap-4 rounded-full border-primary/20 bg-background/70 px-5 text-xs font-medium hover:bg-primary/10 focus:ring-0 focus:ring-offset-0 focus-visible:bg-primary/10 [&>svg]:shrink-0';
 const selectContentClass = 'admin-radius rounded-2xl border-primary/20 p-1 shadow-2xl shadow-primary/10 [&_[role=option]]:rounded-xl';
@@ -26,8 +27,8 @@ export function authorTenure(date: string, now = new Date()) {
 }
 
 export function AuthorMedal({ badge, iconOnly = false }: { badge: AuthorBadge; iconOnly?: boolean }) {
-  const Icon = badge.code === 'published-1' ? Feather : badge.code.startsWith('consistent') ? CalendarDays : badge.code.startsWith('category') ? ShieldCheck : Medal;
-  return <span className={styles.badge} title={iconOnly ? undefined : `${badge.title}: ${badge.description}`}><span className={styles.medal}><Icon size={20} strokeWidth={1.6} aria-hidden="true" /></span>{!iconOnly && <small>{badge.title}</small>}</span>;
+  const Icon = badge.code === 'pioneer-20' ? Flag : badge.code.startsWith('published') ? Feather : badge.code === 'variety-3' ? Compass : badge.code.startsWith('consistent') ? CalendarDays : badge.code.startsWith('category') ? ShieldCheck : Medal;
+  return <span className={styles.badge} title={iconOnly ? undefined : `${badge.title}: ${badge.description}`}><span className={styles.medal} data-level={authorBadgeLevel(badge.code).id}><Icon size={20} strokeWidth={1.6} aria-hidden="true" /></span>{!iconOnly && <small>{badge.title}</small>}</span>;
 }
 
 export function AuthorAdminCard({ author, badges = [], badgeState = 'ready', onEdit, preview = false }: { author: ManagedAuthor; badges?: AuthorBadge[]; badgeState?: 'ready' | 'loading' | 'error'; onEdit?: () => void; preview?: boolean }) {
