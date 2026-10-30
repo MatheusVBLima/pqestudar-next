@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
+import { Portal as TooltipPortal } from "@radix-ui/react-tooltip"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
 
@@ -553,6 +554,7 @@ const SidebarMenuButton = React.forwardRef<
   ) => {
     const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
+    tooltip ??= (props as { 'data-hover-label'?: string })['data-hover-label']
 
     const button = (
       <Comp
@@ -578,12 +580,12 @@ const SidebarMenuButton = React.forwardRef<
     return (
       <Tooltip>
         <TooltipTrigger asChild>{button}</TooltipTrigger>
-        <TooltipContent
+        <TooltipPortal><TooltipContent
           side="right"
           align="center"
           hidden={state !== "collapsed" || isMobile}
           {...tooltip}
-        />
+        /></TooltipPortal>
       </Tooltip>
     )
   }

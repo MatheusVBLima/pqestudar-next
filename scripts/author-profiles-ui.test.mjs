@@ -50,7 +50,7 @@ try {
     await page.setViewportSize({ width, height: 1000 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `No overflow at ${width}`);
     assert.equal(await page.getByTestId('byline').getByRole('link').getAttribute('href'), '/autores/autora-exemplo');
-    assert.equal(await page.getByRole('heading', { name: 'Conquistas', exact: true }).count(), 1);
+    assert.equal(await page.getByRole('heading', { name: 'Conquistas', exact: true }).count(), 0);
     assert.equal(await page.locator('main a[href^="/guias/"]').count(), 3);
     await page.screenshot({ path: `test-results/authors/profile-${width}.png`, fullPage: true });
   }
@@ -61,15 +61,12 @@ try {
   await page.getByRole('button', { name: 'Editar perfil de teste' }).click();
   await page.getByLabel('Sobre você').fill('Apresentação atualizada no teste local.');
   assert.equal(await page.getByLabel('Endereço do perfil').isDisabled(), true);
-  await page.getByRole('checkbox', { name: /Primeiro guia/ }).check();
-  await page.getByRole('checkbox', { name: /Autor consistente/ }).check();
   await page.screenshot({ path: 'test-results/authors/editor-mobile.png', fullPage: true });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   await page.getByRole('button', { name: 'Salvar perfil público' }).click();
   await page.getByText('Perfil salvo no teste', { exact: true }).waitFor();
   assert.equal(savedPayload.bio, 'Apresentação atualizada no teste local.');
   assert.equal(savedPayload.user_id, 'fixture-user');
-  assert.equal(savedPayload.featured_badges.length, 3);
   assert.deepEqual(errors, []);
   console.log('PASS: profile desktop/mobile geometry, byline link, about-author block, badges, guide links, empty state, no browser exceptions. Synthetic data only.');
 } finally { await browser.close(); cleanup(); }

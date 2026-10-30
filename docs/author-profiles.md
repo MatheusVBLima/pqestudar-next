@@ -2,13 +2,22 @@
 
 ## Rotas e edição
 
-- `/autores`: diretório público.
+- `/autores`: endereço antigo, redireciona para a gestão protegida em `/admin/autores`; não exibe listagem pública.
 - `/autores/[slug]`: apresentação, formação/experiência declarada, foto por URL HTTPS, links, guias publicados e conquistas.
-- `/autores/meu-perfil`: o moderador edita o próprio perfil. Disponível no menu do moderador e no diretório.
-- `/admin/autores`: administradores e desenvolvedores criam e editam perfis editoriais e vinculam uma conta após conferir sua identidade.
+- `/autores/meu-perfil`: o moderador edita o próprio perfil, pelo menu do moderador.
+- `/admin/autores`: listagem e gestão no menu **Conteúdo → Autores dos guias**, ao lado de Guias. Administradores criam e editam perfis editoriais e vinculam uma conta após conferir sua identidade. Mantém a proteção existente do dashboard.
+- Os visitantes chegam aos perfis individuais pela autoria dos guias; o perfil oferece retorno a `/guias`.
 - Os editores comum e de fluxo têm seleção explícita do perfil. O banco impõe a autoria própria para novos guias de moderadores, independentemente do payload.
 
 `author_id` é a identidade editorial pública. `created_by` continua sendo a propriedade do guia para controle de edição. Não inferir a conta de uma pessoa a partir do nome nem conceder função de moderador automaticamente a afiliados.
+
+## Apresentação administrativa
+
+Cards verticais exibem foto (ou iniciais), nome, apresentação curta, até três conquistas reais e tempo desde o cadastro do perfil. A data exibida vem de `author_profiles.created_at`: não representa uma data histórica de início como escritor, desconhecida para perfis legados. A legenda explicita a data de cadastro.
+
+A listagem permite buscar nome/apresentação e ordenar por nome ou cadastro recente. O formulário é dividido em identidade, trajetória, links, conquistas e conta responsável, com prévia ao vivo. Bordas, sombras e cores usam os tokens do dashboard. Os selos usam ícones vetoriais nesta etapa; a futura arte em imagem pode substituir o componente `AuthorMedal`.
+
+`node scripts/author-admin-ui.test.mjs` verifica proporções verticais, ausência de overflow, busca, estado vazio, cadastro, prévia e seleção de conquistas com dados fictícios, sem escrever no banco.
 
 ## Regras automáticas
 

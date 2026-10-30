@@ -9,7 +9,6 @@ import { GuideListItem } from "@/components/guides/GuideListItem";
 import { GuideSearchOverlay } from "@/components/guides/GuideSearchOverlay";
 import { useGuidePublicCategories } from "@/hooks/useGuidePublicCategories";
 import { useGuides, Guide } from "@/hooks/useGuides";
-import { usePublicAuthors } from "@/hooks/usePublicAuthors";
 import { useManagementMode } from "@/hooks/useManagementMode";
 import { usePageSettings } from "@/hooks/usePageSettings";
 import { useUserRoles } from "@/hooks/useUserRoles";
@@ -108,7 +107,6 @@ function GuidesList({
 }
 
 export default function GuiasNext() {
-  const { data: authors } = usePublicAuthors();
   const ps = usePageSettings("/guias");
   const { isAdmin, isModerator, loading: rolesLoading } = useUserRoles();
   const { isManagementMode } = useManagementMode();
@@ -175,7 +173,6 @@ export default function GuiasNext() {
       />
 
       <main className="w-full max-w-[1504px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:py-14 pb-16">
-        {!!authors?.length && <div className="mb-6"><Link href="/autores" className="text-sm font-medium text-primary hover:underline">Conheça os autores dos nossos guias →</Link></div>}
         {!rolesLoading && isModerator && (
           <div className="mb-6 flex justify-end">
             <Button asChild><Link href="/moderador">Painel do moderador</Link></Button>

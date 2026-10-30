@@ -431,10 +431,27 @@ All colors MUST be HSL.
   -ms-overflow-style: none;
 }
 
-.admin-radius [data-collapsible="icon"] :is([data-slot="admin-sidebar"], [data-slot="moderator-sidebar"]) [data-sidebar="content"],
 .admin-radius [data-collapsible="icon"] :is([data-slot="admin-sidebar"], [data-slot="moderator-sidebar"]) [data-sidebar="menu-button"],
 .admin-radius [data-collapsible="icon"] :is([data-slot="admin-sidebar"], [data-slot="moderator-sidebar"]) [data-hover-label] {
   overflow: visible;
+}
+
+/* The navigation scrolls independently; account controls never share its space. */
+.admin-radius :is([data-slot="admin-sidebar"], [data-slot="moderator-sidebar"]) [data-sidebar="content"] {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+.admin-radius :is([data-slot="admin-sidebar"], [data-slot="moderator-sidebar"]) [data-sidebar="content"] > * {
+  flex-shrink: 0;
+}
+.admin-radius :is([data-slot="admin-sidebar"], [data-slot="moderator-sidebar"]) :is([data-sidebar="header"], [data-sidebar="footer"]) {
+  flex-shrink: 0;
+}
+/* Collapsed labels are rendered in a portal, outside the scroll viewport. */
+.admin-radius [data-collapsible="icon"] :is([data-slot="admin-sidebar"], [data-slot="moderator-sidebar"]) [data-hover-label]::before,
+.admin-radius [data-collapsible="icon"] :is([data-slot="admin-sidebar"], [data-slot="moderator-sidebar"]) [data-hover-label]::after {
+  display: none !important;
 }
 
 .admin-radius [data-collapsible="icon"] :is([data-slot="admin-sidebar"], [data-slot="moderator-sidebar"]) [data-hover-label]::before,

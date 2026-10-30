@@ -1,6 +1,7 @@
 "use client";
 
-import type { ElementType, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { CollapsedSidebarMenu } from './CollapsedSidebarMenu';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -100,34 +101,6 @@ export function AdminSidebar() {
     <p className={sectionLabelClass}>{children}</p>
   );
 
-  const SubmenuFlyout = ({
-    title,
-    items,
-  }: {
-    title: string;
-    items: Array<{ title: string; href: string; icon: ElementType }>;
-  }) => (
-    <div className="admin-sidebar-flyout" aria-label={title}>
-      <p className="admin-sidebar-flyout-title">{title}</p>
-      <div className="admin-sidebar-flyout-list">
-        {items.map((item) => {
-          const active = isActive(item.href);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn("admin-sidebar-flyout-item", active && "admin-sidebar-flyout-item-active")}
-            >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
-              <span>{item.title}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
-  );
-
   const getUserInitials = () => {
     if (user?.user_metadata?.full_name) {
       return user.user_metadata.full_name
@@ -199,7 +172,7 @@ export function AdminSidebar() {
 
         {/* Insights */}
         <SidebarGroup className={groupClass}>
-          <Collapsible defaultOpen={isInsightsActive} className="admin-sidebar-submenu">
+          {isSidebarCollapsed ? <CollapsedSidebarMenu title="Análises" icon={BarChart3} items={insightsItems} pathname={pathname} className={triggerClass(isInsightsActive)} /> : <Collapsible defaultOpen={isInsightsActive} className="admin-sidebar-submenu">
             <CollapsibleTrigger
               className={triggerClass(isInsightsActive)}
               data-hover-label="Análises"
@@ -213,7 +186,7 @@ export function AdminSidebar() {
               </div>
               <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-data-[collapsible=icon]:hidden [[data-state=open]>&]:rotate-180" />
             </CollapsibleTrigger>
-            <SubmenuFlyout title="Análises" items={insightsItems} />
+            
             <CollapsibleContent className="admin-sidebar-collapsible-content">
               <SidebarGroupContent>
                 <SidebarMenuSub className={expandableSubListClass}>
@@ -262,7 +235,7 @@ export function AdminSidebar() {
                 </SidebarMenuSub>
               </SidebarGroupContent>
             </CollapsibleContent>
-          </Collapsible>
+          </Collapsible>}
         </SidebarGroup>
 
         <SectionLabel>Conteúdo</SectionLabel>
@@ -325,6 +298,19 @@ export function AdminSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive('/admin/autores')}
+                  data-hover-label="Autores dos guias"
+                  className={itemClass(isActive('/admin/autores'))}
+                >
+                  <Link href="/admin/autores">
+                    <Users className="h-4 w-4" />
+                    <span>Autores dos guias</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -373,7 +359,7 @@ export function AdminSidebar() {
 
         {/* Concursos */}
         <SidebarGroup className={groupClass}>
-          <Collapsible defaultOpen={isConcursosActive} className="admin-sidebar-submenu">
+          {isSidebarCollapsed ? <CollapsedSidebarMenu title="Concursos" icon={BookOpen} items={concursosItems} pathname={pathname} className={triggerClass(isConcursosActive)} /> : <Collapsible defaultOpen={isConcursosActive} className="admin-sidebar-submenu">
             <CollapsibleTrigger
               className={triggerClass(isConcursosActive)}
               data-hover-label="Concursos"
@@ -387,7 +373,7 @@ export function AdminSidebar() {
               </div>
               <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-data-[collapsible=icon]:hidden [[data-state=open]>&]:rotate-180" />
             </CollapsibleTrigger>
-            <SubmenuFlyout title="Concursos" items={concursosItems} />
+            
             <CollapsibleContent className="admin-sidebar-collapsible-content">
               <SidebarGroupContent>
                 <SidebarMenuSub className={expandableSubListClass}>
@@ -411,7 +397,7 @@ export function AdminSidebar() {
                 </SidebarMenuSub>
               </SidebarGroupContent>
             </CollapsibleContent>
-          </Collapsible>
+          </Collapsible>}
         </SidebarGroup>
 
         <SectionLabel>Produtos</SectionLabel>
@@ -583,7 +569,6 @@ export function AdminSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem><SidebarMenuButton asChild isActive={isActive('/admin/autores')} className={itemClass(isActive('/admin/autores'))}><Link href="/admin/autores"><Users className="h-4 w-4" /><span>Autores dos guias</span></Link></SidebarMenuButton></SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -632,7 +617,7 @@ export function AdminSidebar() {
 
         {/* Admin Premium */}
         <SidebarGroup>
-          <Collapsible defaultOpen={isPremiumActive} className="admin-sidebar-submenu admin-sidebar-submenu-bottom">
+          {isSidebarCollapsed ? <CollapsedSidebarMenu title="Admin Premium" icon={Crown} items={premiumItems} pathname={pathname} className={triggerClass(isPremiumActive)} /> : <Collapsible defaultOpen={isPremiumActive} className="admin-sidebar-submenu admin-sidebar-submenu-bottom">
             <CollapsibleTrigger
               className={triggerClass(isPremiumActive)}
               data-hover-label="Admin Premium"
@@ -646,7 +631,7 @@ export function AdminSidebar() {
               </div>
               <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-data-[collapsible=icon]:hidden [[data-state=open]>&]:rotate-180" />
             </CollapsibleTrigger>
-            <SubmenuFlyout title="Admin Premium" items={premiumItems} />
+            
             <CollapsibleContent className="admin-sidebar-collapsible-content">
               <SidebarGroupContent>
                 <SidebarMenuSub className={expandableSubListClass}>
@@ -670,7 +655,7 @@ export function AdminSidebar() {
                 </SidebarMenuSub>
               </SidebarGroupContent>
             </CollapsibleContent>
-          </Collapsible>
+          </Collapsible>}
         </SidebarGroup>
       </SidebarContent>
 

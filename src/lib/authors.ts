@@ -13,7 +13,3 @@ export function safeAuthorUrl(value: string | null | undefined): string | undefi
   return undefined;
 }
 
-export function highlightedBadges(author: AuthorProfile, badges: AuthorBadge[]) {
-  const selected = author.featured_badges.map(code => badges.find(b => b.code === code)).filter((b): b is AuthorBadge => !!b);
-  return [...selected, ...badges.filter(b => !selected.includes(b))].slice(0, 3);
-}

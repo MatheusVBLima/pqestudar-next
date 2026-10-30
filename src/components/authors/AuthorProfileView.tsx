@@ -1,6 +1,7 @@
+import { AuthorBadgeDisplay } from './AuthorBadgeDisplay';
 import Link from 'next/link';
-import { Award, ArrowUpRight, BookOpen, GraduationCap, UserRound } from 'lucide-react';
-import { type AuthorBadge, type AuthorProfile, highlightedBadges, safeAuthorUrl } from '@/lib/authors';
+import { ArrowUpRight, BookOpen, GraduationCap, UserRound } from 'lucide-react';
+import { type AuthorBadge, type AuthorProfile, safeAuthorUrl } from '@/lib/authors';
 
 type AuthorGuide = { id: string; slug: string; title: string; short_description: string; public_category: string; category: string; cover_image_url: string | null };
 
@@ -12,10 +13,9 @@ export function AuthorPhoto({ author, large = false }: { author: AuthorProfile; 
 }
 
 export function AuthorProfileView({ author, badges, guides }: { author: AuthorProfile; badges: AuthorBadge[]; guides: AuthorGuide[] }) {
-  const highlights = highlightedBadges(author, badges);
   const categories = [...new Set(guides.map(g => g.public_category || g.category).filter(Boolean))];
   return <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-    <Link href="/autores" className="text-sm text-muted-foreground hover:text-primary">← Todos os autores</Link>
+    <Link href="/guias" className="text-sm text-muted-foreground hover:text-primary">← Explorar guias</Link>
     <section className="mt-6 overflow-hidden rounded-3xl border bg-card">
       <div className="h-24 bg-gradient-to-r from-primary/20 via-primary/10 to-background sm:h-32" />
       <div className="px-6 pb-8 sm:px-10">
@@ -25,7 +25,7 @@ export function AuthorProfileView({ author, badges, guides }: { author: AuthorPr
             <p className="text-xs font-semibold uppercase tracking-widest text-primary">Autor no PqEstudar</p>
             <h1 className="mt-2 break-words text-3xl font-bold tracking-tight sm:text-4xl">{author.display_name}</h1>
             {author.headline && <p className="mt-3 break-words text-lg text-muted-foreground">{author.headline}</p>}
-            <div className="mt-5 flex flex-wrap gap-2">{highlights.map(b => <span key={b.code} title={b.description} className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary"><Award size={14} aria-hidden="true" />{b.title}</span>)}</div>
+            <div className="mt-5 flex flex-wrap gap-2">{badges.map(b => <AuthorBadgeDisplay key={b.code} badge={b} />)}</div>
           </div>
           <div className="flex shrink-0 flex-col items-start gap-3">
             {safeAuthorUrl(author.website_url) && <a href={safeAuthorUrl(author.website_url)} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-full items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">{author.website_label}<ArrowUpRight size={16} /></a>}
@@ -35,7 +35,7 @@ export function AuthorProfileView({ author, badges, guides }: { author: AuthorPr
         <div className="mt-7 flex flex-wrap items-center gap-3 border-t pt-5 text-sm text-muted-foreground"><BookOpen size={18} /><span><strong className="text-foreground">{guides.length}</strong> {guides.length === 1 ? 'guia publicado' : 'guias publicados'}</span><span aria-hidden="true">·</span><span><strong className="text-foreground">{badges.length}</strong> {badges.length === 1 ? 'conquista' : 'conquistas'}</span></div>
       </div>
     </section>
-    <div className="mt-10 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div className={`mt-10 grid items-start gap-10 ${categories.length ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
       <div className="min-w-0 space-y-10">
         {(author.bio || author.education) && <section><h2 className="text-xl font-bold">Sobre {author.display_name}</h2>{author.bio && <p className="mt-4 whitespace-pre-line break-words leading-relaxed text-muted-foreground">{author.bio}</p>}{author.education && <div className="mt-5 rounded-xl border p-4"><h3 className="flex items-center gap-2 text-sm font-semibold"><GraduationCap size={18} />Formação e experiência</h3><p className="mt-2 whitespace-pre-line break-words text-sm text-muted-foreground">{author.education}</p></div>}</section>}
         <section><h2 className="text-xl font-bold">Guias de {author.display_name}</h2><p className="mt-2 text-sm text-muted-foreground">Conhecimento compartilhado para ajudar você a ir mais longe.</p>
@@ -46,9 +46,6 @@ export function AuthorProfileView({ author, badges, guides }: { author: AuthorPr
         </section>
       </div>
       <aside className="space-y-6">
-        <section className="rounded-2xl border bg-card p-6"><h2 className="flex items-center gap-2 font-bold"><Award size={20} className="text-primary" />Conquistas</h2><p className="mt-2 text-xs leading-relaxed text-muted-foreground">Reconhecimentos automáticos por contribuições no PqEstudar.</p>
-          <div className="mt-5 space-y-5">{badges.map(b => <div key={b.code}><h3 className="text-sm font-semibold">{b.title}</h3><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{b.description}</p><p className="mt-1 text-[11px] text-muted-foreground">Conquistado em {new Date(b.earned_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p></div>)}{!badges.length && <p className="text-sm text-muted-foreground">A primeira conquista chega com o primeiro guia publicado.</p>}</div>
-        </section>
         {!!categories.length && <section className="rounded-2xl border p-6"><h2 className="font-bold">Temas que compartilha</h2><div className="mt-4 flex flex-wrap gap-2">{categories.map(c => <span key={c} className="rounded-full bg-muted px-3 py-1 text-xs">{c}</span>)}</div></section>}
       </aside>
     </div>
