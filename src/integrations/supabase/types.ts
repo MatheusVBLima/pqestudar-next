@@ -4436,6 +4436,8 @@ export type Database = {
       }
     }
     Functions: {
+      get_author_profile_visits: { Args: { target: string }; Returns: number }
+      get_author_progress: { Args: { target: string }; Returns: { points: number; credited_guides: number; contribution_months: number }[] }
       affiliate_wallet: { Args: { p_page?: number }; Returns: Json }
       affiliate_release_commission: { Args: { p_commission: string }; Returns: undefined }
       affiliate_request_payout: { Args: { p_id: string; p_amount: number; p_cipher: string; p_mask: string }; Returns: Json }

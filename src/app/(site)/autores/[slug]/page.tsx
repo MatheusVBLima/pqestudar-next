@@ -1,3 +1,5 @@
+import { AuthorProfileActions } from '@/components/authors/AuthorProfileActions';
+import { AuthorPrivateProgress } from '@/components/authors/AuthorPrivateProgress';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAuthor } from '@/lib/data/authors';
@@ -15,5 +17,5 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function AuthorPage({ params }: Props) {
   const result = await getAuthor((await params).slug);
   if (!result) notFound();
-  return <><JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: result.author.display_name, description: result.author.bio, url: absoluteUrl(`/autores/${result.author.slug}`) } }} /><AuthorProfileView {...result} /></>;
+  return <><JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: result.author.display_name, description: result.author.bio, url: absoluteUrl(`/autores/${result.author.slug}`) } }} /><AuthorProfileView {...result} privateProgress={<AuthorPrivateProgress authorId={result.author.id} />} privateVisits={<AuthorProfileActions authorId={result.author.id} />} /></>;
 }

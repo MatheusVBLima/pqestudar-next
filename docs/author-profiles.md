@@ -59,3 +59,15 @@ Migração `20261030000200_author_pioneers.sql`: os primeiros 20 perfis editoria
 ## Niveis visuais
 
 O mapeamento em `src/lib/author-badge-levels.ts` usa prata para primeiro guia; azul para 10 guias e 3 meses; violeta para categoria e variedade; esmeralda para 50 guias e 6 meses; dourado exclusivo para pioneiro. Molduras diferenciam os niveis alem da cor. O tooltip informa o nivel. As regras de concessao nao mudam.
+
+## Pontos e niveis (2026-11-01)
+
+A migracao `20261101000100_author_progress.sql` registra 100 pontos por guia na primeira publicacao com autor atribuido. A chave unica guide_id impede creditos repetidos e a ausencia de FK para guides preserva o credito quando um guia e removido. Trocas posteriores de autoria nao transferem nem duplicam pontos. Os guias com first_published_at existente recebem credito no backfill, inclusive os despublicados. Historico anterior nao registrado nao e reconstruido.
+
+Cada 500 pontos libera um nivel; nivel inicial 1. Meses de contribuicao contam meses distintos com primeira publicacao no fuso America/Sao_Paulo, nao uma sequencia. A proxima meta aparece apenas na edicao. O ledger privado nao exp?e IDs de rascunhos; a RPC publica retorna apenas agregados. Revisoes, login, cliques e republicacoes nao pontuam. Esta fase usa a permissao editorial de publicacao existente, sem novo fluxo de aprovacao.
+
+Validacao: testes PostgreSQL/PGlite para creditos, preservacao, idempotencia e permissoes; UI simulada desktop/mobile para progresso e perfil. Migracao aplicada ao Supabase vinculado; nova publicacao autenticada em producao ainda nao foi realizada para prova ponta a ponta.
+
+## Visitas privadas ao perfil
+
+`get_author_profile_visits` agrega os eventos existentes de page_views pelo slug imutavel, com ou sem barra final. A RPC permite apenas o dono do perfil e administracao (admin/developer); nao retorna eventos individuais. Exclui actor_type admin e user_id identificado como dono/admin/developer. O tracker existente respeita consentimento analytics e debounce de 10 segundos; a contagem e de visitas registradas, nao visitantes unicos nem total absoluto de acessos. Nao se infere historico nao registrado. A UI consulta com a sessao e limpa o resultado ao mudar de conta. Testes de banco e UI simulada cobrem filtros e permissoes.

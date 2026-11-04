@@ -20,7 +20,7 @@ export function ThemeSelector({ className }: { className?: string }) {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full", className)} aria-label="Escolher tema" title={`Tema: ${currentLabel}`}>
+        <Button variant="ghost" size="icon" className={cn("h-9 w-9 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:bg-accent", className)} aria-label="Escolher tema" title={`Tema: ${currentLabel}`}>
           <CurrentIcon className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>

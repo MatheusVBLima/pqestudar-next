@@ -7,6 +7,7 @@ import { partnersRequest } from "@/lib/affiliates/client";
 import type { AffiliateDashboard } from "@/lib/affiliates/types";
 import {
   BarChart3,
+  ContactRound,
   BookOpen,
   Crown,
   Users,
@@ -33,6 +34,7 @@ import { useNavConfig, type NavItem } from "@/hooks/useNavConfig";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { ThemeSelector } from "@/components/layout/theme-selector";
 import {
   DropdownMenu,
@@ -100,7 +102,22 @@ export function Navbar() {
     && !affiliateMembership.isFetching
     && affiliateMembership.data?.profile?.user_id === user.id
     && affiliateMembership.data?.profile?.status === 'approved';
-  const { isAdmin, isModerator, loading: rolesLoading, error: rolesError, refetch: retryRoles } = useUserRoles();
+  const { isAdmin, isModerator, canAccessAdmin, loading: rolesLoading, error: rolesError, refetch: retryRoles } = useUserRoles();
+  const ownAuthor = useQuery({
+    queryKey: ['my-author-profile', user?.id],
+    enabled: !!user && !loading,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('author_profiles').select('slug,user_id').eq('user_id', user!.id).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const ownAuthorSlug = ownAuthor.data?.user_id === user?.id ? ownAuthor.data?.slug : undefined;
+  const authorProfileHref = ownAuthorSlug ? '/autores/' + ownAuthorSlug : '/autores/meu-perfil';
+  const showAuthorProfile = !!user && !loading && !ownAuthor.isPending && !ownAuthor.isError && (!!ownAuthorSlug || (!rolesLoading && canAccessAdmin));
   const { isActive } = useSubscription();
   const { items: navItems, logos, loading: navLoading } = useNavConfig();
   const { enabled: publicCoursesEnabled, loading: publicCoursesLoading } = useSiteFeatureFlag(PREMIUM_COURSES_PUBLIC_FLAG);
@@ -403,6 +420,12 @@ export function Navbar() {
                       >
                         <Bookmark className="h-4 w-4 mr-2" />Salvos
                       </DropdownMenuItem>
+                      {showAuthorProfile && <DropdownMenuItem
+                        onMouseEnter={() => !isOnKitSubdomain && router.prefetch(authorProfileHref)}
+                        onFocus={() => !isOnKitSubdomain && router.prefetch(authorProfileHref)}
+                        onClick={() => handleNavigation(authorProfileHref)}
+                        className="cursor-pointer"
+                      ><ContactRound className="h-4 w-4 mr-2" />Meu perfil de autor</DropdownMenuItem>}
                       {(rolesLoading || rolesError) && (
                         <DropdownMenuItem disabled={rolesLoading} onSelect={(event) => { event.preventDefault(); void retryRoles(); }} className="cursor-pointer">
                           <RotateCcw className="h-4 w-4 mr-2" />
@@ -568,6 +591,12 @@ export function Navbar() {
                         >
                           <Bookmark className="h-4 w-4 mr-2" />Salvos
                         </DropdownMenuItem>
+                        {showAuthorProfile && <DropdownMenuItem
+                          onMouseEnter={() => !isOnKitSubdomain && router.prefetch(authorProfileHref)}
+                          onFocus={() => !isOnKitSubdomain && router.prefetch(authorProfileHref)}
+                          onClick={() => handleNavigation(authorProfileHref)}
+                          className="cursor-pointer"
+                        ><ContactRound className="h-4 w-4 mr-2" />Meu perfil de autor</DropdownMenuItem>}
                         {(rolesLoading || rolesError) && (
                           <DropdownMenuItem disabled={rolesLoading} onSelect={(event) => { event.preventDefault(); void retryRoles(); }} className="cursor-pointer">
                             <RotateCcw className="h-4 w-4 mr-2" />

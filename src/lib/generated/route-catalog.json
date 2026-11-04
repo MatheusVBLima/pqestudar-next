@@ -306,6 +306,12 @@
     "dynamic": false
   },
   {
+    "path": "/author-preview-local",
+    "name": "Author preview local",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
     "path": "/autores",
     "name": "Autores",
     "area": "Site",

@@ -1,4 +1,5 @@
 "use client";
+import { AuthorProgress } from './AuthorProgress';
 import { AuthorBadgeDisplay } from './AuthorBadgeDisplay';
 import { useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
@@ -49,6 +50,11 @@ export function AuthorProfileForm({ profile, userId, admin, onSaved }: { profile
     } finally { setUploading(false); }
   }
   const queryClient = useQueryClient();
+  const progress = useQuery({ queryKey: ['author-progress', profile?.id, userId, admin], enabled: !!profile?.id && (admin || profile.user_id === userId), queryFn: async () => {
+    const { data, error } = await supabase.rpc('get_author_progress', { target: profile!.id });
+    if (error) throw error;
+    return data[0];
+  } });
   const badges = useQuery({ queryKey: ['author-badges', profile?.id], enabled: !!profile?.id, queryFn: async () => {
     const { data, error } = await supabase.from('author_badges').select('*').eq('author_id', profile!.id).order('earned_at', { ascending: false });
     if (error) throw error;
@@ -73,6 +79,7 @@ export function AuthorProfileForm({ profile, userId, admin, onSaved }: { profile
       if (result.error) throw result.error;
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['author-editor'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-author-profile'] }),
         queryClient.invalidateQueries({ queryKey: ['public-authors'] }),
         queryClient.invalidateQueries({ queryKey: ['guide-author-profiles'] }),
       ]);
@@ -127,16 +134,16 @@ export function AuthorProfileForm({ profile, userId, admin, onSaved }: { profile
         {admin && <section className={`${styles.panel} ${styles.formSection}`}><div className={styles.sectionHeading}><span><ShieldCheck size={20} /></span><div><h2>Responsável pelo perfil</h2><p>Defina quem pode gerenciar esta apresentação.</p></div></div><Label htmlFor="author-account">Conta responsável (ID do usuário)</Label><Input id="author-account" value={form.user_id} onChange={e => update('user_id', e.target.value)} pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" className="mt-2" /><p className="mt-2 text-[11px] text-muted-foreground">Opcional. Confira a identidade da conta antes de vinculá-la.</p></section>}
     <footer className={`${styles.panel} ${styles.formFooter}`}><p>As informações salvas aparecem no perfil público do autor.</p><Button type="submit" disabled={saving || uploading}>{saving ? 'Salvando…' : 'Salvar perfil público'}</Button></footer>
       </div>
-      <aside className={styles.aside}><p className={styles.previewLabel}>Prévia do card · ao vivo</p><AuthorAdminCard author={preview} badges={badges.data || []} badgeState={badges.isError ? 'error' : badges.isFetching ? 'loading' : 'ready'} preview />{profile && <Button asChild variant="outline" className="mt-4 w-full"><Link href={`/autores/${profile.slug}`} target="_blank" rel="noopener noreferrer">Ver perfil público<ExternalLink size={14} className="ml-2" /></Link></Button>}<p className="mt-4 text-xs leading-relaxed text-muted-foreground">A foto, a apresentação e os destaques acompanham o autor nos guias.</p></aside>
+      <aside className={styles.aside}>{(admin || profile?.user_id === userId) && progress.data && <div className="mb-4"><AuthorProgress progress={progress.data} privateView /></div>}{(admin || profile?.user_id === userId) && progress.isError && <p role="status" className="mb-3 text-xs text-muted-foreground">Progresso indisponível no momento.</p>}<p className={styles.previewLabel}>Prévia do card · ao vivo</p><AuthorAdminCard author={preview} badges={badges.data || []} badgeState={badges.isError ? 'error' : badges.isFetching ? 'loading' : 'ready'} preview />{profile && <Button asChild variant="outline" className="mt-4 w-full"><Link href={`/autores/${profile.slug}`} target="_blank" rel="noopener noreferrer">Ver perfil público<ExternalLink size={14} className="ml-2" /></Link></Button>}<p className="mt-4 text-xs leading-relaxed text-muted-foreground">A foto, a apresentação e os destaques acompanham o autor nos guias.</p></aside>
     </div>
   </form>;
 
 }
 
-export default function AuthorProfileEditor({ admin = false }: { admin?: boolean }) {
+export default function AuthorProfileEditor({ admin = false, initialAuthorId = null }: { admin?: boolean; initialAuthorId?: string | null }) {
   const { user, loading: authLoading } = useAuth();
   const roles = useUserRoles();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(admin ? initialAuthorId : null);
   const allowed = admin ? roles.canAccessAdmin : roles.canAccessAdmin || roles.isModerator;
   const allBadges = useQuery({ queryKey: ['admin-author-badges', user?.id], enabled: !!user && allowed && admin, queryFn: async () => {
     const rows: Tables<'author_badges'>[] = [];
@@ -160,6 +167,7 @@ export default function AuthorProfileEditor({ admin = false }: { admin?: boolean
   if (query.isPending) return <p className="p-8" role="status">Carregando perfil…</p>;
   if (query.isError) return <div className="p-8"><p role="alert">Não foi possível carregar o perfil.</p><Button className="mt-4" onClick={() => query.refetch()}>Tentar novamente</Button></div>;
   const profile = admin ? query.data.find(a => a.id === selected) : query.data[0];
+  if (admin && selected && !profile) return <div className={styles.page}><p role="alert">Autor não encontrado.</p><Button variant="link" onClick={() => setSelected(null)}>Voltar aos autores</Button></div>;
   return <div className={styles.page}>
     {admin && selected === null ? <AuthorAdminDirectory authors={query.data} badges={allBadges.data || []} badgeState={allBadges.isError ? 'error' : allBadges.isPending ? 'loading' : 'ready'} onSelect={setSelected} /> : <>
       <header className={styles.header}><div>{admin && <Button variant="ghost" size="sm" className="mb-4 -ml-3 text-muted-foreground" onClick={() => setSelected(null)}><ArrowLeft size={14} className="mr-2" />Voltar aos autores</Button>}<p className={styles.eyebrow}>{admin ? 'Conteúdo / Autores' : 'Sua presença no PqEstudar'}</p><h1 className={styles.title}>{admin ? profile ? 'Editar perfil do autor' : 'Uma nova voz nos guias' : 'Meu perfil de autor'}</h1><p className={styles.description}>{profile ? `Cuide da apresentação e dos destaques de ${profile.display_name}.` : 'Apresente quem escreve, valorize sua experiência e conecte seu trabalho aos leitores.'}</p></div></header>

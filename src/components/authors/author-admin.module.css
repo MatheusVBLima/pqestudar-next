@@ -46,10 +46,8 @@
 .medal[data-level="first"] { --badge-ink: #64748b; --badge-edge: #94a3b880; --badge-wash: #94a3b82b; border-radius: 12px; }
 .medal[data-level="dedication"] { --badge-ink: #2563eb; --badge-edge: #3b82f6a0; --badge-wash: #3b82f633; border-width: 2px; }
 .medal[data-level="mastery"] { --badge-ink: #9333ea; --badge-edge: #a855f7a0; --badge-wash: #a855f733; border-width: 2px; border-radius: 16px 16px 10px 10px; }
-.medal[data-level="mastery"]::after { content: ''; position: absolute; bottom: 4px; width: 12px; height: 2px; border-radius: 2px; background: currentColor; opacity: .7; }
 .medal[data-level="excellence"] { --badge-ink: #047857; --badge-edge: #10b981aa; --badge-wash: #10b98133; border: 3px double var(--badge-edge); border-radius: 15px 15px 20px 20px; }
 .medal[data-level="historic"] { --badge-ink: #a66a08; --badge-edge: #d49a2eaa; --badge-wash: #edbe5645; border: 3px double var(--badge-edge); border-radius: 50% 50% 15px 15px; }
-.medal[data-level="historic"]::after { content: ''; position: absolute; top: 4px; width: 4px; height: 4px; background: currentColor; transform: rotate(45deg); }
 :global(.dark) .medal[data-level="first"] { --badge-ink: #cbd5e1; }
 :global(.dark) .medal[data-level="dedication"] { --badge-ink: #93c5fd; }
 :global(.dark) .medal[data-level="mastery"] { --badge-ink: #d8b4fe; }
@@ -95,3 +93,7 @@
 @media (max-width: 640px) { .storyFields { grid-template-columns: minmax(0, 1fr); } .formFooter p { display: none; } }
 @media (max-width: 1100px) { .formLayout { grid-template-columns: minmax(0, 1fr); } .aside { position: static; max-width: 320px; width: 100%; } }
 @media (max-width: 640px) { .header { flex-direction: column; } .stats { gap: 8px; } .stat { padding: 12px 10px; display: block; } .statIcon { width: 30px; height: 30px; margin-bottom: 10px; } .stat strong { font-size: 20px; } .stat small { font-size: 10px; } .toolbar { flex-wrap: wrap; } .search { flex-basis: 100%; } .actionRow [role="combobox"] { flex: 1; min-width: 0; } .formSection { padding: 18px; } .fields { grid-template-columns: minmax(0, 1fr); } .formFooter { align-items: stretch; flex-direction: column; } }
+
+/* One circular silhouette across all recognition levels. */
+.medal[data-level] { box-sizing: border-box; width: 54px; height: 54px; flex-shrink: 0; border-radius: 50%; }
+.badgeChoice .medal { width: 54px; height: 54px; }
