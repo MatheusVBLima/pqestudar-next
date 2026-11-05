@@ -10,6 +10,10 @@ import MarkdownEditor from '@/components/admin/MarkdownEditor';
 import { CATEGORIAS, CATEGORIAS_PUBLICAS } from '@/lib/guide-editorial-options';
 
 export interface ImagePrompt {
+  source_kind?: 'library' | 'diagram' | 'automatic';
+  library_path?: string;
+  source?: string;
+  license?: string;
   type: 'cover' | 'internal';
   position: string;
   prompt: string;

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { ImageLibraryMetadata } from './ImageLibraryMetadata';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,24 @@ interface StorageMetadata {
 export function ImageGalleryTab() {
   const [images, setImages] = useState<StorageImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const uploadImage = async (file?: File) => {
+    if (!file) return;
+    const ext = ({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'} as Record<string,string>)[file.type];
+    if (!ext || file.size > 5 * 1024 * 1024) {
+      toast({title:'Arquivo não aceito',description:'Use PNG, JPEG ou WebP com até 5 MB.',variant:'destructive'}); return;
+    }
+    setIsUploading(true);
+    try {
+      const name = `library-${crypto.randomUUID()}.${ext}`;
+      const {error} = await supabase.storage.from('guide-covers').upload(name,file,{contentType:file.type,upsert:false});
+      if(error) throw error;
+      await loadImages();
+      setPreviewImage({name,bucket:'guide-covers',publicUrl:supabase.storage.from('guide-covers').getPublicUrl(name).data.publicUrl,createdAt:new Date().toISOString(),size:file.size});
+      toast({title:'Imagem enviada',description:'Cadastre os termos e aprove a reutilização uma única vez.'});
+    } catch (error) { toast({title:'Falha ao enviar imagem',description:getErrorMessage(error),variant:'destructive'}); }
+    finally {setIsUploading(false);}
+  };
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<StorageImage | null>(null);
   const [guideCovers, setGuideCovers] = useState<Map<string, string>>(new Map());
@@ -111,19 +130,16 @@ export function ImageGalleryTab() {
     );
   }
 
-  if (images.length === 0) {
-    return (
-      <Card className="rounded-[var(--admin-radius)]">
-        <CardContent className="py-12 text-center">
-          <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">Nenhuma imagem encontrada no bucket guide-covers.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-4">
+      <div className="rounded-lg border p-3 space-y-2">
+        <p className="text-sm">Abra uma imagem para cadastrar assunto, função e autorização de reutilização. Somente imagens aprovadas entram na seleção automática.</p>
+        <label className="block text-sm font-medium">Adicionar imagem ao acervo
+          <input className="mt-2 block text-xs" type="file" accept="image/png,image/jpeg,image/webp" disabled={isUploading} onChange={e=>{void uploadImage(e.target.files?.[0]);e.target.value='';}} />
+        </label>
+        {isUploading && <p role="status" className="text-xs">Enviando imagem…</p>}
+        {!images.length && <p className="text-xs text-muted-foreground">Seu acervo ainda está vazio. Diagramas podem ser criados a partir dos passos dos guias mesmo sem imagens cadastradas.</p>}
+      </div>
       {/* Header stats */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -202,7 +218,7 @@ export function ImageGalleryTab() {
 
       {/* Preview dialog */}
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-sm truncate">{previewImage?.name}</DialogTitle>
           </DialogHeader>
@@ -257,6 +273,7 @@ export function ImageGalleryTab() {
                   </a>
                 </Button>
               </div>
+              <ImageLibraryMetadata key={previewImage.name} storagePath={previewImage.name} />
             </div>
           )}
         </DialogContent>

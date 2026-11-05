@@ -227,17 +227,11 @@ function getCtaValidations(data: GeneratedGuideData): ValidationGroup {
   const ctas = [
     { key: 'Superior', cta: data.cta_top, ideal: 'leve (convite suave)' },
     { key: 'Intermediária', cta: data.cta_middle, ideal: 'contextual (relacionada ao conteúdo)' },
-    { key: 'Final', cta: data.cta_final, ideal: 'forte (conversão direta)' },
+    { key: 'Final', cta: data.cta_final, ideal: 'próximo passo útil para a intenção do guia' },
   ];
 
   const configuredCount = ctas.filter((c) => c.cta).length;
-  if (configuredCount === 0) {
-    items.push({ label: 'CTAs', status: 'warn', detail: '0/3 configuradas', suggestion: 'Adicione pelo menos 2 CTAs para guiar o leitor.' });
-  } else if (configuredCount < 2) {
-    items.push({ label: 'CTAs', status: 'warn', detail: `${configuredCount}/3 configurada(s)` });
-  } else {
-    items.push({ label: 'CTAs', status: 'ok', detail: `${configuredCount}/3` });
-  }
+  items.push({ label: 'CTAs', status: 'ok', detail: `${configuredCount}/3 configuradas (opcionais)` });
 
   for (const { key, cta, ideal } of ctas) {
     if (!cta) continue;
@@ -263,6 +257,13 @@ function getCtaValidations(data: GeneratedGuideData): ValidationGroup {
     }
 
     // Check URL is internal
+    const labelWords = cta.label.trim().split(/\s+/).filter(Boolean).length;
+    if (cta.label.length > 40 || labelWords < 2 || labelWords > 6) {
+      items.push({ label: `Botão ${key}`, status: 'warn', detail: `${cta.label.length} caracteres; ${labelWords} palavras`, suggestion: 'Prefira verbo e objeto, com 2 a 6 palavras e até 40 caracteres. Recomendação editorial, não bloqueia salvar.' });
+    }
+    if ((cta.text || '').length > 120) {
+      items.push({ label: `Apoio ${key}`, status: 'warn', detail: `${cta.text.length}/120 caracteres`, suggestion: 'Prefira uma frase curta que explique a utilidade do próximo passo sem repetir o botão.' });
+    }
     if (cta.url.trim() && !cta.url.startsWith('/') && !cta.url.startsWith('#')) {
       items.push({ label: `URL ${key}`, status: 'warn', detail: 'URL externa', suggestion: 'CTAs devem apontar para páginas internas do portal.' });
     }
@@ -307,11 +308,11 @@ function getLinksValidations(data: GeneratedGuideData): ValidationGroup {
 
 function getImageValidations(data: GeneratedGuideData): ValidationGroup {
   const items: ValidationItem[] = [];
-  const imgCount = countImages(data.content_markdown);
+  const imgCount = countImages(data.content_markdown) + (data.generated_images || []).filter(image => image.type === 'internal' && image.status === 'success' && image.url).length;
   const wordCount = data.content_markdown.trim().split(/\s+/).filter(Boolean).length;
 
   if (imgCount === 0 && wordCount > 300) {
-    items.push({ label: 'Imagens no corpo', status: 'warn', detail: 'Nenhuma imagem', suggestion: 'Guias longos se beneficiam de imagens ilustrativas entre seções.' });
+    items.push({ label: 'Imagens no corpo', status: 'ok', detail: 'Opcionais', suggestion: 'Inclua apenas quando ajudarem a explicar o conteúdo.' });
   } else if (imgCount > 0) {
     items.push({ label: 'Imagens no corpo', status: 'ok', detail: `${imgCount} imagem(ns)` });
   }
@@ -325,7 +326,7 @@ function getImageValidations(data: GeneratedGuideData): ValidationGroup {
   }
 
   // Cover image suggestion
-  if (data.cover_image_suggestion) {
+  if (data.cover_image_url || data.cover_image_suggestion) {
     items.push({ label: 'Capa sugerida', status: 'ok', detail: 'Sim' });
   } else {
     items.push({ label: 'Capa sugerida', status: 'warn', detail: 'Sem sugestão', suggestion: 'Considere adicionar uma sugestão de imagem de capa.' });

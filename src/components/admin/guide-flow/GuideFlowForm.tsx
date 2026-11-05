@@ -56,7 +56,7 @@ export interface GuideFlowInputs {
   palavraChave: string;
   intencao: string;
   contextoAdicional: string;
-  visualMode: 'generate' | 'prompt_only' | 'suggestion';
+  visualMode: 'generate' | 'prompt_only' | 'suggestion' | 'automatic';
   aiProvider: GuideFlowAiProvider;
   textModel: string;
   imageModel: string;

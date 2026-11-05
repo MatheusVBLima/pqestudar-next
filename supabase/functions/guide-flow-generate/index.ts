@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { automaticSections, diagramForSection, rankImages, type LibraryImage } from '../_shared/guide-auto-images.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -154,6 +155,7 @@ serve(async (req) => {
 
     const selectedProvider = getAiProvider(aiProvider);
     const suggestionsOnly = !visualMode || visualMode === "suggestion";
+    const automaticImages = visualMode === 'automatic';
     const shouldGenerateImages = !isToolTarget && visualMode === "generate";
 
     if (!tema || (!isToolTarget && !categoria)) {
@@ -239,7 +241,9 @@ Regras:
 `
       : "";
 
-    const imageInstruction = suggestionsOnly
+    const imageInstruction = automaticImages
+      ? `\n## IMAGENS AUTOMATICAS\nNao gere imagens, prompts visuais, URLs ou tags de imagem. Retorne image_prompts vazio. O sistema selecionara imagens aprovadas da biblioteca e montara esquemas a partir de listas numeradas ja presentes no texto. Nao crie listas apenas para obter imagens.`
+      : suggestionsOnly
       ? `\n## POSICOES DE IMAGEM (PRIORIDADE SOBRE DIRETRIZES DE PROMPTS)
 Nao escreva prompts visuais e nao gere imagens. Apenas sugira pontos uteis para inserir imagens.
 Retorne image_prompts com prompt vazio, type internal, position after_section_N e editorial_function curta em portugues.
@@ -298,7 +302,10 @@ ${imageInstruction}
 ## CTAs contextuais
 - CTA superior: mais leve
 - CTA intermediaria: relacionada ao conteudo
-- CTA final: conversao direta
+- CTA final: proximo passo mais util para a intencao do guia; pode orientar execucao, comparacao, validacao ou contratacao quando pertinente, sem forcar chamada comercial
+- Preencha ate tres CTAs apenas quando houver proximo passo util e destino existente; use null nas posicoes sem contexto suficiente. Nao invente destinos nem exija quantidade minima.
+- Botao: verbo e objeto, preferencialmente 2 a 6 palavras e ate 40 caracteres. Apoio: uma frase, preferencialmente ate 120 caracteres, explicando a utilidade sem repetir o botao. Sao recomendacoes, nao limites obrigatorios.
+- O destino deve entregar o que a chamada anuncia. Evite repetir CTAs sem motivo editorial.
 - URLs de CTA devem ser internas, comecando com /
 
 ## Dados reais disponiveis
@@ -321,7 +328,7 @@ Quando o destino nao for ferramenta, o campo "title" deve sempre comecar com a p
 ## Regras de output
 Retorne exclusivamente um JSON valido, sem markdown code fences e sem texto fora do JSON.`;
 
-    const imageSchema = suggestionsOnly
+    const imageSchema = automaticImages ? ', "image_prompts": []' : suggestionsOnly
       ? `,
   "image_prompts": [{ "type": "internal", "position": "after_section_1", "prompt": "", "alt_text": "", "editorial_function": "Imagem aqui: ilustrar o conceito desta secao" }]`
       : isToolTarget
@@ -389,6 +396,53 @@ Retorne um JSON com esta estrutura exata:
       }, 500);
     }
 
+    if (automaticImages) {
+      const { data: assets, error: libraryError } = await supabase.from('guide_image_library').select('*').eq('approved', true).limit(1000);
+      const library = (assets || []) as LibraryImage[];
+      const selected: any[] = [];
+      const used = new Set<string>();
+      const usage: Record<string, number> = {};
+      const { data: previous } = await supabase.from('guides').select('cover_image_url, flow_data').limit(200);
+      for (const guide of previous || []) {
+        for (const image of guide.flow_data?.generated_images || []) {
+          if (image.library_path) usage[image.library_path] = (usage[image.library_path] || 0) + 1;
+        }
+      }
+      const choose = (subject: string, purpose: string, position: string, type: string) => {
+        const found = rankImages(library, subject, purpose, used, usage)[0];
+        if (!found) return false;
+        const asset = found.asset;
+        const url = supabase.storage.from('guide-covers').getPublicUrl(asset.storage_path).data.publicUrl;
+        selected.push({type, position, status:'success', prompt:'', url, alt_text:asset.description, editorial_function:asset.description, source_kind:'library', library_path:asset.storage_path, source:asset.source, license:asset.license});
+        used.add(asset.storage_path);
+        if (type === 'cover') guideData.cover_image_url = url;
+        return true;
+      };
+      guideData.cover_image_url = '';
+      guideData.cover_image_suggestion = '';
+      if (!isToolTarget && !choose(`${tema} ${palavraChave || ''} ${guideData.title || ''}`, 'cover', 'cover', 'cover')) {
+        selected.push({type:'cover', position:'cover', status:'suggestion', prompt:'', alt_text:'', editorial_function:'Selecione uma capa: nenhuma imagem aprovada com correspondencia suficiente.', source_kind:'automatic'});
+      }
+      let placed = 0;
+      for (const section of automaticSections(guideData.content_markdown || '')) {
+        if (placed >= 2 || !section.heading || /faq|perguntas frequentes/i.test(section.title)) continue;
+        const svg = diagramForSection(section.content, section.title);
+        const purpose = svg ? 'steps' : /compar|diferenc|versus/i.test(normalize(section.title)) ? 'comparison' : 'explanation';
+        if (choose(section.title, purpose, section.position, 'internal')) { placed++; continue; }
+        if (svg) {
+          const file = `${user.id}/${crypto.randomUUID()}.svg`;
+          const { error } = await supabase.storage.from('guide-diagrams').upload(file, new TextEncoder().encode(svg), {contentType:'image/svg+xml', upsert:false});
+          if (!error) {
+            selected.push({type:'internal',position:section.position,status:'success',prompt:'',url:supabase.storage.from('guide-diagrams').getPublicUrl(file).data.publicUrl,alt_text:`Esquema ilustrativo: ${section.title}`,editorial_function:'Resumo dos passos desta secao. Confira as orientacoes completas no texto.',source_kind:'diagram'});
+            placed++; continue;
+          }
+        }
+        // One unresolved position is enough; do not fill every section with placeholders.
+        if (!selected.some(i => i.type === 'internal' && i.status === 'suggestion')) selected.push({type:'internal',position:section.position,status:'suggestion',prompt:'',alt_text:'',editorial_function:libraryError ? 'Biblioteca indisponivel. Revise a imagem desta secao.' : 'Sem imagem adequada. Opcional: selecionar na biblioteca ou remover.',source_kind:'automatic'});
+      }
+      guideData.image_prompts = selected;
+      guideData.generated_images = selected;
+    }
     if (suggestionsOnly) {
       const suggestions = Array.isArray(guideData.image_prompts) && guideData.image_prompts.length
         ? guideData.image_prompts
@@ -490,7 +544,7 @@ Retorne um JSON com esta estrutura exata:
       }
 
       guideData.generated_images = generatedImages;
-    } else if (guideData.image_prompts && Array.isArray(guideData.image_prompts) && guideData.image_prompts.length > 0 && !shouldGenerateImages) {
+    } else if (!automaticImages && guideData.image_prompts && Array.isArray(guideData.image_prompts) && guideData.image_prompts.length > 0 && !shouldGenerateImages) {
       guideData.generated_images = guideData.image_prompts.map((imgPrompt: any) => ({
         type: imgPrompt.type,
         position: imgPrompt.position,

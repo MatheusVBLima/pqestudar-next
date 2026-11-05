@@ -627,9 +627,13 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
           <Label className="text-xs font-medium">Modo visual</Label>
           <RadioGroup
             value={inputs.visualMode}
-            onValueChange={(v) => setInputs((p) => ({ ...p, visualMode: v as 'generate' | 'prompt_only' | 'suggestion' }))}
+            onValueChange={(v) => setInputs((p) => ({ ...p, visualMode: v as GuideFlowInputs['visualMode'] }))}
             className="flex flex-wrap gap-3"
           >
+            <div className="flex items-center gap-1.5">
+              <RadioGroupItem value="automatic" id="vm-auto" className="h-3 w-3" />
+              <label htmlFor="vm-auto" className="text-[10px] cursor-pointer">Automático com biblioteca</label>
+            </div>
             <div className="flex items-center gap-1.5">
               <RadioGroupItem value="generate" id="vm-gen" className="h-3 w-3" />
               <label htmlFor="vm-gen" className="text-[10px] flex items-center gap-1 cursor-pointer">
@@ -649,6 +653,7 @@ function InputNodeComponent({ data }: { data: InputNodeData }) {
               <label htmlFor="vm-suggestion" className="text-[10px] cursor-pointer">Imagem aqui (sem prompt)</label>
             </div>
           </RadioGroup>
+          {inputs.visualMode === 'automatic' && <p className="text-[10px] text-muted-foreground">Reutiliza imagens aprovadas e cria esquemas de passos do texto, sem gerar imagens por IA. Correspondências incertas ficam para revisão.</p>}
         </div>
 
         <Button

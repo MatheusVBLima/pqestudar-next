@@ -38,6 +38,7 @@ import { TrailPlannerNode } from './flow-nodes/TrailPlannerNode';
 import { TrailGuidesNode, type TrailGuidesNodeData } from './flow-nodes/TrailGuidesNode';
 import { NodeEditorSheet } from './NodeEditorSheet';
 import { ImagePromptEditor } from './ImagePromptEditor';
+import type { ImagePrompt } from './GuideFlowPreview';
 import type { GeneratedGuideData } from './GuideFlowPreview';
 import type { GuideFlowInputs } from './GuideFlowForm';
 import type { GuideFlowSources } from '@/hooks/useGuideFlowSources';
@@ -863,8 +864,8 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
 
       {guideData && !readOnly && imageEditorPosition && (() => {
         const allImages = [
-          ...(guideData.image_prompts ?? []),
           ...(guideData.generated_images ?? []),
+          ...(guideData.image_prompts ?? []),
         ];
         const img = allImages.find(i => i.position === imageEditorPosition);
         if (!img) return null;
@@ -875,6 +876,10 @@ export function FlowCanvas({ guideData, guideInternalCode, prefillInputs, isGene
             image={img}
             onRegenerate={onRegenerateImage ?? (() => {})}
             onUpdatePrompt={onUpdateImagePrompt ?? (() => {})}
+            onSelectImage={(replacement) => {
+              const replace = (images: ImagePrompt[] = []) => [...images.filter(i=>i.position!==replacement.position),replacement];
+              commitGuideData({...guideData,image_prompts:replace(guideData.image_prompts),generated_images:replace(guideData.generated_images),...(replacement.type==='cover'?{cover_image_url:replacement.url}:{})});
+            }}
           />
         );
       })()}

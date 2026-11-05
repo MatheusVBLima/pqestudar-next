@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ImageNodeData {
+  source_kind?: 'library' | 'diagram' | 'automatic';
   type: 'cover' | 'internal';
   position: string;
   prompt: string;
@@ -38,6 +39,7 @@ export const ImageNode = memo(({ data }: { data: ImageNodeData }) => {
         <ImageIcon className="h-5 w-5 text-primary" />
         <span className="text-sm font-medium">Imagem aqui</span>
         <p className="text-xs text-muted-foreground">{data.editorial_function || 'Sugestão de posição para adicionar uma imagem.'}</p>
+        {data.onEditPrompt && <Button size="sm" variant="outline" onClick={()=>data.onEditPrompt?.(data.position)}>Selecionar imagem</Button>}
       </div>
       <Handle type="source" position={Position.Right} className="!bg-primary" />
     </div>;
@@ -58,7 +60,7 @@ export const ImageNode = memo(({ data }: { data: ImageNodeData }) => {
             variant={data.status === 'success' ? 'default' : data.status === 'error' ? 'destructive' : data.status === 'prompt_only' ? 'outline' : 'secondary'}
             className="text-[10px] px-1.5 py-0"
           >
-            {data.status === 'success' ? '✓ Gerada' : data.status === 'error' ? '✗ Erro' : data.status === 'generating' ? 'Gerando...' : data.status === 'prompt_only' ? '📝 Prompt' : 'Pendente'}
+            {data.status === 'success' ? data.source_kind === 'library' ? 'Biblioteca' : data.source_kind === 'diagram' ? 'Diagrama' : '✓ Gerada' : data.status === 'error' ? '✗ Erro' : data.status === 'generating' ? 'Gerando...' : data.status === 'prompt_only' ? '📝 Prompt' : 'Pendente'}
           </Badge>
         </div>
 
@@ -74,7 +76,7 @@ export const ImageNode = memo(({ data }: { data: ImageNodeData }) => {
             <img
               src={data.url}
               alt={data.alt_text}
-              className="w-full h-32 object-cover rounded-md"
+              className="w-full max-h-64 object-contain rounded-md"
               loading="lazy"
             />
           )}
@@ -108,9 +110,9 @@ export const ImageNode = memo(({ data }: { data: ImageNodeData }) => {
               📌 {data.editorial_function}
             </p>
           )}
-          <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-3 mb-1.5">
+          {!data.source_kind && <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-3 mb-1.5">
             <span className="font-semibold">Prompt:</span> {data.prompt}
-          </p>
+          </p>}
           <p className="text-[10px] text-muted-foreground">
             <span className="font-semibold">Alt:</span> {data.alt_text}
           </p>
@@ -146,11 +148,11 @@ export const ImageNode = memo(({ data }: { data: ImageNodeData }) => {
                   <span className="ml-1">Editar</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">Editar prompt e regenerar</TooltipContent>
+              <TooltipContent side="bottom">Editar ou trocar imagem</TooltipContent>
             </Tooltip>
           )}
 
-          {data.onRegenerate && (
+          {data.onRegenerate && !data.source_kind && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

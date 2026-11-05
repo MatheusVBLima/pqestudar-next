@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { imageLibraryClient, type LibraryAsset } from './ImageLibraryMetadata';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -13,9 +15,21 @@ interface ImagePromptEditorProps {
   image: ImagePrompt;
   onRegenerate: (prompt: string, position: string) => void;
   onUpdatePrompt: (position: string, newPrompt: string) => void;
+  onSelectImage?: (image: ImagePrompt) => void;
 }
 
-export function ImagePromptEditor({ open, onClose, image, onRegenerate, onUpdatePrompt }: ImagePromptEditorProps) {
+export function ImagePromptEditor({ open, onClose, image, onRegenerate, onUpdatePrompt, onSelectImage }: ImagePromptEditorProps) {
+  const [assets, setAssets] = useState<LibraryAsset[]>([]);
+  const [libraryError, setLibraryError] = useState('');
+  useEffect(() => {
+    let alive = true;
+    imageLibraryClient.from('guide_image_library').select('*').eq('approved',true).limit(1000).then(({data,error})=>{
+      if (!alive) return;
+      setAssets((data || []) as LibraryAsset[]);
+      if(error) setLibraryError('Biblioteca indisponível. Confira o acesso e a atualização do banco.');
+    });
+    return () => {alive=false;};
+  }, []);
   const [editedPrompt, setEditedPrompt] = useState(image.prompt);
   const [copied, setCopied] = useState(false);
   const isModified = editedPrompt !== image.prompt;
@@ -43,7 +57,7 @@ export function ImagePromptEditor({ open, onClose, image, onRegenerate, onUpdate
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-sm">
             <ImageIcon className="h-4 w-4 text-primary" />
@@ -52,13 +66,22 @@ export function ImagePromptEditor({ open, onClose, image, onRegenerate, onUpdate
         </DialogHeader>
 
         <div className="space-y-4">
+          {onSelectImage && <div className="space-y-2">
+            <Label>Trocar por imagem da biblioteca</Label>
+            {libraryError && <p role="alert" className="text-xs text-destructive">{libraryError}</p>}
+            <select aria-label="Selecionar imagem aprovada" className="w-full border rounded bg-background p-2 text-sm" value="" onChange={e=>{
+              const asset=assets.find(a=>a.storage_path===e.target.value); if(!asset)return;
+              onSelectImage({...image,status:'success',prompt:'',url:supabase.storage.from('guide-covers').getPublicUrl(asset.storage_path).data.publicUrl,alt_text:asset.description,editorial_function:asset.description,source_kind:'library',library_path:asset.storage_path,source:asset.source,license:asset.license}); onClose();
+            }}><option value="">Escolha uma imagem aprovada</option>{assets.filter(a=>image.type==='cover'?a.purpose==='cover':a.purpose!=='cover').map(a=><option key={a.storage_path} value={a.storage_path}>{a.description}</option>)}</select>
+            {!assets.length && !libraryError && <p className="text-xs text-muted-foreground">Cadastre e aprove imagens na galeria da biblioteca.</p>}
+          </div>}
           {/* Image preview */}
           {image.url && image.status === 'success' && (
             <div className="rounded-[var(--admin-radius)] overflow-hidden bg-muted">
               <img
                 src={image.url}
                 alt={image.alt_text}
-                className="w-full object-cover max-h-[200px]"
+                className="w-full object-contain max-h-[360px]"
               />
             </div>
           )}
@@ -77,11 +100,12 @@ export function ImagePromptEditor({ open, onClose, image, onRegenerate, onUpdate
               variant={image.status === 'success' ? 'default' : image.status === 'error' ? 'destructive' : 'secondary'}
               className="text-[10px]"
             >
-              {image.status === 'success' ? '✓ Gerada' : image.status === 'error' ? '✗ Erro' : image.status === 'generating' ? 'Gerando...' : 'Pendente'}
+              {image.status === 'success' ? image.source_kind === 'library' ? 'Biblioteca' : image.source_kind === 'diagram' ? 'Diagrama' : '✓ Gerada' : image.status === 'error' ? '✗ Erro' : image.status === 'generating' ? 'Gerando...' : 'Pendente'}
             </Badge>
           </div>
 
           {/* Alt text */}
+          {image.source_kind === 'library' && <p className="text-xs text-muted-foreground">Fonte: {image.source}. Licença: {image.license}.</p>}
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Texto alternativo</Label>
             <p className="text-xs bg-muted/50 px-3 py-2 rounded-[var(--admin-radius)]">
@@ -90,7 +114,7 @@ export function ImagePromptEditor({ open, onClose, image, onRegenerate, onUpdate
           </div>
 
           {/* Editable prompt */}
-          <div className="space-y-1.5">
+          {!image.source_kind && <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-semibold">Prompt visual</Label>
               {isModified && (
@@ -109,10 +133,10 @@ export function ImagePromptEditor({ open, onClose, image, onRegenerate, onUpdate
             <p className="text-[10px] text-muted-foreground">
               {editedPrompt.length} caracteres — edite livremente antes de regenerar
             </p>
-          </div>
+          </div>}
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        {!image.source_kind && <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -148,7 +172,7 @@ export function ImagePromptEditor({ open, onClose, image, onRegenerate, onUpdate
               {isModified ? 'Salvar e Regenerar' : 'Regenerar'}
             </Button>
           </div>
-        </DialogFooter>
+        </DialogFooter>}
       </DialogContent>
     </Dialog>
   );
