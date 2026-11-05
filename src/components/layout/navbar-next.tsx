@@ -425,7 +425,7 @@ export function Navbar() {
                         onFocus={() => !isOnKitSubdomain && router.prefetch(authorProfileHref)}
                         onClick={() => handleNavigation(authorProfileHref)}
                         className="cursor-pointer"
-                      ><ContactRound className="h-4 w-4 mr-2" />Meu perfil de autor</DropdownMenuItem>}
+                      ><ContactRound className="h-4 w-4 mr-2" />Meu perfil</DropdownMenuItem>}
                       {(rolesLoading || rolesError) && (
                         <DropdownMenuItem disabled={rolesLoading} onSelect={(event) => { event.preventDefault(); void retryRoles(); }} className="cursor-pointer">
                           <RotateCcw className="h-4 w-4 mr-2" />
@@ -596,7 +596,7 @@ export function Navbar() {
                           onFocus={() => !isOnKitSubdomain && router.prefetch(authorProfileHref)}
                           onClick={() => handleNavigation(authorProfileHref)}
                           className="cursor-pointer"
-                        ><ContactRound className="h-4 w-4 mr-2" />Meu perfil de autor</DropdownMenuItem>}
+                        ><ContactRound className="h-4 w-4 mr-2" />Meu perfil</DropdownMenuItem>}
                         {(rolesLoading || rolesError) && (
                           <DropdownMenuItem disabled={rolesLoading} onSelect={(event) => { event.preventDefault(); void retryRoles(); }} className="cursor-pointer">
                             <RotateCcw className="h-4 w-4 mr-2" />

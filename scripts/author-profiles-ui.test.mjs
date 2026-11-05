@@ -59,7 +59,7 @@ try {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `No overflow at ${width}`);
     assert.equal(await page.getByRole('progressbar').count(), 0, 'Public profile hides progress');
     const counter = await page.getByTestId('visits-counter').boundingBox();
-    const profileCard = await page.locator('main > section').first().boundingBox();
+    const profileCard = await page.getByRole('region', { name: 'Perfil do autor', exact: true }).boundingBox();
     const channel = await page.getByRole('link', { name: /Instagram/ }).first().boundingBox();
     assert.ok(counter.x > profileCard.x + profileCard.width / 2, 'Counter on right side');
     assert.ok(counter.x + counter.width < profileCard.x + profileCard.width, 'Counter within card');

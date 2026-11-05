@@ -25,5 +25,5 @@ export function AuthorPrivateProgress({ authorId }: { authorId: string }) {
   if (loading || !user) return null;
   if (progress.isError) return <div className="mt-5 text-xs text-muted-foreground" role="status">Não foi possível consultar o progresso privado.<Button variant="link" size="sm" onClick={() => progress.refetch()}>Tentar novamente</Button></div>;
   if (!progress.data) return null;
-  return <div className="mt-5"><p className="mb-2 text-xs text-muted-foreground">Visível apenas ao autor e à administração.</p><AuthorProgress progress={progress.data} privateView /></div>;
+  return <AuthorProgress progress={progress.data} privateView compact />;
 }
