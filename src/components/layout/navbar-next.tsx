@@ -249,14 +249,14 @@ export function Navbar() {
         className={cn(
           "mx-auto transition-all duration-300 ease-out",
           isScrolled
-            ? "w-[85%] mt-2 px-3 rounded-[1.2rem] border border-border/40 bg-background/75 backdrop-blur-md shadow-sm"
+            ? "w-full border-b border-border/40 bg-background md:w-[85%] md:mt-2 md:px-3 md:rounded-[1.2rem] md:border md:bg-background/75 md:backdrop-blur-md md:shadow-sm"
             : "w-full bg-background border-b border-border/40",
         )}
       >
         <div
           className={cn(
             "flex items-center justify-between transition-all duration-300 ease-out px-4",
-            isScrolled ? "h-14" : "h-16",
+            isScrolled ? "h-16 md:h-14" : "h-16",
           )}
         >
           <div className="flex items-center gap-1">

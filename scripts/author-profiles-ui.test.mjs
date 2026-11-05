@@ -67,7 +67,7 @@ try {
     const topics = await page.getByRole('heading', { name: 'Temas que compartilha' }).boundingBox();
     const about = await page.getByRole('heading', { name: 'Sobre ' + author.display_name }).boundingBox();
     const guideList = await page.getByRole('heading', { name: 'Guias de ' + author.display_name }).boundingBox();
-    if (width < 1024) assert.ok(topics.y > about.y && topics.y < guideList.y, 'Mobile topics between biography and guides');
+    if (width < 1024) assert.ok(topics.y < about.y && topics.y < guideList.y, 'Mobile topics before biography and guides');
     else assert.ok(topics.x > guideList.x && topics.y < guideList.y, 'Desktop topics stay in sidebar');
     assert.equal(await page.getByTestId('byline').getByRole('link').getAttribute('href'), '/autores/autora-exemplo');
     assert.equal(await page.getByRole('heading', { name: 'Conquistas', exact: true }).count(), 0);

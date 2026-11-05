@@ -14,7 +14,7 @@ const colors = {
 
 export function AuthorChannels({ channels }: { channels: AuthorChannel[] }) {
   return <TooltipProvider delayDuration={200}>
-    <div className="mt-3 flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap lg:mt-3 items-center gap-2">
       {channels.map(channel => {
         return <Tooltip key={channel.platform}>
           <TooltipTrigger asChild>
