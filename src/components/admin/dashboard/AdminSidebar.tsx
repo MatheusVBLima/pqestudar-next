@@ -311,6 +311,7 @@ export function AdminSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem><SidebarMenuButton asChild tooltip="Revisar guias" isActive={isActive('/admin/guias/revisao')}><Link href="/admin/guias/revisao"><ClipboardCheck /><span>Revisar guias</span></Link></SidebarMenuButton></SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

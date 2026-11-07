@@ -4,13 +4,13 @@ import { Portal } from '@radix-ui/react-tooltip';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { authorBadgeLevel } from '@/lib/author-badge-levels';
 import type { AuthorBadge } from '@/lib/authors';
-import { AuthorMedal } from './AuthorAdminDirectory';
+import { AuthorBadgeSymbol } from './AuthorBadgeSymbol';
 
-export function AuthorBadgeDisplay({ badge }: { badge: AuthorBadge }) {
+export function AuthorBadgeDisplay({ badge, compact = false }: { badge: AuthorBadge; compact?: boolean }) {
   return <TooltipProvider delayDuration={200}><Tooltip>
     <TooltipTrigger asChild>
-      <button type="button" aria-label={badge.title} className="rounded-xl p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-        <span aria-hidden="true"><AuthorMedal badge={badge} iconOnly /></span>
+      <button type="button" aria-label={badge.title} className={`${compact ? 'h-11 w-11 p-1.5' : 'h-[54px] w-[54px]'} shrink-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}>
+        <span className="block h-full w-full" aria-hidden="true" data-level={authorBadgeLevel(badge.code).id}><AuthorBadgeSymbol code={badge.code} title={badge.title} /></span>
       </button>
     </TooltipTrigger>
     <Portal><TooltipContent className="max-w-64 text-xs leading-relaxed">

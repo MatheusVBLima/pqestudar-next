@@ -15,14 +15,15 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-type Role = "admin" | "developer" | "moderator" | "user";
+type Role = "admin" | "developer" | "moderator" | "author" | "user";
 type RoleRow = { id: string; user_id: string; role: Role; created_at: string; email: string | null };
 type RolesResponse = { roles: RoleRow[] };
-const ROLE_ORDER: Role[] = ["admin", "developer", "moderator", "user"];
-const ROLE_LABEL: Record<Role, string> = { admin: "Admin", developer: "Developer", moderator: "Moderator", user: "User" };
+const ROLE_ORDER: Role[] = ["admin", "developer", "moderator", "author", "user"];
+const ROLE_LABEL: Record<Role, string> = { admin: "Admin", developer: "Developer", moderator: "Moderator", author: "Autor", user: "User" };
 const ROLE_DESCRIPTION: Record<Role, string> = {
   admin: "Controle total do painel e das permissões.",
   developer: "Acesso técnico para manutenção e evolução do sistema.",
+  author: "Cria guias e envia para revisao editorial.",
   moderator: "Apoio na revisão e moderação de conteúdo.",
   user: "Permissão padrão de usuário autenticado.",
 };

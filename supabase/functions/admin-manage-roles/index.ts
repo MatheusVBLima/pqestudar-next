@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type Role = "admin" | "developer" | "moderator" | "user";
+type Role = "admin" | "developer" | "moderator" | "author" | "user";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       const email = String(body.email ?? "").trim().toLowerCase();
       const role = body.role as Role;
 
-      if (!email || !["admin", "developer", "moderator", "user"].includes(role)) {
+      if (!email || !["admin", "developer", "moderator", "author", "user"].includes(role)) {
         return json(400, { error: "Email and valid role required" });
       }
 
@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
       const userId = String(body.user_id ?? "");
       const fromRole = body.from_role as Role;
       const toRole = body.to_role as Role;
-      const validRoles: Role[] = ["admin", "developer", "moderator", "user"];
+      const validRoles: Role[] = ["admin", "developer", "moderator", "author", "user"];
 
       if (!userId || !validRoles.includes(fromRole) || !validRoles.includes(toRole)) {
         return json(400, { error: "user_id, from_role and to_role are required" });

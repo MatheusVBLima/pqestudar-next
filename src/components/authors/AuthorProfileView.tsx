@@ -3,6 +3,7 @@ import { AuthorBadgeDisplay } from './AuthorBadgeDisplay';
 import { AuthorChannels, type AuthorChannel } from './AuthorChannels';
 import Link from 'next/link';
 import { AuthorBiography } from './AuthorBiography';
+import { AuthorEditablePhoto } from './AuthorEditablePhoto';
 import { AuthorGuides, type AuthorGuide } from './AuthorGuides';
 import { BookOpen, UserRound } from 'lucide-react';
 import { type AuthorBadge, type AuthorProfile, safeAuthorUrl } from '@/lib/authors';
@@ -32,14 +33,19 @@ export function AuthorProfileView({ author, badges, guides, privateProgress, pri
     <section aria-label="Perfil do autor" className="relative mt-5 sm:mt-4">
       <div className="absolute right-1 -top-10 sm:top-0">{privateVisits}</div>
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 sm:items-start sm:gap-x-5 sm:gap-y-2">
-        <div className="sm:row-span-4"><AuthorPhoto author={author} large /></div>
+        <div className="sm:row-span-3"><AuthorEditablePhoto authorId={author.id}><AuthorPhoto author={author} large /></AuthorEditablePhoto></div>
         <div className="min-w-0 sm:pr-20">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-primary sm:text-xs">Autor no PqEstudar</p>
             <h1 className="mt-1 break-words text-2xl font-bold tracking-tight sm:text-3xl">{author.display_name}</h1>
         </div>
         {author.headline && <p className="col-span-2 max-w-2xl break-words text-base leading-relaxed text-muted-foreground sm:col-span-1 sm:col-start-2 sm:text-base">{author.headline}</p>}
-        {!!badges.length && <div className="col-span-2 flex flex-wrap gap-1 sm:col-span-1 sm:col-start-2 sm:gap-2">{badges.map(b => <AuthorBadgeDisplay key={b.code} badge={b} />)}</div>}
-        <div className="col-span-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:col-span-1 sm:col-start-2 sm:gap-3 sm:text-sm"><BookOpen size={18} /><span><strong className="text-foreground">{guides.length}</strong> {guides.length === 1 ? 'guia publicado' : 'guias publicados'}</span><span aria-hidden="true">·</span><span><strong className="text-foreground">{badges.length}</strong> {badges.length === 1 ? 'conquista' : 'conquistas'}</span></div>
+        <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1 sm:col-start-2">
+          <div className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm text-muted-foreground"><BookOpen size={16} aria-hidden="true" /><span><strong className="font-semibold text-foreground">{guides.length}</strong> {guides.length === 1 ? 'guia' : 'guias'}</span></div>
+          {!!badges.length && <>
+            <span className="h-5 w-px shrink-0 bg-border" aria-hidden="true" />
+            <div className="flex min-w-0 items-center gap-0 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:thin]" role="region" aria-label="Conquistas do autor" tabIndex={0}>{badges.map(b => <AuthorBadgeDisplay key={b.code} badge={b} compact />)}</div>
+          </>}
+        </div>
       </div>
     </section>
     </div>

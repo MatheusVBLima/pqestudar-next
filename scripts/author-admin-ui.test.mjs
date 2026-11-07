@@ -6,6 +6,7 @@ const route = 'src/app/author-admin-preview-local/page.tsx';
 const author = { id: 'example', user_id: null, slug: 'autora-exemplo', display_name: 'Autora de Exemplo', headline: 'Educação e tecnologia para transformar a jornada de quem estuda.', bio: '', education: '', photo_url: '', website_url: '', website_label: 'Conheça meu trabalho', instagram_url: '', youtube_url: '', featured_badges: [], created_at: '2025-08-10T12:00:00Z' };
 const authors = [author, { ...author, id: 'second', slug: 'outro-autor', display_name: 'Outro Autor', headline: 'Carreira, oportunidades e os próximos passos para o seu futuro.', created_at: '2026-09-10T12:00:00Z' }, { ...author, id: 'third', slug: 'nova-autora', display_name: 'Nova Autora', headline: '', created_at: new Date().toISOString() }];
 const badges = [{ author_id: 'example', code: 'published-1', title: 'Primeiro guia', description: 'Publicou seu primeiro guia.', earned_at: '2025-08-10T12:00:00Z' }, { author_id: 'example', code: 'published-10', title: 'Autor em ação', description: 'Alcançou 10 guias publicados.', earned_at: '2026-01-10T12:00:00Z' }, { author_id: 'example', code: 'consistent-3', title: 'Autor consistente', description: 'Publicou em três meses seguidos.', earned_at: '2026-02-10T12:00:00Z' }];
+badges.push(...['published-50', 'consistent-6', 'variety-3', 'pioneer-20'].map(code => ({ ...badges[0], code, title: code })));
 const source = `'use client';
 import {useState} from 'react';
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query';
@@ -37,6 +38,24 @@ try {
     const rects = await page.locator('[data-author-card]').evaluateAll(cards => cards.map(c => ({ width: c.getBoundingClientRect().width, height: c.getBoundingClientRect().height })));
     assert.ok(rects.every(r => r.height > r.width), `Vertical cards at ${width}: ${JSON.stringify(rects)}`);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    const rail = page.getByRole('region', { name: /Conquistas de Autora/ });
+    const ys = await rail.locator('[data-level]').evaluateAll(items => items.map(el => el.getBoundingClientRect().y));
+    assert.ok(ys.every(y => Math.abs(y - ys[0]) < 1), 'Badges stay in one row');
+    const box = await rail.boundingBox();
+    await page.mouse.move(box.x + box.width - 20, box.y + 25);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 20, box.y + 25, { steps: 10 });
+    await page.mouse.up();
+    assert.ok(await rail.evaluate(el => el.scrollLeft > 0), 'Mouse drag scrolls badges');
+    await page.getByRole('button', { name: /Expandir conquistas de Autora/ }).click();
+    await page.getByRole('dialog').waitFor();
+    assert.equal(await page.getByRole('dialog').locator('[data-level]').count(), badges.length);
+    await page.keyboard.press('Escape');
+    await page.getByRole('dialog').waitFor({ state: 'hidden' });
+    if (width === 1440) {
+      const dates = await page.locator('[data-author-card]').evaluateAll(cards => cards.map(card => card.querySelector('footer').getBoundingClientRect().top - card.querySelector('[class*="tenure"]').getBoundingClientRect().bottom));
+      assert.ok(dates.every(gap => Math.abs(gap - dates[0]) < 1), 'Dates aligned at card bottom');
+    }
     await page.screenshot({ path: `test-results/authors/admin-directory-${width}.png`, fullPage: true });
     console.log(JSON.stringify({ width, cards: rects }));
   }

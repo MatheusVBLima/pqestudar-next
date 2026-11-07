@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-export type AppRole = 'admin' | 'developer' | 'moderator' | 'user';
+export type AppRole = 'admin' | 'developer' | 'moderator' | 'author' | 'user';
 
 export interface UserRole {
   id: string;
@@ -38,7 +38,7 @@ export const useUserRoles = () => {
       if (data.userId !== user.id || !Array.isArray(data.roles)) {
         throw new Error('Sua sessão mudou. Atualize a página para verificar o acesso.');
       }
-      return { roles: data.roles.filter((role: string) => ['admin', 'developer', 'moderator', 'user'].includes(role)) as AppRole[] };
+      return { roles: data.roles.filter((role: string) => ['admin', 'developer', 'moderator', 'author', 'user'].includes(role)) as AppRole[] };
     },
     enabled: !!user,
     ...ADMIN_CACHE,
@@ -95,6 +95,7 @@ export const useUserRoles = () => {
     isAdmin,
     isDeveloper,
     isModerator,
+    isAuthor: roles.includes('author'),
     canAccessAdmin,
     canAccessModerator,
     loading,

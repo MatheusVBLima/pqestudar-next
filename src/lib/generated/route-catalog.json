@@ -132,6 +132,12 @@
     "dynamic": false
   },
   {
+    "path": "/admin/guias/revisao",
+    "name": "Revisao",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
     "path": "/admin/influenciadores",
     "name": "Influenciadores",
     "area": "Admin",
@@ -312,6 +318,30 @@
     "dynamic": false
   },
   {
+    "path": "/autor",
+    "name": "Autor",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/autor/conquistas",
+    "name": "Conquistas",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/autor/guias",
+    "name": "Guias",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/autor/perfil",
+    "name": "Perfil",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
     "path": "/autores",
     "name": "Autores",
     "area": "Site",
@@ -326,6 +356,12 @@
   {
     "path": "/autores/meu-perfil",
     "name": "Meu perfil",
+    "area": "Site",
+    "dynamic": false
+  },
+  {
+    "path": "/autores/meu-perfil/editar",
+    "name": "Editar",
     "area": "Site",
     "dynamic": false
   },
@@ -494,6 +530,12 @@
   {
     "path": "/moderador/guias",
     "name": "Guias",
+    "area": "Moderador",
+    "dynamic": false
+  },
+  {
+    "path": "/moderador/revisao",
+    "name": "Revisao",
     "area": "Moderador",
     "dynamic": false
   },

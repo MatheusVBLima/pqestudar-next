@@ -197,6 +197,7 @@ interface MarkdownEditorProps {
   showWordCount?: boolean;
   /** Code used as the Supabase folder for uploaded inline images. */
   guideInternalCode?: string;
+  uploadImage?: (file: File) => Promise<{ path: string; publicUrl: string }>;
 }
 
 const HIGHLIGHT_COLORS = [
@@ -301,6 +302,7 @@ export default function MarkdownEditor({
   visual = false,
   showWordCount = true,
   guideInternalCode,
+  uploadImage,
 }: MarkdownEditorProps) {
   const [activeTab, setActiveTab] = useState<string>(visual ? "visual" : "edit");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -442,20 +444,20 @@ export default function MarkdownEditor({
   }, [activeTab, imageAlt, onChange, runVisualCommand, value]);
 
   const uploadInlineImage = useCallback(async () => {
-    if (!guideInternalCode || !imageFile) return;
+    if ((!guideInternalCode && !uploadImage) || !imageFile) return;
     setImageUploading(true);
     try {
-      const uploaded = await uploadGuideImage(imageFile, guideInternalCode, "content");
+      const uploaded = uploadImage ? await uploadImage(imageFile) : await uploadGuideImage(imageFile, guideInternalCode!, "content");
       setImageUrl(uploaded.publicUrl);
       insertResolvedImage(uploaded.publicUrl);
-      toast({ title: "Imagem enviada", description: `Salva na pasta ${guideInternalCode}.` });
+      toast({ title: "Imagem enviada", description: uploadImage ? 'Imagem pronta para usar no guia.' : `Salva na pasta ${guideInternalCode}.` });
     } catch (error) {
       toast({ title: "Erro no upload", description: getErrorMessage(error), variant: "destructive" });
     } finally {
       setImageUploading(false);
       if (imageFileRef.current) imageFileRef.current.value = "";
     }
-  }, [guideInternalCode, imageFile, insertResolvedImage]);
+  }, [guideInternalCode, uploadImage, imageFile, insertResolvedImage]);
 
   const openVideoDialog = useCallback(() => {
     if (activeTab === "visual") {
@@ -1204,7 +1206,7 @@ export default function MarkdownEditor({
           <Tabs value={imageMode} onValueChange={(mode) => setImageMode(mode as "url" | "upload")}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4" /> URL</TabsTrigger>
-              <TabsTrigger value="upload" disabled={!guideInternalCode}><Upload className="mr-2 h-4 w-4" /> Upload</TabsTrigger>
+              <TabsTrigger value="upload" disabled={!guideInternalCode && !uploadImage}><Upload className="mr-2 h-4 w-4" /> Upload</TabsTrigger>
             </TabsList>
             <TabsContent value="url" className="space-y-2 pt-3">
               <Label htmlFor="editor-image-url">URL da imagem</Label>

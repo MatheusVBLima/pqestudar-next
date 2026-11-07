@@ -102,7 +102,7 @@ export function Navbar() {
     && !affiliateMembership.isFetching
     && affiliateMembership.data?.profile?.user_id === user.id
     && affiliateMembership.data?.profile?.status === 'approved';
-  const { isAdmin, isModerator, canAccessAdmin, loading: rolesLoading, error: rolesError, refetch: retryRoles } = useUserRoles();
+  const { isAdmin, isModerator, canAccessAdmin, isAuthor, loading: rolesLoading, error: rolesError, refetch: retryRoles } = useUserRoles();
   const ownAuthor = useQuery({
     queryKey: ['my-author-profile', user?.id],
     enabled: !!user && !loading,
@@ -110,7 +110,7 @@ export function Navbar() {
     gcTime: 0,
     retry: false,
     queryFn: async () => {
-      const { data, error } = await supabase.from('author_profiles').select('slug,user_id').eq('user_id', user!.id).maybeSingle();
+      const { data, error } = await supabase.from('author_profiles').select('id,slug,user_id').eq('user_id', user!.id).maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -420,6 +420,7 @@ export function Navbar() {
                       >
                         <Bookmark className="h-4 w-4 mr-2" />Salvos
                       </DropdownMenuItem>
+                      {(isAuthor || canAccessAdmin) && <DropdownMenuItem onClick={() => handleNavigation("/autor")} className="cursor-pointer"><ContactRound className="h-4 w-4 mr-2" />Painel do autor</DropdownMenuItem>}
                       {showAuthorProfile && <DropdownMenuItem
                         onMouseEnter={() => !isOnKitSubdomain && router.prefetch(authorProfileHref)}
                         onFocus={() => !isOnKitSubdomain && router.prefetch(authorProfileHref)}
@@ -591,7 +592,8 @@ export function Navbar() {
                         >
                           <Bookmark className="h-4 w-4 mr-2" />Salvos
                         </DropdownMenuItem>
-                        {showAuthorProfile && <DropdownMenuItem
+                        {(isAuthor || canAccessAdmin) && <DropdownMenuItem onClick={() => handleNavigation("/autor")} className="cursor-pointer"><ContactRound className="h-4 w-4 mr-2" />Painel do autor</DropdownMenuItem>}
+                      {showAuthorProfile && <DropdownMenuItem
                           onMouseEnter={() => !isOnKitSubdomain && router.prefetch(authorProfileHref)}
                           onFocus={() => !isOnKitSubdomain && router.prefetch(authorProfileHref)}
                           onClick={() => handleNavigation(authorProfileHref)}

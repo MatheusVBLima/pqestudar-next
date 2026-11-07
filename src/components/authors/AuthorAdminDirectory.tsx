@@ -1,5 +1,6 @@
 "use client";
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Link from 'next/link';
 import { Award, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Pencil, Plus, Search, ShieldCheck, Users, SlidersHorizontal, ListFilter } from 'lucide-react';
 import { differenceInCalendarDays, differenceInMonths, differenceInYears } from 'date-fns';
@@ -28,7 +29,37 @@ export function authorTenure(date: string, now = new Date()) {
 }
 
 export function AuthorMedal({ badge, iconOnly = false }: { badge: AuthorBadge; iconOnly?: boolean }) {
-  return <span className={styles.badge} title={iconOnly ? undefined : `${badge.title}: ${badge.description}`}><span className={styles.medal} data-level={authorBadgeLevel(badge.code).id}><AuthorBadgeSymbol code={badge.code} title={badge.title} /></span>{!iconOnly && <small>{badge.title}</small>}</span>;
+  return <span className={styles.badge} title={iconOnly ? undefined : `${badge.title}: ${badge.description}`}><span className={styles.medalImage} data-level={authorBadgeLevel(badge.code).id}><AuthorBadgeSymbol code={badge.code} title={badge.title} /></span>{!iconOnly && <small>{badge.title}</small>}</span>;
+}
+
+function CardAchievements({ badges, name }: { badges: AuthorBadge[]; name: string }) {
+  const drag = useRef<{ x: number; scroll: number } | null>(null);
+  return <div className="min-w-0 w-full">
+    <div className={styles.badgeScroller} tabIndex={0} role="region" aria-label={`Conquistas de ${name}. Role para ver mais.`}
+      onPointerDown={event => {
+        if (event.pointerType !== 'mouse' || event.button !== 0) return;
+        drag.current = { x: event.clientX, scroll: event.currentTarget.scrollLeft };
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }}
+      onPointerMove={event => {
+        if (drag.current) event.currentTarget.scrollLeft = drag.current.scroll - (event.clientX - drag.current.x);
+      }}
+      onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }} onLostPointerCapture={() => { drag.current = null; }}
+      onDragStart={event => event.preventDefault()}>
+      {badges.map(badge => <AuthorMedal key={badge.code} badge={badge} />)}
+    </div>
+    <Dialog>
+      <DialogTrigger asChild><Button variant="ghost" size="sm" className="mt-1 text-xs" aria-label={`Expandir conquistas de ${name}`}>Expandir ({badges.length})</Button></DialogTrigger>
+      <DialogContent className="max-h-[85svh] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl sm:max-w-xl">
+        <DialogHeader><DialogTitle>Conquistas de {name}</DialogTitle><DialogDescription>Todos os badges conquistados e seus critérios.</DialogDescription></DialogHeader>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{badges.map(badge => <div key={badge.code} className="flex flex-col items-center gap-2 rounded-xl border p-3 text-center">
+          <AuthorMedal badge={badge} iconOnly />
+          <strong className="text-sm">{badge.title}</strong><p className="text-xs text-muted-foreground">{badge.description}</p>
+          <p className="mt-auto pt-2 text-[11px] text-muted-foreground">Conquistado em {new Date(badge.earned_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+        </div>)}</div>
+      </DialogContent>
+    </Dialog>
+  </div>;
 }
 
 export function AuthorAdminCard({ author, badges = [], badgeState = 'ready', onEdit, preview = false }: { author: ManagedAuthor; badges?: AuthorBadge[]; badgeState?: 'ready' | 'loading' | 'error'; onEdit?: () => void; preview?: boolean }) {
@@ -40,7 +71,7 @@ export function AuthorAdminCard({ author, badges = [], badgeState = 'ready', onE
       <h2 className={styles.name}>{author.display_name || 'Nome do autor'}</h2>
       <p className={styles.headline}>{author.headline || 'Uma apresentação para conectar o autor aos seus leitores.'}</p>
       <div className={styles.badgeTray} aria-label="Conquistas do autor">
-        {badgeState === 'loading' ? <p className="text-xs text-muted-foreground">Carregando conquistas…</p> : badgeState === 'error' ? <p role="status" className="text-xs text-muted-foreground">Conquistas indisponíveis no momento.</p> : shown.length ? shown.map(badge => <AuthorMedal key={badge.code} badge={badge} />) : <div className="flex flex-col items-center gap-2 text-muted-foreground"><Award size={22} strokeWidth={1.3} /><span className="text-[11px]">A primeira conquista começa com um guia.</span></div>}
+        {badgeState === 'loading' ? <p className="text-xs text-muted-foreground">Carregando conquistas…</p> : badgeState === 'error' ? <p role="status" className="text-xs text-muted-foreground">Conquistas indisponíveis no momento.</p> : shown.length ? <CardAchievements badges={shown} name={author.display_name} /> : <div className="flex flex-col items-center gap-2 text-muted-foreground"><Award size={22} strokeWidth={1.3} /><span className="text-[11px]">A primeira conquista começa com um guia.</span></div>}
       </div>
       <div className={styles.tenure}><CalendarDays size={16} /><div><strong>{preview && !author.created_at ? 'Sua trajetória começa aqui' : authorTenure(author.created_at)}</strong><small>{author.created_at ? `Perfil cadastrado em ${new Date(author.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}` : 'A partir do cadastro do perfil'}</small></div></div>
     </div>

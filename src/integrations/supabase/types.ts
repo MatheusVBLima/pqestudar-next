@@ -4912,7 +4912,7 @@ export type Database = {
       unaccent_safe: { Args: { input_text: string }; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user" | "developer"
+      app_role: "admin" | "moderator" | "user" | "developer" | "author"
       content_status: "draft" | "published"
       course_badge: "trending" | "popular" | "community"
       feature_status: "open" | "completed"
@@ -5048,7 +5048,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user", "developer"],
+      app_role: ["admin", "moderator", "user", "developer", "author"],
       content_status: ["draft", "published"],
       course_badge: ["trending", "popular", "community"],
       feature_status: ["open", "completed"],

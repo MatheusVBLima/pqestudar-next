@@ -1,7 +1,9 @@
 "use client";
+import { AuthorAccessControl } from './AuthorAccessControl';
+import { uploadAuthorImage } from '@/lib/author-editorial';
 import { AuthorProgress } from './AuthorProgress';
 import { AuthorBadgeDisplay } from './AuthorBadgeDisplay';
-import { useRef, useState, type FormEvent } from 'react';
+import { useRef, useState, useEffect, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,6 +26,8 @@ const blank = { display_name: '', slug: '', headline: '', bio: '', education: ''
 
 export function AuthorProfileForm({ profile, userId, admin, onSaved }: { profile?: Profile; userId: string; admin: boolean; onSaved: (id: string) => void }) {
   const [form, setForm] = useState(profile ? { ...profile, user_id: profile.user_id || '' } : { ...blank, user_id: admin ? '' : userId });
+  const boundAccountId = profile?.user_id;
+  useEffect(() => { if (boundAccountId !== undefined) setForm(current => ({ ...current, user_id: boundAccountId || '' })); }, [boundAccountId]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
@@ -37,6 +41,7 @@ export function AuthorProfileForm({ profile, userId, admin, onSaved }: { profile
     }
     setUploading(true);
     try {
+      if (!admin) { const uploaded = await uploadAuthorImage(file); update('photo_url', uploaded.publicUrl); return; }
       const bitmap = await createImageBitmap(file);
       bitmap.close();
       const bucket = supabase.storage.from(GUIDE_IMAGES_BUCKET);
@@ -131,7 +136,7 @@ export function AuthorProfileForm({ profile, userId, admin, onSaved }: { profile
           <div className={styles.sectionHeading}><span><Award size={20} /></span><div><h2>Conquistas do autor</h2><p>Todas as conquistas aparecem automaticamente no perfil.</p></div></div>
           {badges.isError ? <p role="alert" className="text-sm text-destructive">Não foi possível carregar suas conquistas.</p> : badges.isFetching ? <p role="status" className="text-sm text-muted-foreground">Carregando conquistas…</p> : badges.data?.length ? <div className={styles.badgeChoices}>{badges.data.map(badge => <AuthorBadgeDisplay key={badge.code} badge={badge} />)}</div> : <div className="rounded-xl border border-dashed bg-muted/20 p-6 text-center"><Award size={28} strokeWidth={1.3} className="mx-auto mb-3 text-primary/60" /><p className="text-sm font-medium">Cada contribuição conta</p><p className="mt-2 text-xs leading-relaxed text-muted-foreground">O primeiro guia publicado libera a primeira conquista. Novos selos chegam com volume, categorias e constância.</p></div>}
         </section>
-        {admin && <section className={`${styles.panel} ${styles.formSection}`}><div className={styles.sectionHeading}><span><ShieldCheck size={20} /></span><div><h2>Responsável pelo perfil</h2><p>Defina quem pode gerenciar esta apresentação.</p></div></div><Label htmlFor="author-account">Conta responsável (ID do usuário)</Label><Input id="author-account" value={form.user_id} onChange={e => update('user_id', e.target.value)} pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" className="mt-2" /><p className="mt-2 text-[11px] text-muted-foreground">Opcional. Confira a identidade da conta antes de vinculá-la.</p></section>}
+        {admin && <section className={`${styles.panel} ${styles.formSection}`}><div className={styles.sectionHeading}><span><ShieldCheck size={20} /></span><div><h2>Responsável pelo perfil</h2><p>Defina quem pode gerenciar esta apresentação.</p></div></div><Label htmlFor="author-account">Conta responsável (ID do usuário)</Label><Input id="author-account" value={form.user_id} onChange={e => update('user_id', e.target.value)} pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" className="mt-2" /><p className="mt-2 text-[11px] text-muted-foreground">Opcional. Confira a identidade da conta antes de vinculá-la.</p>{profile && <AuthorAccessControl authorId={profile.id} accountId={profile.user_id} />}</section>}
     <footer className={`${styles.panel} ${styles.formFooter}`}><p>As informações salvas aparecem no perfil público do autor.</p><Button type="submit" disabled={saving || uploading}>{saving ? 'Salvando…' : 'Salvar perfil público'}</Button></footer>
       </div>
       <aside className={styles.aside}>{(admin || profile?.user_id === userId) && progress.data && <div className="mb-4"><AuthorProgress progress={progress.data} privateView /></div>}{(admin || profile?.user_id === userId) && progress.isError && <p role="status" className="mb-3 text-xs text-muted-foreground">Progresso indisponível no momento.</p>}<p className={styles.previewLabel}>Prévia do card · ao vivo</p><AuthorAdminCard author={preview} badges={badges.data || []} badgeState={badges.isError ? 'error' : badges.isFetching ? 'loading' : 'ready'} preview />{profile && <Button asChild variant="outline" className="mt-4 w-full"><Link href={`/autores/${profile.slug}`} target="_blank" rel="noopener noreferrer">Ver perfil público<ExternalLink size={14} className="ml-2" /></Link></Button>}<p className="mt-4 text-xs leading-relaxed text-muted-foreground">A foto, a apresentação e os destaques acompanham o autor nos guias.</p></aside>
@@ -154,7 +159,7 @@ export default function AuthorProfileEditor({ admin = false, initialAuthorId = n
       if (data.length < 500) return rows;
     }
   } });
-  const query = useQuery({ queryKey: ['author-editor', user?.id, admin], enabled: !!user && allowed, queryFn: async () => {
+  const query = useQuery({ queryKey: ['author-editor', user?.id, admin], enabled: !!user && (!admin || allowed), queryFn: async () => {
     let query = supabase.from('author_profiles').select('*').order('display_name');
     if (!admin) query = query.eq('user_id', user!.id);
     const { data, error } = await query;
@@ -162,11 +167,12 @@ export default function AuthorProfileEditor({ admin = false, initialAuthorId = n
     return data;
   } });
   if (authLoading || roles.loading) return <p className="p-8" role="status">Carregando perfil…</p>;
-  if (!user) return <div className="p-8"><p>Entre na sua conta para editar seu perfil de autor.</p><Button asChild className="mt-4"><Link href="/login?from=%2Fautores%2Fmeu-perfil">Entrar</Link></Button></div>;
-  if (!allowed) return <p className="p-8">O perfil de autor está disponível para quem tem acesso à publicação de guias. Solicite esse acesso à equipe PqEstudar.</p>;
+  if (!user) return <div className="p-8"><p>Entre na sua conta para editar seu perfil de autor.</p><Button asChild className="mt-4"><Link href="/login?from=%2Fautores%2Fmeu-perfil%2Feditar">Entrar</Link></Button></div>;
+  if (admin && !allowed) return <p className="p-8">Acesso restrito à administração.</p>;
   if (query.isPending) return <p className="p-8" role="status">Carregando perfil…</p>;
   if (query.isError) return <div className="p-8"><p role="alert">Não foi possível carregar o perfil.</p><Button className="mt-4" onClick={() => query.refetch()}>Tentar novamente</Button></div>;
   const profile = admin ? query.data.find(a => a.id === selected) : query.data[0];
+  if (!admin && !profile && !allowed) return <p className="p-8">Sua conta ainda não está vinculada a um perfil de autor. Solicite o vínculo à administração.</p>;
   if (admin && selected && !profile) return <div className={styles.page}><p role="alert">Autor não encontrado.</p><Button variant="link" onClick={() => setSelected(null)}>Voltar aos autores</Button></div>;
   return <div className={styles.page}>
     {admin && selected === null ? <AuthorAdminDirectory authors={query.data} badges={allBadges.data || []} badgeState={allBadges.isError ? 'error' : allBadges.isPending ? 'loading' : 'ready'} onSelect={setSelected} /> : <>
