@@ -288,6 +288,12 @@
     "dynamic": false
   },
   {
+    "path": "/admin/revisao-conteudo",
+    "name": "Revisao conteudo",
+    "area": "Admin",
+    "dynamic": false
+  },
+  {
     "path": "/admin/roles",
     "name": "Roles",
     "area": "Admin",

@@ -20,6 +20,7 @@ import { useNavConfig } from '@/hooks/useNavConfig';
 import { useTheme } from '@/hooks/useTheme';
 import { ThemeSelector } from '@/components/layout/theme-selector';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRoles } from '@/hooks/useUserRoles';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -60,6 +61,7 @@ const premiumItems = [
 ];
 
 export function AdminSidebar() {
+  const { isAdmin } = useUserRoles();
   const router = useRouter();
   const pathname = usePathname() ?? "";
   const { state: sidebarState } = useSidebar();
@@ -259,6 +261,14 @@ export function AdminSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && <SidebarGroup className={groupClass}>
+          <SidebarGroupContent><SidebarMenu><SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isActive('/admin/revisao-conteudo')} data-hover-label="Central de revisão" className={itemClass(isActive('/admin/revisao-conteudo'))}>
+              <Link href="/admin/revisao-conteudo"><Shield className="h-4 w-4"/><span>Central de revisão</span></Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem></SidebarMenu></SidebarGroupContent>
+        </SidebarGroup>}
 
         {/* Fluxos */}
         <SidebarGroup className={groupClass}>

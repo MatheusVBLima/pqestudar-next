@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {reviewSegments,claimsFromSegments} from '../supabase/functions/_shared/content-review.ts';
+const fields={content_markdown:'## Recursos\n\nO plano **gratuito** permite três projetos.\n\n![Imagem](https://example.com/image.png)\n\nÉ necessário criar uma conta.'};
+const segments=reviewSegments(fields);
+assert.equal(segments.length,2);
+const claims=claimsFromSegments([{segment_id:segments[0].id,statement:'Limite do plano',original:'Texto inventado',field:'title'},{segment_id:'inventado',statement:'Falso'}],segments,fields);
+assert.equal(claims.length,1);
+assert.equal(claims[0].original,'O plano **gratuito** permite três projetos.');
+assert.equal(claims[0].field,'content_markdown');
+assert.equal(claimsFromSegments([],segments,fields).length,0);
+assert.equal(claimsFromSegments([{segment_id:segments[0].id,statement:'A'},{segment_id:segments[0].id,statement:'B'}],segments,fields).length,1);
+console.log('PASS: segment IDs preserve accents and Markdown; invented and duplicate IDs are discarded.');

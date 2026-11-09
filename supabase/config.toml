@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.newsletter-count]
 verify_jwt = false
+
+[functions.content-review]
+verify_jwt = false
