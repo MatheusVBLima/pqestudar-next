@@ -1,2 +1,2 @@
-import { AuthorEditorialPanel } from '@/components/authors/AuthorEditorialPanel';
-export default function Page() { return <AuthorEditorialPanel reviewer />; }
+import { redirect } from 'next/navigation';
+export default function Page() { redirect('/admin/revisao-conteudo?aba=aprovacao'); }
